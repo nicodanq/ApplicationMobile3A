@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Animated, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Animated } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 const evenementsData = [
@@ -30,6 +30,7 @@ const EvenementsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
+  const calendarFade = useRef(new Animated.Value(1)).current;
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -55,6 +56,7 @@ const EvenementsScreen = () => {
         ...(marked[selectedDate] || {}),
         selected: true,
         selectedColor: '#3c6e87',
+        dotColor: 'white',
       };
     }
 
@@ -67,6 +69,15 @@ const EvenementsScreen = () => {
     } else {
       setSelectedDate(day.dateString);
     }
+  };
+
+  const handleMonthChange = () => {
+    calendarFade.setValue(0);
+    Animated.timing(calendarFade, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
   };
 
   useEffect(() => {
@@ -106,12 +117,35 @@ const EvenementsScreen = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Evènements</Text>
-      <Calendar
-        onDayPress={handleDayPress}
-        markedDates={getMarkedDates()}
-        enableSwipeMonths={true}
-        style={styles.calendar}
-      />
+      <Animated.View style={{ opacity: calendarFade }}>
+        <Calendar
+          onDayPress={handleDayPress}
+          onMonthChange={handleMonthChange}
+          markedDates={getMarkedDates()}
+          enableSwipeMonths={true}
+          theme={{
+            backgroundColor: '#ffffff',
+            calendarBackground: '#ffffff',
+            textSectionTitleColor: '#3c6e87',
+            selectedDayBackgroundColor: '#3c6e87',
+            selectedDayTextColor: '#ffffff',
+            todayTextColor: '#3c6e87',
+            dayTextColor: '#2d4150',
+            textDisabledColor: '#d9e1e8',
+            dotColor: '#3c6e87',
+            selectedDotColor: '#ffffff',
+            arrowColor: '#3c6e87',
+            monthTextColor: '#3c6e87',
+            textMonthFontWeight: 'bold',
+            textDayFontWeight: '600',
+            textDayHeaderFontWeight: '600',
+            textDayFontSize: 14,
+            textMonthFontSize: 18,
+            textDayHeaderFontSize: 14,
+          }}
+          style={styles.calendar}
+        />
+      </Animated.View>
 
       <Text style={styles.subtitle}>
         {selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}
