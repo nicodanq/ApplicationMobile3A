@@ -19,6 +19,8 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
 
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
+import FooterLogo from "@/components/FooterLogo"
+
 const { width } = Dimensions.get("window")
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
 
@@ -192,6 +194,7 @@ export default function EtudeDetailScreen({ navigation }: EtudeDetailScreenProps
             </LinearGradient>
           </AnimatedTouchable>
         </View>
+        <FooterLogo />
       </ScrollView>
     </View>
   )
