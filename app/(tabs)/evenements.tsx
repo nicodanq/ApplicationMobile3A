@@ -1,7 +1,8 @@
+import FooterLogo from '@/components/FooterLogo';
+import HeaderPage from '@/components/HeaderPage';
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-
 type Evenement = {
   id: string;
   date: string;
@@ -42,19 +43,20 @@ const EvenementsScreen = () => {
     : evenementsData;
 
   return (
+
     <View style={styles.container}>
-      <Text style={styles.title}>Evènements</Text>
+      <HeaderPage title="Évènements" />
       <Calendar
         onDayPress={day => setSelectedDate(day.dateString)}
         markedDates={
           selectedDate
             ? {
-                [selectedDate]: {
-                  selected: true,
-                  marked: true,
-                  selectedColor: '#3c6e87',
-                },
-              }
+              [selectedDate]: {
+                selected: true,
+                marked: true,
+                selectedColor: '#3c6e87',
+              },
+            }
             : {}
         }
         style={styles.calendar}
@@ -79,6 +81,7 @@ const EvenementsScreen = () => {
           <Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>
         }
       />
+      <FooterLogo />
     </View>
   );
 };
@@ -86,31 +89,28 @@ const EvenementsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 50,
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
+    backgroundColor: "#F8FAFC",
   },
   calendar: {
-    marginBottom: 10,
-    borderRadius: 10,
+    margin: 20,
+    borderRadius: 30,
     overflow: 'hidden',
   },
   subtitle: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginTop: 10,
+    textAlign: 'center',
+  
   },
   eventCard: {
     backgroundColor: '#f0f4f7',
     padding: 12,
+    marginLeft: 20,
+    marginRight: 20,
     marginBottom: 10,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   eventTitle: {
     fontSize: 16,
@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     marginTop: 4,
+    
   },
   emptyText: {
     textAlign: 'center',

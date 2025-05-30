@@ -1,227 +1,186 @@
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import type React from "react"
-import { Dimensions, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 import FooterLogo from "@/components/FooterLogo"
+import HeaderPage from "@/components/HeaderPage"
 
-const { width } = Dimensions.get("window")
+
 
 interface StudyCardProps {
-  title: string
-  description: string
-  image: any
-  color: string
-  gradientColors: readonly [string, string, ...string[]]
+    title: string
+    description: string
+    image: any
+    color: string
+    gradientColors: readonly [string, string, ...string[]]
 }
 
 const StudyCard: React.FC<StudyCardProps> = ({ title, description, image, color, gradientColors }) => {
-  return (
-    <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8}>
-      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
-        <View style={styles.cardContent}>
-          <View style={styles.imageContainer}>
-            <Image source={image} style={styles.cardImage} />
-            <View style={styles.imageOverlay} />
-          </View>
+    return (
+        <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8}>
+            <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
+                <View style={styles.cardContent}>
+                    <View style={styles.imageContainer}>
+                        <Image source={image} style={styles.cardImage} />
+                        <View style={styles.imageOverlay} />
+                    </View>
 
-          <View style={styles.textContainer}>
-            <Text style={[styles.cardTitle, { color }]}>{title}</Text>
-            <Text style={styles.cardDescription}>{description}</Text>
+                    <View style={styles.textContainer}>
+                        <Text style={[styles.cardTitle, { color }]}>{title}</Text>
+                        <Text style={styles.cardDescription}>{description}</Text>
 
-            <TouchableOpacity style={styles.learnMoreButton}>
-              <Text style={[styles.learnMoreText, { color }]}>En savoir plus</Text>
-              <Ionicons name="arrow-forward" size={16} color={color} style={styles.arrowIcon} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  )
+                        <TouchableOpacity style={styles.learnMoreButton}>
+                            <Text style={[styles.learnMoreText, { color }]}>En savoir plus</Text>
+                            <Ionicons name="arrow-forward" size={16} color={color} style={styles.arrowIcon} />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </LinearGradient>
+        </TouchableOpacity>
+    )
 }
 
 export default function EtudesScreen() {
-  const studiesData = [
-    {
-      title: "IT & Digital",
-      description: "Formation complète en technologies numériques et développement informatique",
-      image: require("../../assets/images/EPF_Projets_Logo.png"), // Remplacez par vos images
-      color: "#3B82F6",
-      gradientColors: ["#EBF4FF", "#DBEAFE"] as [string, string],
-    },
-    {
-      title: "Ingénierie des Systèmes",
-      description: "Conception et optimisation de systèmes complexes industriels",
-      image: require("../../assets/images/EPF_Projets_Logo.png"),
-      color: "#10B981",
-      gradientColors: ["#ECFDF5", "#D1FAE5"] as [string, string],
-    },
-    {
-      title: "Conseil",
-      description: "Stratégie d'entreprise et accompagnement organisationnel",
-      image: require("../../assets/images/EPF_Projets_Logo.png"),
-      color: "#EC4899",
-      gradientColors: ["#FDF2F8", "#FCE7F3"] as [string, string],
-    },
-    {
-      title: "Traduction technique",
-      description: "Spécialisation en traduction de documents techniques et scientifiques",
-      image: require("../../assets/images/EPF_Projets_Logo.png"),
-      color: "#06B6D4",
-      gradientColors: ["#F0F9FF", "#E0F7FA"] as [string, string],
-    },
-  ]
+    const studiesData = [
+        {
+            title: "IT & Digital",
+            description: "Formation complète en technologies numériques et développement informatique",
+            image: require("../../assets/images/EPF_Projets_Logo.png"), // Remplacez par vos images
+            color: "#3B82F6",
+            gradientColors: ["#EBF4FF", "#DBEAFE"] as [string, string],
+        },
+        {
+            title: "Ingénierie des Systèmes",
+            description: "Conception et optimisation de systèmes complexes industriels",
+            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            color: "#10B981",
+            gradientColors: ["#ECFDF5", "#D1FAE5"] as [string, string],
+        },
+        {
+            title: "Conseil",
+            description: "Stratégie d'entreprise et accompagnement organisationnel",
+            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            color: "#EC4899",
+            gradientColors: ["#FDF2F8", "#FCE7F3"] as [string, string],
+        },
+        {
+            title: "Traduction technique",
+            description: "Spécialisation en traduction de documents techniques et scientifiques",
+            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            color: "#06B6D4",
+            gradientColors: ["#F0F9FF", "#E0F7FA"] as [string, string],
+        },
+    ]
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Études</Text>
-        <View style={styles.headerLine} />
-      </View>
+            {/* Header */}
+            <HeaderPage title="Etudes" />
 
-      {/* Scrollable Content */}
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {studiesData.map((study, index) => (
-          <StudyCard
-            key={index}
-            title={study.title}
-            description={study.description}
-            image={study.image}
-            color={study.color}
-            gradientColors={study.gradientColors}
-          />
-        ))}
-        <FooterLogo />
-      </ScrollView>
-      
-    </View>
-  )
+            {/* Scrollable Content */}
+            <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent}
+                showsVerticalScrollIndicator={false}
+            >
+                {studiesData.map((study, index) => (
+                    <StudyCard
+                        key={index}
+                        title={study.title}
+                        description={study.description}
+                        image={study.image}
+                        color={study.color}
+                        gradientColors={study.gradientColors}
+                    />
+                ))}
+                <FooterLogo />
+            </ScrollView>
+        </View>
+    )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8FAFC",
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 20,
-    backgroundColor: "#F8FAFC",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#1E293B",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  headerLine: {
-    height: 2,
-    backgroundColor: "#E2E8F0",
-    marginHorizontal: 40,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  cardContainer: {
-    marginBottom: 20,
-  },
-  card: {
-    borderRadius: 20,
-    overflow: "hidden",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
+    container: {
+        flex: 1,
+        backgroundColor: "#F8FAFC",
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-  },
-  cardContent: {
-    flexDirection: "row",
-    padding: 16,
-    minHeight: 120,
-  },
-  imageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginRight: 16,
-    position: "relative",
-  },
-  cardImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  imageOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.1)",
-  },
-  textContainer: {
-    flex: 1,
-    justifyContent: "space-between",
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 6,
-  },
-  cardDescription: {
-    fontSize: 14,
-    color: "#64748B",
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  learnMoreButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  learnMoreText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  arrowIcon: {
-    marginLeft: 4,
-  },
-  footerContainer: {
-    alignItems: "center",
-    marginTop: 40,
-    marginBottom: 20,
-  },
-  logoContainer: {
-    alignItems: "center",
-  },
-  logoCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  logoText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#64748B",
-  },
+
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 20,
+        paddingTop: 20,
+        paddingBottom: 40,
+    },
+    cardContainer: {
+        marginBottom: 20,
+    },
+    card: {
+        borderRadius: 20,
+        overflow: "hidden",
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+    },
+    cardContent: {
+        flexDirection: "row",
+        padding: 16,
+        minHeight: 120,
+    },
+    imageContainer: {
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        overflow: "hidden",
+        marginRight: 16,
+        position: "relative",
+    },
+    cardImage: {
+        width: "100%",
+        height: "100%",
+        resizeMode: "cover",
+    },
+    imageOverlay: {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0,0,0,0.1)",
+    },
+    textContainer: {
+        flex: 1,
+        justifyContent: "space-between",
+    },
+    cardTitle: {
+        fontSize: 18,
+        fontWeight: "700",
+        marginBottom: 6,
+    },
+    cardDescription: {
+        fontSize: 14,
+        color: "#64748B",
+        lineHeight: 20,
+        marginBottom: 12,
+    },
+    learnMoreButton: {
+        flexDirection: "row",
+        alignItems: "center",
+    },
+    learnMoreText: {
+        fontSize: 14,
+        fontWeight: "600",
+    },
+    arrowIcon: {
+        marginLeft: 4,
+    },
 })
