@@ -1,16 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Animated, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
-type Evenement = {
-  id: string;
-  date: string;
-  titre: string;
-  heure: string;
-  lieu: string;
-};
-
-const evenementsData: Evenement[] = [
+const evenementsData = [
   {
     id: '1',
     date: '2025-06-01',
@@ -36,49 +28,114 @@ const evenementsData: Evenement[] = [
 
 const EvenementsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const bounceAnim = useRef(new Animated.Value(0)).current;
+
+  const today = new Date().toISOString().split('T')[0];
 
   const evenementsFiltres = selectedDate
     ? evenementsData.filter(event => event.date === selectedDate)
-    : evenementsData;
+    : evenementsData
+        .filter(event => event.date >= today)
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+  const getMarkedDates = () => {
+    const marked: { [date: string]: any } = {};
+
+    evenementsData.forEach(event => {
+      marked[event.date] = {
+        ...(marked[event.date] || {}),
+        marked: true,
+        dotColor: 'red',
+      };
+    });
+
+    if (selectedDate) {
+      marked[selectedDate] = {
+        ...(marked[selectedDate] || {}),
+        selected: true,
+        selectedColor: '#3c6e87',
+      };
+    }
+
+    return marked;
+  };
+
+  const handleDayPress = (day: { dateString: string }) => {
+    if (selectedDate === day.dateString) {
+      setSelectedDate(null);
+    } else {
+      setSelectedDate(day.dateString);
+    }
+  };
+
+  useEffect(() => {
+    fadeAnim.setValue(0);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.spring(bounceAnim, {
+          toValue: 0,
+          friction: 3,
+          useNativeDriver: true,
+        })
+      ])
+    ]).start();
+  }, [selectedDate]);
+
+  const bounceStyle = {
+    transform: [
+      {
+        translateY: bounceAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, -10],
+        }),
+      },
+    ],
+  };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Evènements</Text>
       <Calendar
-        onDayPress={day => setSelectedDate(day.dateString)}
-        markedDates={
-          selectedDate
-            ? {
-                [selectedDate]: {
-                  selected: true,
-                  marked: true,
-                  selectedColor: '#3c6e87',
-                },
-              }
-            : {}
-        }
+        onDayPress={handleDayPress}
+        markedDates={getMarkedDates()}
+        enableSwipeMonths={true}
         style={styles.calendar}
       />
 
       <Text style={styles.subtitle}>
-        {selectedDate ? `Évènements du ${selectedDate}` : 'Tous les évènements'}
+        {selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}
       </Text>
 
-      <FlatList
-        data={evenementsFiltres}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.eventCard}>
-            <Text style={styles.eventTitle}>{item.titre}</Text>
-            <Text style={styles.eventDetails}>
-              🕒 {item.heure}   📍 {item.lieu}
-            </Text>
-          </View>
-        )}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>
-        }
-      />
+      <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}>
+        <FlatList
+          data={evenementsFiltres}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.eventCard}>
+              <Text style={styles.eventTitle}>{item.titre}</Text>
+              <Text style={styles.eventDetails}>
+                🕒 {item.heure}   📍 {item.lieu}
+              </Text>
+            </View>
+          )}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>
+          }
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        />
+      </Animated.View>
     </View>
   );
 };
