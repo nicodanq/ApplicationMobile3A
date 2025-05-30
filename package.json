@@ -32,6 +32,7 @@
     "react-dom": "19.0.0",
     "react-hook-form": "^7.56.4",
     "react-native": "0.79.2",
+    "react-native-calendars": "^1.1312.1",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
@@ -43,6 +44,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "@types/react-native-calendars": "^1.1264.7",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~9.2.0",
     "typescript": "~5.8.3"
