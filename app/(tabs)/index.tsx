@@ -5,7 +5,6 @@ import { LinearGradient } from "expo-linear-gradient"
 import { useState } from "react"
 import {
   Alert,
-  Dimensions,
   Image,
   Platform,
   ScrollView,
@@ -13,7 +12,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
 
@@ -21,7 +20,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 
 import FooterLogo from "@/components/FooterLogo"
 
-const { width } = Dimensions.get("window")
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
 
 type EtudeDetailScreenProps = {
