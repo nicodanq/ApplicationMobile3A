@@ -1,11 +1,13 @@
 "use client"
 
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 
 export default function HomeScreen() {
   const router = useRouter()
+  const { signOut } = useSession()
 
   const handleNavigation = () => {
     router.push("/(tabs)/etudes")
@@ -22,6 +24,13 @@ export default function HomeScreen() {
         <Ionicons name="book-outline" size={20} color="white" style={{ marginRight: 8 }} />
         <Text style={styles.buttonText}>Voir les études</Text>
       </TouchableOpacity>
+      <Text
+        onPress={() => {
+          // The `app/(app)/_layout.tsx` will redirect to the sign-in screen.
+          signOut();
+        }}>
+        Sign Out
+      </Text>
     </View>
   )
 }

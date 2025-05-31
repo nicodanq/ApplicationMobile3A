@@ -1,6 +1,8 @@
 "use client"
 
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
@@ -16,6 +18,8 @@ import {
   View
 } from "react-native"
 
+
+
 interface FormData {
   email: string
   password: string
@@ -26,6 +30,8 @@ const LoginScreen: React.FC = () => {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === "dark"
   const [showPassword, setShowPassword] = useState(false)
+  const { signIn } = useSession()
+  const router = useRouter()
 
   const logoScale = useRef(new Animated.Value(1)).current
 
@@ -61,6 +67,10 @@ const LoginScreen: React.FC = () => {
   const onSubmit = (data: FormData) => {
     console.log("Form submitted:", data)
     // Ajouter logique de connexion ici
+    signIn();
+    // Navigate after signing in. You may want to tweak this to ensure sign-in is
+    // successful before navigating.
+    router.replace('/');
   }
 
   const theme = {
@@ -77,7 +87,7 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}> 
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
       <View style={styles.logoContainer}>
@@ -165,7 +175,7 @@ const LoginScreen: React.FC = () => {
           onPress={handleSubmit(onSubmit)}
           activeOpacity={0.8}
         >
-          <Text style={styles.submitButtonText}>LOGIN</Text>
+          <Text style={styles.submitButtonText}>SIGNIN</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.forgotPasswordContainer}>

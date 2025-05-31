@@ -5,6 +5,10 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { SessionProvider } from "../contexts/AuthContext"; // <--- Chemin correct selon où est ton fichier ctx.tsx
+import { SplashScreenController } from '../screens/splash'; // <--- Chemin vers ton SplashScreenController
+
+import { useSession } from '../contexts/AuthContext'; // <--- Chemin correct selon où est ton fichier ctx.tsx
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -13,18 +17,31 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
+    <SessionProvider>
+      <SplashScreenController />
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </ThemeProvider>
+    </SessionProvider>
+  );
+}
+
+function RootNavigator() {
+  const { session } = useSession();
+  return (
+    <Stack>
+      <Stack.Protected guard={!!session}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+      </Stack.Protected>
+      <Stack.Protected guard={!session}>
+      <Stack.Screen name="signin" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Screen name="+not-found" />
+    </Stack>
   );
 }
