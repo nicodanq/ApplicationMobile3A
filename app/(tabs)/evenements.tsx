@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Animated, Modal, Pressable, TouchableOpacity } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import HeaderPage from '@/components/HeaderPage';
 import FooterLogo from '@/components/FooterLogo';
+import HeaderPage from '@/components/HeaderPage';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 
 // Définition du type Evenement (venant de main)
 type Evenement = {
@@ -199,7 +199,7 @@ const EvenementsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 40 },
+  container: { flex: 1, backgroundColor: '#fff' },
   calendar: { marginBottom: 10, borderRadius: 10 },
   subtitle: { fontSize: 18, fontWeight: '600', marginVertical: 8, textAlign: 'center' },
   eventBlock: { backgroundColor: '#e3f2fd', padding: 16, marginBottom: 12, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
