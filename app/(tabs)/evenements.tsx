@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Animated } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Animated, Modal, Pressable, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 
 const evenementsData = [
@@ -9,6 +9,7 @@ const evenementsData = [
     titre: 'Hackathon EPF',
     heure: '10h - 17h',
     lieu: 'Cachan',
+    description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain."
   },
   {
     id: '2',
@@ -16,6 +17,7 @@ const evenementsData = [
     titre: 'Forum Entreprises',
     heure: '9h - 16h',
     lieu: 'Sceaux',
+    description: 'Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.'
   },
   {
     id: '3',
@@ -23,11 +25,14 @@ const evenementsData = [
     titre: 'Conférence IA',
     heure: '14h - 16h',
     lieu: 'Online',
+    description: "Conférence sur l'impact de l'IA dans la recherche scientifique."
   },
 ];
 
 const EvenementsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const calendarFade = useRef(new Animated.Value(1)).current;
@@ -42,7 +47,6 @@ const EvenementsScreen = () => {
 
   const getMarkedDates = () => {
     const marked: { [date: string]: any } = {};
-
     evenementsData.forEach(event => {
       marked[event.date] = {
         ...(marked[event.date] || {}),
@@ -50,7 +54,6 @@ const EvenementsScreen = () => {
         dotColor: 'red',
       };
     });
-
     if (selectedDate) {
       marked[selectedDate] = {
         ...(marked[selectedDate] || {}),
@@ -59,16 +62,11 @@ const EvenementsScreen = () => {
         dotColor: 'white',
       };
     }
-
     return marked;
   };
 
   const handleDayPress = (day: { dateString: string }) => {
-    if (selectedDate === day.dateString) {
-      setSelectedDate(null);
-    } else {
-      setSelectedDate(day.dateString);
-    }
+    setSelectedDate(selectedDate === day.dateString ? null : day.dateString);
   };
 
   const handleMonthChange = () => {
@@ -104,14 +102,7 @@ const EvenementsScreen = () => {
   }, [selectedDate]);
 
   const bounceStyle = {
-    transform: [
-      {
-        translateY: bounceAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, -10],
-        }),
-      },
-    ],
+    transform: [{ translateY: bounceAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -10] }) }]
   };
 
   return (
@@ -146,77 +137,67 @@ const EvenementsScreen = () => {
           style={styles.calendar}
         />
       </Animated.View>
-
-      <Text style={styles.subtitle}>
-        {selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}
-      </Text>
-
-      <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}>
+      <Text style={styles.subtitle}>{selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}</Text>
+      <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}> 
         <FlatList
           data={evenementsFiltres}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.eventCard}>
-              <Text style={styles.eventTitle}>{item.titre}</Text>
-              <Text style={styles.eventDetails}>
-                🕒 {item.heure}   📍 {item.lieu}
-              </Text>
+            <View style={styles.eventBlock}>
+              <Text style={styles.eventCategory}>🎓 {item.titre}</Text>
+              <Text style={styles.eventDescription}>{item.description}</Text>
+              <Text style={styles.eventDetailsStyled}>🕒 {item.heure}   📍 {item.lieu}</Text>
+              <TouchableOpacity
+                style={styles.infoButton}
+                onPress={() => {
+                  setSelectedEvent(item);
+                  setModalVisible(true);
+                }}
+              >
+                <Text style={styles.infoButtonText}>En savoir plus →</Text>
+              </TouchableOpacity>
             </View>
           )}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>
-          }
+          ListEmptyComponent={<Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}
         />
       </Animated.View>
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{selectedEvent?.titre}</Text>
+            <Text style={styles.modalText}>🕒 {selectedEvent?.heure}</Text>
+            <Text style={styles.modalText}>📍 {selectedEvent?.lieu}</Text>
+            <Text style={styles.modalText}>{selectedEvent?.description}</Text>
+            <Pressable style={styles.closeButton} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>Fermer</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: 50,
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  calendar: {
-    marginBottom: 10,
-    borderRadius: 10,
-    overflow: 'hidden',
-  },
-  subtitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-  },
-  eventCard: {
-    backgroundColor: '#f0f4f7',
-    padding: 12,
-    marginBottom: 10,
-    borderRadius: 8,
-  },
-  eventTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  eventDetails: {
-    fontSize: 14,
-    color: '#333',
-    marginTop: 4,
-  },
-  emptyText: {
-    textAlign: 'center',
-    color: '#888',
-    marginTop: 20,
-  },
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 40 },
+  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+  calendar: { marginBottom: 10, borderRadius: 10 },
+  subtitle: { fontSize: 18, fontWeight: '600', marginVertical: 8 },
+  eventBlock: { backgroundColor: '#e3f2fd', padding: 16, marginBottom: 12, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
+  eventCategory: { fontSize: 18, fontWeight: 'bold', color: '#1565c0' },
+  eventDescription: { fontSize: 15, color: '#555', marginTop: 4 },
+  eventDetailsStyled: { fontSize: 14, color: '#333', marginTop: 6 },
+  infoButton: { marginTop: 10, backgroundColor: '#3c6e87', padding: 10, borderRadius: 8, alignSelf: 'flex-start' },
+  infoButtonText: { color: 'white', fontWeight: '600' },
+  emptyText: { textAlign: 'center', color: '#888', marginTop: 20 },
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' },
+  modalContent: { width: '85%', backgroundColor: 'white', padding: 20, borderRadius: 10, elevation: 5 },
+  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+  modalText: { fontSize: 16, marginBottom: 6 },
+  closeButton: { marginTop: 15, backgroundColor: '#3c6e87', padding: 10, borderRadius: 6 },
+  closeButtonText: { color: 'white', textAlign: 'center', fontWeight: '600' },
 });
 
 export default EvenementsScreen;
