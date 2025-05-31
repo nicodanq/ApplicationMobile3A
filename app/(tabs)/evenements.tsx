@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Animated, Modal, Pressable, TouchableOpacity } from 'react-native';
-import { Calendar } from 'react-native-calendars';
-import HeaderPage from '@/components/HeaderPage';
 import FooterLogo from '@/components/FooterLogo';
+import HeaderPage from '@/components/HeaderPage';
+import React, { useEffect, useRef, useState } from 'react';
+import { Animated, FlatList, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 
-// Définition du type Evenement (venant de main)
 type Evenement = {
   id: string;
   date: string;
@@ -54,8 +53,8 @@ const EvenementsScreen = () => {
   const evenementsFiltres = selectedDate
     ? evenementsData.filter(event => event.date === selectedDate)
     : evenementsData
-        .filter(event => event.date >= today)
-        .sort((a, b) => a.date.localeCompare(b.date));
+      .filter(event => event.date >= today)
+      .sort((a, b) => a.date.localeCompare(b.date));
 
   const getMarkedDates = () => {
     const marked: { [date: string]: any } = {};
@@ -153,25 +152,23 @@ const EvenementsScreen = () => {
 
       <Text style={styles.subtitle}>{selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}</Text>
 
-      <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}> 
+      <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}>
         <FlatList
           data={evenementsFiltres}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
-            <View style={styles.eventBlock}>
+            <TouchableOpacity
+              style={styles.eventBlock}
+              onPress={() => {
+                setSelectedEvent(item);
+                setModalVisible(true);
+              }}
+              activeOpacity={0.8}
+            >
               <Text style={styles.eventCategory}>🎓 {item.titre}</Text>
               <Text style={styles.eventDescription}>{item.description}</Text>
               <Text style={styles.eventDetailsStyled}>🕒 {item.heure}   📍 {item.lieu}</Text>
-              <TouchableOpacity
-                style={styles.infoButton}
-                onPress={() => {
-                  setSelectedEvent(item);
-                  setModalVisible(true);
-                }}
-              >
-                <Text style={styles.infoButtonText}>En savoir plus →</Text>
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           )}
           ListEmptyComponent={<Text style={styles.emptyText}>Aucun évènement ce jour-là.</Text>}
           showsVerticalScrollIndicator={false}
@@ -180,8 +177,11 @@ const EvenementsScreen = () => {
       </Animated.View>
 
       <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+        <Pressable style={styles.modalContainer} onPress={() => setModalVisible(false)}>
+          <Pressable
+            style={styles.modalContent}
+            onPress={(e) => e.stopPropagation()} // Empêche le clic dans la boîte de fermer le modal
+          >
             <Text style={styles.modalTitle}>{selectedEvent?.titre}</Text>
             <Text style={styles.modalText}>🕒 {selectedEvent?.heure}</Text>
             <Text style={styles.modalText}>📍 {selectedEvent?.lieu}</Text>
@@ -189,9 +189,10 @@ const EvenementsScreen = () => {
             <Pressable style={styles.closeButton} onPress={() => setModalVisible(false)}>
               <Text style={styles.closeButtonText}>Fermer</Text>
             </Pressable>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
+
 
       <FooterLogo />
     </View>
@@ -199,15 +200,24 @@ const EvenementsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 40 },
-  calendar: { marginBottom: 10, borderRadius: 10 },
+  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  calendar: { margin: 20, borderRadius: 20 },
   subtitle: { fontSize: 18, fontWeight: '600', marginVertical: 8, textAlign: 'center' },
-  eventBlock: { backgroundColor: '#e3f2fd', padding: 16, marginBottom: 12, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
+  eventBlock: {
+    backgroundColor: '#e3f2fd',
+    margin: 20,
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4
+  },
   eventCategory: { fontSize: 18, fontWeight: 'bold', color: '#1565c0' },
   eventDescription: { fontSize: 15, color: '#555', marginTop: 4 },
   eventDetailsStyled: { fontSize: 14, color: '#333', marginTop: 6 },
-  infoButton: { marginTop: 10, backgroundColor: '#3c6e87', padding: 10, borderRadius: 8, alignSelf: 'flex-start' },
-  infoButtonText: { color: 'white', fontWeight: '600' },
   emptyText: { textAlign: 'center', color: '#888', marginTop: 20 },
   modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' },
   modalContent: { width: '85%', backgroundColor: 'white', padding: 20, borderRadius: 10, elevation: 5 },

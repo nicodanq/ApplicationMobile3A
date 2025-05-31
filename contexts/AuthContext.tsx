@@ -31,7 +31,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       value={{
         signIn: () => {
           // Perform sign-in logic here
-          setSession('xxx');
+          setSession('123'); // Example session string (e.g., user id or token)
         },
         signOut: () => {
           setSession(null);

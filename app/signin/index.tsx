@@ -1,19 +1,21 @@
 "use client"
 
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
-    Animated,
-    Image,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useColorScheme,
-    View
+  Animated,
+  Image,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from "react-native"
 
 interface FormData {
@@ -26,25 +28,102 @@ const LoginScreen: React.FC = () => {
   const colorScheme = useColorScheme()
   const isDark = colorScheme === "dark"
   const [showPassword, setShowPassword] = useState(false)
+  const { signIn } = useSession()
+  const router = useRouter()
 
+  // Animations existantes
   const logoScale = useRef(new Animated.Value(1)).current
 
+  // Nouvelles animations d'apparition
+  const logoOpacity = useRef(new Animated.Value(0)).current
+  const logoTranslateY = useRef(new Animated.Value(-30)).current
+  const titleOpacity = useRef(new Animated.Value(0)).current
+  const titleTranslateY = useRef(new Animated.Value(-20)).current
+  const subtitleOpacity = useRef(new Animated.Value(0)).current
+  const subtitleTranslateY = useRef(new Animated.Value(-15)).current
+  const formOpacity = useRef(new Animated.Value(0)).current
+  const formTranslateY = useRef(new Animated.Value(20)).current
+
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(logoScale, {
-          toValue: 1.1,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoScale, {
+    // Animation du logo (apparition)
+    Animated.parallel([
+      Animated.timing(logoOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoTranslateY, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Démarrer l'animation de pulsation après l'apparition
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(logoScale, {
+            toValue: 1.1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoScale, {
+            toValue: 1,
+            duration: 2000,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start()
+    })
+
+    // Animation du titre (avec délai)
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(titleOpacity, {
           toValue: 1,
-          duration: 2000,
+          duration: 600,
           useNativeDriver: true,
         }),
-      ])
-    ).start()
-  }, [logoScale])
+        Animated.timing(titleTranslateY, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }, 300)
+
+    // Animation du sous-titre (avec délai)
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(subtitleOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(subtitleTranslateY, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }, 500)
+
+    // Animation du formulaire (avec délai)
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(formOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(formTranslateY, {
+          toValue: 0,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }, 700)
+  }, [])
 
   const {
     control,
@@ -61,6 +140,10 @@ const LoginScreen: React.FC = () => {
   const onSubmit = (data: FormData) => {
     console.log("Form submitted:", data)
     // Ajouter logique de connexion ici
+    signIn()
+    // Navigate after signing in. You may want to tweak this to ensure sign-in is
+    // successful before navigating.
+    router.replace("/")
   }
 
   const theme = {
@@ -77,10 +160,18 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}> 
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-      <View style={styles.logoContainer}>
+      <Animated.View
+        style={[
+          styles.logoContainer,
+          {
+            opacity: logoOpacity,
+            transform: [{ translateY: logoTranslateY }],
+          },
+        ]}
+      >
         <Animated.View style={[styles.logoWrapper, { transform: [{ scale: logoScale }] }]}>
           <Image
             source={require("../../assets/images/EPF_Projets_Logo.png")}
@@ -88,12 +179,41 @@ const LoginScreen: React.FC = () => {
             resizeMode="contain"
           />
         </Animated.View>
-      </View>
+      </Animated.View>
 
-      <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to EPF Projets!</Text>
-      <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>Keep your data safe</Text>
+      <Animated.View
+        style={[
+          styles.titleContainer,
+          {
+            opacity: titleOpacity,
+            transform: [{ translateY: titleTranslateY }],
+          },
+        ]}
+      >
+        <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to EPF Projets!</Text>
+      </Animated.View>
 
-      <View style={styles.formContainer}>
+      <Animated.View
+        style={[
+          styles.subtitleContainer,
+          {
+            opacity: subtitleOpacity,
+            transform: [{ translateY: subtitleTranslateY }],
+          },
+        ]}
+      >
+        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>Keep your data safe</Text>
+      </Animated.View>
+
+      <Animated.View
+        style={[
+          styles.formContainer,
+          {
+            opacity: formOpacity,
+            transform: [{ translateY: formTranslateY }],
+          },
+        ]}
+      >
         <View style={styles.inputContainer}>
           <Controller
             control={control}
@@ -165,7 +285,7 @@ const LoginScreen: React.FC = () => {
           onPress={handleSubmit(onSubmit)}
           activeOpacity={0.8}
         >
-          <Text style={styles.submitButtonText}>LOGIN</Text>
+          <Text style={styles.submitButtonText}>Se connecter</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.forgotPasswordContainer}>
@@ -186,11 +306,13 @@ const LoginScreen: React.FC = () => {
               >
                 {value && <Ionicons name="checkmark" size={16} color="white" />}
               </View>
-              <Text style={[styles.checkboxText, { color: theme.textSecondary }]}>J&apos;accepte de recevoir les dernières offres et actualités par mail</Text>
+              <Text style={[styles.checkboxText, { color: theme.textSecondary }]}>
+                J&apos;accepte de recevoir les dernières offres et actualités par mail
+              </Text>
             </TouchableOpacity>
           )}
         />
-      </View>
+      </Animated.View>
     </View>
   )
 }
@@ -216,16 +338,20 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
   },
+  titleContainer: {
+    marginBottom: 8,
+  },
   welcomeTitle: {
     fontSize: 24,
     fontWeight: "700",
     textAlign: "center",
-    marginBottom: 8,
+  },
+  subtitleContainer: {
+    marginBottom: 40,
   },
   welcomeSubtitle: {
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 40,
   },
   formContainer: {
     width: "100%",

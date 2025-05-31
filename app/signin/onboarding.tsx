@@ -1,33 +1,49 @@
 "use client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
-    Animated,
-    Dimensions,
-    Easing,
-    Image,
-    ImageBackground,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  ImageBackground,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from "react-native";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
-interface WelcomeScreenProps {
-  onNavigateToLogin: () => void;
-}
-
-const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigateToLogin }) => {
+const WelcomeScreen: React.FC = () => {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  // Animation values
+  // Check if the user has already seen the welcome screen
+  useEffect(() => {
+    const checkWelcomeScreen = async () => {
+      const hasSeenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
+      if (hasSeenWelcome === "true") {
+        router.replace("/signin");
+      }
+    };
+    checkWelcomeScreen();
+  }, [router]);
+
+  const handleContinue = async () => {
+    // Store that the user has seen the welcome screen
+    await AsyncStorage.setItem("hasSeenWelcome", "true");
+    router.replace("/signin");
+  };
+
+  // Animations
   const logoScale = useRef(new Animated.Value(0)).current;
   const logoRotation = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
@@ -41,14 +57,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigateToLogin }) => {
 
   useEffect(() => {
     Animated.sequence([
-      Animated.parallel([
-        Animated.timing(logoScale, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.elastic(1.2),
-          useNativeDriver: true,
-        }),
-      ]),
+      Animated.timing(logoScale, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.elastic(1.2),
+        useNativeDriver: true,
+      }),
       Animated.parallel([
         Animated.timing(titleOpacity, {
           toValue: 1,
@@ -126,11 +140,12 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigateToLogin }) => {
     outputRange: ["-2deg", "2deg"],
   });
 
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      {/* Background Image with Overlay */}
+      {/* Background */}
       <View style={styles.backgroundContainer}>
         <ImageBackground
           source={require("../../assets/images/welcome-background.jpg")}
@@ -223,7 +238,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigateToLogin }) => {
         >
           <TouchableOpacity
             style={styles.loginButton}
-            onPress={onNavigateToLogin}
+            onPress={handleContinue}
             activeOpacity={0.8}
           >
             <LinearGradient
@@ -239,17 +254,10 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onNavigateToLogin }) => {
               />
             </LinearGradient>
           </TouchableOpacity>
-
-          <View style={styles.additionalActions}>
-            <TouchableOpacity style={styles.secondaryButton}>
-              <Text style={styles.secondaryButtonText}>
-                Découvrir nos projets
-              </Text>
-            </TouchableOpacity>
-          </View>
         </Animated.View>
       </View>
 
+      {/* Decorative Floating Dots */}
       <View style={styles.floatingElements}>
         {[...Array(6)].map((_, index) => (
           <Animated.View
@@ -400,18 +408,6 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginLeft: 5,
   },
-  additionalActions: {
-    alignItems: "center",
-  },
-  secondaryButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-  },
-  secondaryButtonText: {
-    color: "rgba(255, 255, 255, 0.8)",
-    fontSize: 16,
-    textDecorationLine: "underline",
-  },
   floatingElements: {
     position: "absolute",
     width: "100%",
@@ -427,7 +423,3 @@ const styles = StyleSheet.create({
 });
 
 export default WelcomeScreen;
-
-export const unstable_settings = {
-  initialRouteName: "welcome",
-};
