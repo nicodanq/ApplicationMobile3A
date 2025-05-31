@@ -4,17 +4,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
 import {
-  Animated,
-  Dimensions,
-  Easing,
-  Image,
-  ImageBackground,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
+    Animated,
+    Dimensions,
+    Easing,
+    Image,
+    ImageBackground,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useColorScheme,
+    View,
 } from "react-native";
 
 const { width, height } = Dimensions.get("window");

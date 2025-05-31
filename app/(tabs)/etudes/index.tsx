@@ -6,7 +6,7 @@ import { Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View 
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 
-
+import { useRouter } from "expo-router"
 
 interface StudyCardProps {
     title: string
@@ -14,11 +14,12 @@ interface StudyCardProps {
     image: any
     color: string
     gradientColors: readonly [string, string, ...string[]]
+    onPress: () => void
 }
 
-const StudyCard: React.FC<StudyCardProps> = ({ title, description, image, color, gradientColors }) => {
+const StudyCard: React.FC<StudyCardProps> = ({ title, description, image, color, gradientColors, onPress }) => {
     return (
-        <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8} onPress={onPress}>
             <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
                 <View style={styles.cardContent}>
                     <View style={styles.imageContainer}>
@@ -46,32 +47,44 @@ export default function EtudesScreen() {
         {
             title: "IT & Digital",
             description: "Formation complète en technologies numériques et développement informatique",
-            image: require("../../assets/images/EPF_Projets_Logo.png"), // Remplacez par vos images
+            image: require("../../../assets/images/EPF_Projets_Logo.png"), // Remplacez par vos images
             color: "#3B82F6",
             gradientColors: ["#EBF4FF", "#DBEAFE"] as [string, string],
         },
         {
             title: "Ingénierie des Systèmes",
             description: "Conception et optimisation de systèmes complexes industriels",
-            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            image: require("../../../assets/images/EPF_Projets_Logo.png"),
             color: "#10B981",
             gradientColors: ["#ECFDF5", "#D1FAE5"] as [string, string],
         },
         {
             title: "Conseil",
             description: "Stratégie d'entreprise et accompagnement organisationnel",
-            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            image: require("../../../assets/images/EPF_Projets_Logo.png"),
             color: "#EC4899",
             gradientColors: ["#FDF2F8", "#FCE7F3"] as [string, string],
         },
         {
             title: "Traduction technique",
             description: "Spécialisation en traduction de documents techniques et scientifiques",
-            image: require("../../assets/images/EPF_Projets_Logo.png"),
+            image: require("../../../assets/images/EPF_Projets_Logo.png"),
             color: "#06B6D4",
             gradientColors: ["#F0F9FF", "#E0F7FA"] as [string, string],
         },
     ]
+
+    const router = useRouter()
+    const handleCardPress = (title: string) => {
+        // Navigate to the study details page
+        router.push({
+            pathname: "/(tabs)/etudes/[id]",
+            params: { id: title },
+        });
+
+        console.log(`Navigating to details for: ${title}`);
+    }
+
 
     return (
         <View style={styles.container}>
@@ -94,6 +107,7 @@ export default function EtudesScreen() {
                         image={study.image}
                         color={study.color}
                         gradientColors={study.gradientColors}
+                        onPress={() => handleCardPress(study.title)}
                     />
                 ))}
                 <FooterLogo />

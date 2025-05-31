@@ -5,15 +5,15 @@ import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import {
-  Animated,
-  Image,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme,
-  View
+    Animated,
+    Image,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useColorScheme,
+    View
 } from "react-native"
 
 interface FormData {
