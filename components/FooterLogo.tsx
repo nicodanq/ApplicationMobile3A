@@ -17,6 +17,7 @@ const FooterLogo = () => {
         </View>
   )
 }
+
 const styles = StyleSheet.create({
   footerContainer: {
     padding: 16,

@@ -1,8 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, Animated, Modal, Pressable, TouchableOpacity } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import HeaderPage from '@/components/HeaderPage';
+import FooterLogo from '@/components/FooterLogo';
 
-const evenementsData = [
+// Définition du type Evenement (venant de main)
+type Evenement = {
+  id: string;
+  date: string;
+  titre: string;
+  heure: string;
+  lieu: string;
+  description: string;
+};
+
+const evenementsData: Evenement[] = [
   {
     id: '1',
     date: '2025-06-01',
@@ -32,7 +44,7 @@ const evenementsData = [
 const EvenementsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<Evenement | null>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(0)).current;
   const calendarFade = useRef(new Animated.Value(1)).current;
@@ -107,7 +119,8 @@ const EvenementsScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Evènements</Text>
+      <HeaderPage title="Évènements" />
+
       <Animated.View style={{ opacity: calendarFade }}>
         <Calendar
           onDayPress={handleDayPress}
@@ -137,7 +150,9 @@ const EvenementsScreen = () => {
           style={styles.calendar}
         />
       </Animated.View>
+
       <Text style={styles.subtitle}>{selectedDate ? `Évènements du ${selectedDate}` : 'Prochains évènements'}</Text>
+
       <Animated.View style={[{ opacity: fadeAnim }, bounceStyle, { flex: 1 }]}> 
         <FlatList
           data={evenementsFiltres}
@@ -163,6 +178,7 @@ const EvenementsScreen = () => {
           contentContainerStyle={{ paddingBottom: 40 }}
         />
       </Animated.View>
+
       <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
@@ -176,15 +192,16 @@ const EvenementsScreen = () => {
           </View>
         </View>
       </Modal>
+
+      <FooterLogo />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop: 40 },
-  title: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
   calendar: { marginBottom: 10, borderRadius: 10 },
-  subtitle: { fontSize: 18, fontWeight: '600', marginVertical: 8 },
+  subtitle: { fontSize: 18, fontWeight: '600', marginVertical: 8, textAlign: 'center' },
   eventBlock: { backgroundColor: '#e3f2fd', padding: 16, marginBottom: 12, borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 4 },
   eventCategory: { fontSize: 18, fontWeight: 'bold', color: '#1565c0' },
   eventDescription: { fontSize: 15, color: '#555', marginTop: 4 },
