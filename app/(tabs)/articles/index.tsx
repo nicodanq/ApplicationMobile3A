@@ -32,20 +32,20 @@ const ArticlesScreen = () => {
     }
   ];
   type Article = {
-  id: string;
-  title: string;
-  description: string;
-};
+    id: string;
+    title: string;
+    description: string;
+  };
 
-  const handleArticlePress = (article : string) => {
-router.push({
+  const handleArticlePress = (article: string) => {
+    router.push({
       pathname: "/(tabs)/articles/[id]",
       params: { id: article },
     })
   };
 
   const ArticleCard = ({ article }: { article: Article }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.articleCard}
       onPress={() => handleArticlePress(article.title)}
       activeOpacity={0.7}
@@ -81,7 +81,7 @@ router.push({
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Articles</Text>
