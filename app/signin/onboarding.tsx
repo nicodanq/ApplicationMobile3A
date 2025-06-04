@@ -47,7 +47,6 @@ const WelcomeScreen: React.FC = () => {
 
   // Animations
   const logoScale = useRef(new Animated.Value(0)).current;
-  const logoRotation = useRef(new Animated.Value(0)).current;
   const titleOpacity = useRef(new Animated.Value(0)).current;
   const titleTranslateY = useRef(new Animated.Value(30)).current;
   const subtitleOpacity = useRef(new Animated.Value(0)).current;
@@ -119,28 +118,7 @@ const WelcomeScreen: React.FC = () => {
       ]),
     ]).start();
 
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(logoRotation, {
-          toValue: 0.02,
-          duration: 3000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoRotation, {
-          toValue: -0.02,
-          duration: 3000,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
   }, []);
-
-  const logoSpin = logoRotation.interpolate({
-    inputRange: [-0.02, 0.02],
-    outputRange: ["-2deg", "2deg"],
-  });
 
 
   return (
@@ -172,7 +150,7 @@ const WelcomeScreen: React.FC = () => {
             style={[
               styles.logoContainer,
               {
-                transform: [{ scale: logoScale }, { rotate: logoSpin }],
+                transform: [{ scale: logoScale }],
               },
             ]}
           >
@@ -257,23 +235,6 @@ const WelcomeScreen: React.FC = () => {
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
-      </View>
-
-      {/* Decorative Floating Dots */}
-      <View style={styles.floatingElements}>
-        {[...Array(6)].map((_, index) => (
-          <Animated.View
-            key={index}
-            style={[
-              styles.floatingDot,
-              {
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                opacity: 0.1,
-              },
-            ]}
-          />
-        ))}
       </View>
     </View>
   );
@@ -409,18 +370,6 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginLeft: 5,
-  },
-  floatingElements: {
-    position: "absolute",
-    width: "100%",
-    height: "100%",
-  },
-  floatingDot: {
-    position: "absolute",
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "white",
   },
 });
 

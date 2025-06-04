@@ -192,8 +192,6 @@ const EvenementsScreen = () => {
           </Pressable>
         </Pressable>
       </Modal>
-
-
       <FooterLogo />
     </View>
   );
