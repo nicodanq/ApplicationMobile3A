@@ -9,11 +9,13 @@ import { Controller, useForm } from "react-hook-form"
 import {
   Animated,
   Image,
+  Keyboard,
   StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   useColorScheme,
   View,
 } from "react-native"
@@ -160,160 +162,170 @@ const LoginScreen: React.FC = () => {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
-      <Animated.View
-        style={[
-          styles.logoContainer,
-          {
-            opacity: logoOpacity,
-            transform: [{ translateY: logoTranslateY }],
-          },
-        ]}
-      >
-        <Animated.View style={[styles.logoWrapper, { transform: [{ scale: logoScale }] }]}>
-          <Image
-            source={require("../../assets/images/EPF_Projets_Logo.png")}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
+        <Animated.View
+          style={[
+            styles.logoContainer,
+            {
+              opacity: logoOpacity,
+              transform: [{ translateY: logoTranslateY }],
+            },
+          ]}
+        >
+          <Animated.View style={[styles.logoWrapper, { transform: [{ scale: logoScale }] }]}>
+            <Image
+              source={require("../../assets/images/EPF_Projets_Logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.titleContainer,
-          {
-            opacity: titleOpacity,
-            transform: [{ translateY: titleTranslateY }],
-          },
-        ]}
-      >
-        <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to EPF Projets!</Text>
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.titleContainer,
+            {
+              opacity: titleOpacity,
+              transform: [{ translateY: titleTranslateY }],
+            },
+          ]}
+        >
+          <Text style={[styles.welcomeTitle, { color: theme.text }]}>Welcome to EPF Projets!</Text>
+        </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.subtitleContainer,
-          {
-            opacity: subtitleOpacity,
-            transform: [{ translateY: subtitleTranslateY }],
-          },
-        ]}
-      >
-        <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>Keep your data safe</Text>
-      </Animated.View>
+        <Animated.View
+          style={[
+            styles.subtitleContainer,
+            {
+              opacity: subtitleOpacity,
+              transform: [{ translateY: subtitleTranslateY }],
+            },
+          ]}
+        >
+          <Text style={[styles.welcomeSubtitle, { color: theme.textSecondary }]}>Keep your data safe</Text>
+        </Animated.View>
 
-      <Animated.View
-        style={[
-          styles.formContainer,
-          {
-            opacity: formOpacity,
-            transform: [{ translateY: formTranslateY }],
-          },
-        ]}
-      >
-        <View style={styles.inputContainer}>
-          <Controller
-            control={control}
-            name="email"
-            rules={{
-              required: "Email requis",
-              pattern: {
-                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                message: "Email invalide",
-              },
-            }}
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: isDark ? "#252547" : "#f5f5f5",
-                    borderColor: errors.email ? theme.error : "transparent",
-                    color: theme.text,
-                  },
-                ]}
-                placeholder="Email"
-                placeholderTextColor={theme.textSecondary}
-                value={value}
-                onChangeText={onChange}
-                onBlur={onBlur}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            )}
-          />
-          {errors.email && <Text style={[styles.errorText, { color: theme.error }]}>{errors.email.message}</Text>}
-        </View>
-
-        <View style={styles.inputContainer}>
-          <View style={styles.passwordContainer}>
+        <Animated.View
+          style={[
+            styles.formContainer,
+            {
+              opacity: formOpacity,
+              transform: [{ translateY: formTranslateY }],
+            },
+          ]}
+        >
+          <View style={styles.inputContainer}>
             <Controller
               control={control}
-              name="password"
-              rules={{ required: "Mot de passe requis" }}
+              name="email"
+              rules={{
+                required: "Email requis",
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: "Email invalide",
+                },
+              }}
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
                   style={[
                     styles.input,
                     {
                       backgroundColor: isDark ? "#252547" : "#f5f5f5",
-                      borderColor: errors.password ? theme.error : "transparent",
+                      borderColor: errors.email ? theme.error : "transparent",
                       color: theme.text,
                     },
                   ]}
-                  placeholder="Password"
+                  placeholder="Email"
                   placeholderTextColor={theme.textSecondary}
                   value={value}
                   onChangeText={onChange}
                   onBlur={onBlur}
-                  secureTextEntry={!showPassword}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
                 />
               )}
             />
-            <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color={theme.textSecondary} />
-            </TouchableOpacity>
+            {errors.email && <Text style={[styles.errorText, { color: theme.error }]}>{errors.email.message}</Text>}
           </View>
-          {errors.password && <Text style={[styles.errorText, { color: theme.error }]}>{errors.password.message}</Text>}
-        </View>
 
-        <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: theme.primary }]}
-          onPress={handleSubmit(onSubmit)}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.submitButtonText}>Se connecter</Text>
-        </TouchableOpacity>
+          <View style={styles.inputContainer}>
+            <View style={styles.passwordContainer}>
+              <Controller
+                control={control}
+                name="password"
+                rules={{
+                  required: "Mot de passe requis",
+                  pattern: {
+                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/,
+                    message:
+                      "Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.",
+                  },
+                }}
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: isDark ? "#252547" : "#f5f5f5",
+                        borderColor: errors.password ? theme.error : "transparent",
+                        color: theme.text,
+                      },
+                    ]}
+                    placeholder="Password"
+                    placeholderTextColor={theme.textSecondary}
+                    value={value}
+                    onChangeText={onChange}
+                    onBlur={onBlur}
+                    secureTextEntry={!showPassword}
+                  />
+                )}
+              />
 
-        <TouchableOpacity style={styles.forgotPasswordContainer}>
-          <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>Forgot password?</Text>
-        </TouchableOpacity>
+              <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons name={showPassword ? "eye-off" : "eye"} size={22} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            {errors.password && <Text style={[styles.errorText, { color: theme.error }]}>{errors.password.message}</Text>}
+          </View>
 
-        <Controller
-          control={control}
-          name="newsletter"
-          render={({ field: { onChange, value } }) => (
-            <TouchableOpacity style={styles.checkboxRow} onPress={() => onChange(!value)}>
-              <View
-                style={[
-                  styles.checkbox,
-                  { borderColor: theme.border },
-                  value && { backgroundColor: theme.primary, borderColor: theme.primary },
-                ]}
-              >
-                {value && <Ionicons name="checkmark" size={16} color="white" />}
-              </View>
-              <Text style={[styles.checkboxText, { color: theme.textSecondary }]}>
-                J&apos;accepte de recevoir les dernières offres et actualités par mail
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      </Animated.View>
-    </View>
+          <TouchableOpacity
+            style={[styles.submitButton, { backgroundColor: theme.primary }]}
+            onPress={handleSubmit(onSubmit)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.submitButtonText}>Se connecter</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.forgotPasswordContainer}>
+            <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>Forgot password?</Text>
+          </TouchableOpacity>
+
+          <Controller
+            control={control}
+            name="newsletter"
+            render={({ field: { onChange, value } }) => (
+              <TouchableOpacity style={styles.checkboxRow} onPress={() => onChange(!value)}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    { borderColor: theme.border },
+                    value && { backgroundColor: theme.primary, borderColor: theme.primary },
+                  ]}
+                >
+                  {value && <Ionicons name="checkmark" size={16} color="white" />}
+                </View>
+                <Text style={[styles.checkboxText, { color: theme.textSecondary }]}>
+                  J&apos;accepte de recevoir les dernières offres et actualités par mail
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </Animated.View>
+      </View>
+    </TouchableWithoutFeedback>
   )
 }
 

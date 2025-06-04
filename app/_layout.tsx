@@ -5,10 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { SessionProvider } from "../contexts/AuthContext"; // <--- Chemin correct selon où est ton fichier ctx.tsx
+import { SessionProvider, useSession } from "../contexts/AuthContext"; // <--- Chemin correct selon où est ton fichier ctx.tsx
 import { SplashScreenController } from '../screens/splash'; // <--- Chemin vers ton SplashScreenController
-
-import { useSession } from '../contexts/AuthContext'; // <--- Chemin correct selon où est ton fichier ctx.tsx
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
