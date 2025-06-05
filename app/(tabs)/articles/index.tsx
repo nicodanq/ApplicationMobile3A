@@ -1,4 +1,3 @@
-// import { useNavigation } from '@react-navigation/native';
 import { useRouter } from "expo-router";
 import {
   SafeAreaView,
@@ -9,78 +8,88 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 
 const ArticlesScreen = () => {
-  // const navigation = useNavigation();
-  const router = useRouter()
+  const router = useRouter();
+
   const articlesData = [
     {
       id: '1',
-      title: 'Changement Climatique et Biodiversité',
-      description: 'Cet article parle des sciences au sein des sociétés blabla blablabla ablablab labala blabla bla blab lablablab'
+      title: 'IT & Digital',
+      description: 'Formation complète en technologies numériques et développement informatique',
+      backgroundColor: '#E3F2FD',
+      titleColor: '#2196F3',
+      linkColor: '#2196F3'
     },
     {
       id: '2',
-      title: 'Innovation Technologique',
-      description: 'Cet article parle des sciences au sein des sociétés blabla blablabla ablablab labala blabla bla blab lablablab'
+      title: 'Ingénierie des Systèmes',
+      description: 'Conception et optimisation de systèmes complexes industriels',
+      backgroundColor: '#E8F5E8',
+      titleColor: '#4CAF50',
+      linkColor: '#4CAF50'
     },
     {
       id: '3',
-      title: 'Recherche Médicale',
-      description: 'Cet article parle des sciences au sein des sociétés blabla blablabla ablablab labala blabla bla blab lablablab'
+      title: 'Conseil',
+      description: 'Stratégie d\'entreprise et accompagnement organisationnel',
+      backgroundColor: '#FCE4EC',
+      titleColor: '#E91E63',
+      linkColor: '#E91E63'
+    },
+    {
+      id: '4',
+      title: 'Traduction technique',
+      description: 'Spécialisation en traduction de documents techniques et scientifiques',
+      backgroundColor: '#E1F5FE',
+      titleColor: '#00BCD4',
+      linkColor: '#00BCD4'
     }
   ];
-  type Article = {
-  id: string;
-  title: string;
-  description: string;
-};
 
-  const handleArticlePress = (article : string) => {
-router.push({
-      pathname: "/(tabs)/articles/[id]",
-      params: { id: article },
-    })
+  const handleArticlePress = (article: any) => {
+    // ✅ Correction : Ajouter l'id obligatoire
+    router.push({
+      pathname: '/(tabs)/articles/[id]',
+      params: {
+        id: article.id, // ← ID obligatoire ajouté
+        articleTitle: article.title,
+        articleDescription: article.description,
+        articleTitleColor: article.titleColor,
+        articleBackgroundColor: article.backgroundColor
+      }
+    });
   };
 
-  const ArticleCard = ({ article }: { article: Article }) => (
+  const ArticleCard = ({ article }: { article: any }) => (
     <TouchableOpacity 
-      style={styles.articleCard}
-      onPress={() => handleArticlePress(article.title)}
+      style={[styles.articleCard, { backgroundColor: article.backgroundColor }]}
+      onPress={() => handleArticlePress(article)}
       activeOpacity={0.7}
     >
-      <View style={styles.imageContainer}>
-        <View style={styles.imageBackground}>
-          <View style={styles.chalkboard}>
-            <Text style={styles.formula}>E=mc²</Text>
-          </View>
-          <Text style={styles.imageLabel}>SCIENCE EDUCATION</Text>
-          {/* Decorative elements */}
-          <View style={[styles.star, { top: 10, left: 15 }]}>
-            <Text>✦</Text>
-          </View>
-          <View style={[styles.star, { top: 20, right: 20 }]}>
-            <Text>+</Text>
-          </View>
-          <View style={[styles.star, { bottom: 30, left: 10 }]}>
-            <Text>×</Text>
-          </View>
-          <View style={[styles.star, { bottom: 15, right: 15 }]}>
-            <Text>○</Text>
-          </View>
+      <View style={styles.logoContainer}>
+        <View style={styles.spiralIcon}>
+          <View style={styles.spiralInner} />
         </View>
       </View>
-      <View style={styles.textContainer}>
-        <Text style={styles.articleTitle}>{article.title}</Text>
-        <Text style={styles.articleDescription}>{article.description}</Text>
+      
+      <View style={styles.contentContainer}>
+        <Text style={[styles.articleTitle, { color: article.titleColor }]}>
+          {article.title}
+        </Text>
+        <Text style={styles.articleDescription}>
+          {article.description}
+        </Text>
+        <Text style={[styles.learnMore, { color: article.linkColor }]}>
+          En savoir plus →
+        </Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f5f5f5" />
+      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       
       {/* Header */}
       <View style={styles.header}>
@@ -94,20 +103,6 @@ router.push({
           <ArticleCard key={article.id} article={article} />
         ))}
       </ScrollView>
-
-      {/* EPF Projects Logo */}
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>🌀 EPF Projets</Text>
-      </View>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <Icon name="person-outline" size={24} color="#fff" />
-        <Icon name="settings-outline" size={24} color="#fff" />
-        <Icon name="home-outline" size={24} color="#fff" />
-        <Icon name="document-outline" size={24} color="#fff" />
-        <Icon name="star-outline" size={24} color="#fff" />
-      </View>
     </SafeAreaView>
   );
 };
@@ -115,7 +110,7 @@ router.push({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffff',
   },
   header: {
     alignItems: 'center',
@@ -125,105 +120,71 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#333',
     marginBottom: 10,
   },
   headerLine: {
-    width: '100%',
+    width: '90%',
     height: 1,
     backgroundColor: '#ddd',
   },
   scrollView: {
     flex: 1,
     paddingHorizontal: 20,
+    paddingTop: 10,
   },
   articleCard: {
     flexDirection: 'row',
-    backgroundColor: '#e8f0f5',
     borderRadius: 15,
     padding: 15,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginVertical: 8,
+    alignItems: 'center',
   },
-  imageContainer: {
-    marginRight: 15,
-  },
-  imageBackground: {
+  logoContainer: {
     width: 80,
     height: 80,
-    backgroundColor: '#c8e6c9',
-    borderRadius: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 15,
+  },
+  spiralIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 22.5,
+    backgroundColor: '#4A90A4',
     position: 'relative',
+    overflow: 'hidden',
   },
-  chalkboard: {
-    width: 50,
-    height: 35,
-    backgroundColor: '#2e7d32',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#8d6e63',
-  },
-  formula: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  imageLabel: {
+  spiralInner: {
     position: 'absolute',
-    bottom: 5,
-    fontSize: 8,
-    color: '#666',
-    fontWeight: 'bold',
+    top: 10,
+    left: 10,
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    backgroundColor: '#7BB3C0',
+    transform: [{ rotate: '45deg' }],
   },
-  star: {
-    position: 'absolute',
-    fontSize: 12,
-    color: '#666',
-  },
-  textContainer: {
+  contentContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
   },
   articleTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 8,
+    marginBottom: 5,
   },
   articleDescription: {
     fontSize: 14,
     color: '#666',
+    marginBottom: 10,
     lineHeight: 20,
   },
-  logoContainer: {
-    alignItems: 'center',
-    paddingVertical: 15,
-  },
-  logoText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#5f7c8a',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: '#5f7c8a',
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+  learnMore: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
