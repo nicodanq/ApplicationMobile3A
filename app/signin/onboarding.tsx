@@ -271,6 +271,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
+    marginTop: 90,
   },
   logoContainer: {
     marginBottom: 30,
@@ -297,7 +298,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   welcomeText: {
-    fontSize: 36,
+    fontSize: 60,
     fontWeight: "700",
     color: "white",
     textAlign: "center",

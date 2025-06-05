@@ -47,6 +47,7 @@ const ArticlesScreen = () => {
     }
   ];
 
+
   const handleArticlePress = (article: any) => {
     // ✅ Correction : Ajouter l'id obligatoire
     router.push({
@@ -65,6 +66,7 @@ const ArticlesScreen = () => {
     <TouchableOpacity 
       style={[styles.articleCard, { backgroundColor: article.backgroundColor }]}
       onPress={() => handleArticlePress(article)}
+
       activeOpacity={0.7}
     >
       <View style={styles.logoContainer}>
@@ -89,8 +91,10 @@ const ArticlesScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       
+
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Articles</Text>
