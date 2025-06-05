@@ -2,9 +2,9 @@ import * as functions from 'firebase-functions';
 import * as mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
-  host: "10.1.120.58",
-  user: "firebaseuser",
-  password: "firebase123",
+  host: "localhost",
+  user: "root",
+  password: process.env.MYSQL_PASSWORD,
   database: "application3A",
 });
 
@@ -25,7 +25,7 @@ export const getUserById = functions.https.onRequest(async (req, res) => {
     return;
   }
   try {
-    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE id = ?", [userId]);
+    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE ID_user = ?", [userId]);
     if (rows.length === 0) {
       res.status(404).send("Utilisateur non trouvé");
       return;
@@ -44,7 +44,7 @@ export const getUserByEmail = functions.https.onRequest(async (req, res) => {
     return;
   }
   try {
-    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE email = ?", [email]);
+    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE email_user = ?", [email]);
     if (rows.length === 0) {
       res.status(404).send("Utilisateur non trouvé");
       return;
