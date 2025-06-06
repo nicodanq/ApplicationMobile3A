@@ -2,6 +2,7 @@
 
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import * as bcrypt from "bcrypt"
 import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
@@ -32,6 +33,8 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const { signIn } = useSession()
   const router = useRouter()
+
+  const [loading, setLoading] = useState(false)
 
   // Animations existantes
   const logoScale = useRef(new Animated.Value(1)).current
@@ -139,14 +142,43 @@ const LoginScreen: React.FC = () => {
     },
   })
 
-  const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data)
-    // Ajouter logique de connexion ici
-    signIn()
-    // Navigate after signing in. You may want to tweak this to ensure sign-in is
-    // successful before navigating.
-    router.replace("/")
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    // Hash the password before sending it to the server
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    data.password = hashedPassword; // Replace the plain password with the hashed one
+    try {
+      const response = await fetch("http://192.168.x.x:5001/application3A/us-central1/getUserPasswordByEmail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const resData = await response.json();
+
+      const isValidPassword = await bcrypt.compare(data.password, resData.mdp_user);
+      if (!isValidPassword) {
+        console.warn("Mot de passe invalide");
+        return;
+      }
+      // Si la réponse est valide, on peut procéder à la connexion
+      console.log("Connexion réussie :", resData);
+      signIn(); // ou signIn(resData.token) selon ton AuthContext
+      router.replace("/");
+      console.warn("Erreur côté serveur :", resData.message);
+
+    } catch (error) {
+      console.error("Erreur lors de la connexion :", error);
+    } finally {
+      setLoading(false);
+    }
   }
+
 
   const theme = {
     background: isDark ? "#1a1a2e" : "#ffffff",

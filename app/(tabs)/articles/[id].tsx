@@ -84,7 +84,7 @@ const getArticleContent = (title: string) => {
         >
           <Icon name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Détail de l'article</Text>
+        <Text style={styles.headerTitle}>Détail de l&apos;article</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
