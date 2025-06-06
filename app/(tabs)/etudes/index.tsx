@@ -20,6 +20,7 @@ interface StudyCardProps {
 }
 
 const StudyCard: React.FC<StudyCardProps> = ({ title, description, image, color, gradientColors, onPress }) => {
+  
   return (
     <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8} onPress={onPress}>
       <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
