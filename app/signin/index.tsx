@@ -2,7 +2,7 @@
 
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
-import * as bcrypt from "bcrypt"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
@@ -144,9 +144,7 @@ const LoginScreen: React.FC = () => {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
-    // Hash the password before sending it to the server
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    data.password = hashedPassword; // Replace the plain password with the hashed one
+
     try {
       const response = await fetch("http://192.168.x.x:5001/application3A/us-central1/getUserPasswordByEmail", {
         method: "POST",
@@ -161,14 +159,30 @@ const LoginScreen: React.FC = () => {
 
       const resData = await response.json();
 
-      const isValidPassword = await bcrypt.compare(data.password, resData.mdp_user);
-      if (!isValidPassword) {
-        console.warn("Mot de passe invalide");
+      if (!response.ok) {
+        // Si la réponse n'est pas OK, on affiche l'erreur
+        console.error("Erreur de connexion :", resData.message);
+        if (resData.message === "Utilisateur non trouvé") {
+          alert("Utilisateur non trouvé. Veuillez vérifier votre email et mot de passe.");
+        }
+        if (resData.message === "Mot de passe incorrect") {
+          alert("Mot de passe incorrect. Veuillez réessayer.");
+        }
         return;
       }
-      // Si la réponse est valide, on peut procéder à la connexion
+      if (!resData || !resData.token) {
+        // Si la réponse ne contient pas de token, on affiche une erreur
+        console.error("Réponse invalide :", resData);
+        alert("Erreur lors de la connexion. Veuillez réessayer plus tard.");
+        return;
+      }
       console.log("Connexion réussie :", resData);
-      signIn(); // ou signIn(resData.token) selon ton AuthContext
+      await AsyncStorage.setItem("session", resData.token);
+      signIn({
+        token: resData.token,
+        id: resData.id,
+        email: resData.email
+      });
       router.replace("/");
       console.warn("Erreur côté serveur :", resData.message);
 
