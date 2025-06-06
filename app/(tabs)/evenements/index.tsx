@@ -5,22 +5,42 @@ import { LinearGradient } from "expo-linear-gradient"
 import React, { useEffect, useRef, useState } from "react"
 import {
   Animated,
-  FlatList,
+  Image,
   Modal,
   Pressable,
+  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from "react-native"
-import { Calendar } from "react-native-calendars"
-import Toast from "react-native-toast-message"
+import { Calendar, LocaleConfig } from "react-native-calendars"
 import Animated2, { FadeInDown } from "react-native-reanimated"
+import Toast from "react-native-toast-message"
 
-import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
+import HeaderPage from "@/components/HeaderPage"
+
+//calendrier en francais
+
+LocaleConfig.locales["fr"] = {
+  monthNames: [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+  ],
+  monthNamesShort: [
+    "janv.", "févr.", "mars", "avr.", "mai", "juin",
+    "juil.", "août", "sept.", "oct.", "nov.", "déc."
+  ],
+  dayNames: [
+    "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"
+  ],
+  dayNamesShort: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+}
+
+LocaleConfig.defaultLocale = "fr"
+
 
 // Types
 type Evenement = {
@@ -119,8 +139,7 @@ const EvenementsScreen = () => {
   
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current
-  const calendarFade = useRef(new Animated.Value(1)).current
-  const calendarHeight = useRef(new Animated.Value(320)).current
+  const scrollViewRef = useRef<ScrollView>(null)
 
   const today = new Date().toISOString().split("T")[0]
 
@@ -143,7 +162,7 @@ const EvenementsScreen = () => {
       marked[selectedDate] = {
         ...(marked[selectedDate] || {}),
         selected: true,
-        selectedColor: "#3B82F6",
+        selectedColor: "#003366",
         dotColor: "white",
       }
     }
@@ -157,7 +176,7 @@ const EvenementsScreen = () => {
           borderRadius: 20,
         },
         text: {
-          color: "#3B82F6",
+          color: "#003366",
           fontWeight: "bold",
         },
       },
@@ -168,39 +187,15 @@ const EvenementsScreen = () => {
 
   const handleDayPress = (day: { dateString: string }) => {
     setSelectedDate(selectedDate === day.dateString ? null : day.dateString)
+    
+    // Faire défiler vers la section des événements après sélection d'une date
+    //setTimeout(() => {
+    //  scrollViewRef.current?.scrollTo({ y: 400, animated: true })
+    //}, 300)
   }
 
   const toggleCalendar = () => {
-    if (showCalendar) {
-      // Masquer le calendrier
-      Animated.parallel([
-        Animated.timing(calendarHeight, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(calendarFade, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setShowCalendar(false))
-    } else {
-      // Afficher le calendrier
-      setShowCalendar(true)
-      Animated.parallel([
-        Animated.timing(calendarHeight, {
-          toValue: 320,
-          duration: 300,
-          useNativeDriver: false,
-        }),
-        Animated.timing(calendarFade, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start()
-    }
+    setShowCalendar(!showCalendar)
   }
 
   const handleInscription = () => {
@@ -273,154 +268,164 @@ const EvenementsScreen = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       
       <HeaderPage title="Évènements" />
-
-      <View style={styles.calendarHeader}>
-        <Text style={styles.calendarTitle}>
-          {selectedDate ? formatDate(selectedDate) : "Calendrier des événements"}
-        </Text>
-        <TouchableOpacity 
-          style={styles.calendarToggle} 
-          onPress={toggleCalendar}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.calendarToggleText}>
-            {showCalendar ? "Masquer" : "Afficher"}
+      
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+        overScrollMode="always"
+      >
+        {/* En-tête du calendrier avec bouton toggle */}
+        <View style={styles.calendarHeader}>
+          <Text style={styles.calendarTitle}>
+            {selectedDate ? formatDate(selectedDate) : "Calendrier des événements"}
           </Text>
-          <Ionicons 
-            name={showCalendar ? "chevron-up" : "chevron-down"} 
-            size={16} 
-            color="#3B82F6" 
-          />
-        </TouchableOpacity>
-      </View>
-
-      {/* Calendrier avec animation */}
-      {showCalendar && (
-        <Animated.View style={{ 
-          opacity: calendarFade, 
-          height: calendarHeight,
-          overflow: "hidden"
-        }}>
-          <Calendar
-            onDayPress={handleDayPress}
-            markedDates={getMarkedDates()}
-            markingType="custom"
-            enableSwipeMonths={true}
-            theme={{
-              calendarBackground: "#ffffff",
-              textSectionTitleColor: "#3B82F6",
-              selectedDayBackgroundColor: "#3B82F6",
-              selectedDayTextColor: "#ffffff",
-              todayTextColor: "#3B82F6",
-              dayTextColor: "#1E293B",
-              textDisabledColor: "#94A3B8",
-              dotColor: "#3B82F6",
-              selectedDotColor: "#ffffff",
-              arrowColor: "#3B82F6",
-              monthTextColor: "#3B82F6",
-              textMonthFontWeight: "bold",
-              textDayFontWeight: "600",
-              textDayHeaderFontWeight: "600",
-              textDayFontSize: 14,
-              textMonthFontSize: 18,
-              textDayHeaderFontSize: 14,
-            }}
-            style={styles.calendar}
-          />
-        </Animated.View>
-      )}
-
-      {/* Titre de section */}
-      <View style={styles.subtitleContainer}>
-        <Text style={styles.subtitle}>
-          {selectedDate 
-            ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}` 
-            : "Prochains événements"}
-        </Text>
-        {selectedDate && (
           <TouchableOpacity 
-            onPress={() => setSelectedDate(null)}
-            style={styles.resetButton}
+            style={styles.calendarToggle} 
+            onPress={toggleCalendar}
+            activeOpacity={0.7}
           >
-            <Text style={styles.resetButtonText}>Tout voir</Text>
+            <Text style={styles.calendarToggleText}>
+              {showCalendar ? "Masquer" : "Afficher"}
+            </Text>
+            <Ionicons 
+              name={showCalendar ? "chevron-up" : "chevron-down"} 
+              size={16} 
+              color="#003366" 
+            />
           </TouchableOpacity>
+        </View>
+
+        {/* Calendrier */}
+        {showCalendar && (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDayPress}
+              markedDates={getMarkedDates()}
+              markingType="custom"
+              enableSwipeMonths={true}
+              firstDay={1} // commencer lundi
+              theme={{
+                calendarBackground: "#ffffff",
+                textSectionTitleColor: "#003366",
+                selectedDayBackgroundColor: "#003366",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#003366",
+                dayTextColor: "#1E293B",
+                textDisabledColor: "#94A3B8",
+                dotColor: "#003366",
+                selectedDotColor: "#ffffff",
+                arrowColor: "#003366",
+                monthTextColor: "#003366",
+                textMonthFontWeight: "bold",
+                textDayFontWeight: "600",
+                textDayHeaderFontWeight: "600",
+                textDayFontSize: 14,
+                textMonthFontSize: 18,
+                textDayHeaderFontSize: 14,
+              }}
+              style={styles.calendar}
+            />
+          </View>
         )}
-      </View>
 
-      {/* Liste des événements avec animation */}
-      <Animated.View style={[{ opacity: fadeAnim }, { flex: 1 }]}>
-        <FlatList
-          data={evenementsFiltres}
-          keyExtractor={item => item.id}
-          renderItem={({ item, index }) => (
-            <Animated2.View
-              entering={FadeInDown.delay(index * 100).springify()}
+        {/* Titre de section */}
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitle}>
+            {selectedDate 
+              ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}` 
+              : "Prochains événements"}
+          </Text>
+          {selectedDate && (
+            <TouchableOpacity 
+              onPress={() => setSelectedDate(null)}
+              style={styles.resetButton}
             >
-              <TouchableOpacity
-                style={styles.cardContainer}
-                activeOpacity={0.8}
-                onPress={() => {
-                  setSelectedEvent(item)
-                  setModalVisible(true)
-                }}
-              >
-                <LinearGradient 
-                  colors={item.gradientColors} 
-                  start={{ x: 0, y: 0 }} 
-                  end={{ x: 1, y: 1 }} 
-                  style={styles.card}
-                >
-                  <View style={styles.cardContent}>
-                    <View style={styles.imageContainer}>
-                      <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
-                        <Ionicons name={getCategoryIcon(item.categorie)} size={24} color="white" />
-                      </View>
-                      <View style={styles.imageOverlay} />
-                    </View>
-
-                    <View style={styles.textContainer}>
-                      <Text style={[styles.cardTitle, { color: item.color }]}>{item.titre}</Text>
-                      <Text style={styles.cardDescription} numberOfLines={2}>
-                        {item.description}
-                      </Text>
-
-                      <View style={styles.eventDetails}>
-                        <View style={styles.eventDetailItem}>
-                          <Ionicons name="time-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>{item.heure}</Text>
-                        </View>
-                        <View style={styles.eventDetailItem}>
-                          <Ionicons name="location-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>{item.lieu}</Text>
-                        </View>
-                      </View>
-
-                      <TouchableOpacity style={styles.learnMoreButton}>
-                        <Text style={[styles.learnMoreText, { color: item.color }]}>En savoir plus</Text>
-                        <Ionicons name="arrow-forward" size={16} color={item.color} style={styles.arrowIcon} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated2.View>
+              <Text style={styles.resetButtonText}>Tout voir</Text>
+            </TouchableOpacity>
           )}
-          ListEmptyComponent={
+        </View>
+
+        {/* Liste des événements */}
+        <Animated.View style={{ opacity: fadeAnim }}>
+          {evenementsFiltres.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Image 
-                source={require("../../../assets/images/EPF_Projets_Logo.png")} 
-                style={styles.emptyImage} 
-              />
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
+              </View>
               <Text style={styles.emptyText}>
                 Aucun événement {selectedDate ? "ce jour-là" : "à venir"}.
               </Text>
             </View>
-          }
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-          ListFooterComponent={<FooterLogo />}
-        />
-      </Animated.View>
+          ) : (
+            evenementsFiltres.map((item, index) => (
+              <Animated2.View
+                key={item.id}
+                entering={FadeInDown.delay(index * 100).springify()}
+              >
+                <TouchableOpacity
+                  style={styles.cardContainer}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    setSelectedEvent(item)
+                    setModalVisible(true)
+                  }}
+                >
+                  <LinearGradient 
+                    colors={item.gradientColors} 
+                    start={{ x: 0, y: 0 }} 
+                    end={{ x: 1, y: 1 }} 
+                    style={styles.card}
+                  >
+                    <View style={styles.cardContent}>
+                      <View style={styles.imageContainer}>
+                        <View style={[styles.iconContainer, { backgroundColor: item.color }]}>
+                          <Ionicons name={getCategoryIcon(item.categorie)} size={24} color="white" />
+                        </View>
+                        <View style={styles.imageOverlay} />
+                      </View>
+
+                      <View style={styles.textContainer}>
+                        <Text style={[styles.cardTitle, { color: item.color }]}>{item.titre}</Text>
+                        <Text style={styles.cardDescription} numberOfLines={2}>
+                          {item.description}
+                        </Text>
+
+                        <View style={styles.eventDetails}>
+                          <View style={styles.eventDetailItem}>
+                            <Ionicons name="calendar-outline" size={14} color="#64748B" />
+                            <Text style={styles.eventDetailText}>
+                              {formatDate(item.date).split(" ").slice(0, 2).join(" ")}
+                            </Text>
+                          </View>
+                          <View style={styles.eventDetailItem}>
+                            <Ionicons name="time-outline" size={14} color="#64748B" />
+                            <Text style={styles.eventDetailText}>{item.heure}</Text>
+                          </View>
+                          <View style={styles.eventDetailItem}>
+                            <Ionicons name="location-outline" size={14} color="#64748B" />
+                            <Text style={styles.eventDetailText}>{item.lieu}</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.learnMoreButton}>
+                          <Text style={[styles.learnMoreText, { color: item.color }]}>En savoir plus</Text>
+                          <Ionicons name="arrow-forward" size={16} color={item.color} style={styles.arrowIcon} />
+                        </View>
+                      </View>
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </Animated2.View>
+            ))
+          )}
+        </Animated.View>
+
+        {/* Footer */}
+        <FooterLogo />
+      </ScrollView>
 
       {/* Modal détaillée de l'événement */}
       <Modal visible={modalVisible} transparent animationType="fade">
@@ -508,6 +513,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
   calendarHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -527,21 +538,24 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   calendarToggleText: {
-    color: "#3B82F6",
+    color: "#003366",
     fontWeight: "600",
     fontSize: 14,
     marginRight: 4,
   },
-  calendar: {
-    marginHorizontal: 20,
+  calendarContainer: {
     marginBottom: 10,
-    borderRadius: 20,
-    height: 320,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  calendar: {
+    marginHorizontal: 20,
+    borderRadius: 20,
+    paddingVertical: 8,
+    backgroundColor: "#ffffff",
   },
   subtitleContainer: {
     flexDirection: "row",
@@ -561,7 +575,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   resetButtonText: {
-    color: "#3B82F6",
+    color: "#003366",
     fontSize: 12,
     fontWeight: "600",
   },
@@ -656,6 +670,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 40,
+    marginTop: 20,
   },
   emptyImage: {
     width: 80,
@@ -667,9 +682,6 @@ const styles = StyleSheet.create({
     textAlign: "center", 
     color: "#64748B", 
     fontSize: 16,
-  },
-  listContent: {
-    paddingBottom: 40,
   },
   modalOverlay: { 
     flex: 1, 
@@ -690,6 +702,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 12,
+    maxHeight: "80%",
   },
   modalHeader: {
     height: 100,
@@ -764,6 +777,7 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+    marginRight: 4,
   },
   closeIconContainer: { 
     position: "absolute", 
@@ -778,6 +792,15 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.9)",
     justifyContent: "center",
     alignItems: "center",
+  },
+  emptyIconContainer: {
+    width: 80,
+    height: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 40,
   },
 })
 
