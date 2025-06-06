@@ -2,6 +2,7 @@
 
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
@@ -32,6 +33,8 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const { signIn } = useSession()
   const router = useRouter()
+
+  const [loading, setLoading] = useState(false)
 
   // Animations existantes
   const logoScale = useRef(new Animated.Value(1)).current
@@ -139,14 +142,57 @@ const LoginScreen: React.FC = () => {
     },
   })
 
-  const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data)
-    // Ajouter logique de connexion ici
-    signIn()
-    // Navigate after signing in. You may want to tweak this to ensure sign-in is
-    // successful before navigating.
-    router.replace("/")
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+
+    try {
+      const response = await fetch("http://192.168.x.x:5001/application3A/us-central1/getUserPasswordByEmail", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password,
+        }),
+      });
+
+      const resData = await response.json();
+
+      if (!response.ok) {
+        // Si la réponse n'est pas OK, on affiche l'erreur
+        console.error("Erreur de connexion :", resData.message);
+        if (resData.message === "Utilisateur non trouvé") {
+          alert("Utilisateur non trouvé. Veuillez vérifier votre email et mot de passe.");
+        }
+        if (resData.message === "Mot de passe incorrect") {
+          alert("Mot de passe incorrect. Veuillez réessayer.");
+        }
+        return;
+      }
+      if (!resData || !resData.token) {
+        // Si la réponse ne contient pas de token, on affiche une erreur
+        console.error("Réponse invalide :", resData);
+        alert("Erreur lors de la connexion. Veuillez réessayer plus tard.");
+        return;
+      }
+      console.log("Connexion réussie :", resData);
+      await AsyncStorage.setItem("session", resData.token);
+      signIn({
+        token: resData.token,
+        id: resData.id,
+        email: resData.email
+      });
+      router.replace("/");
+      console.warn("Erreur côté serveur :", resData.message);
+
+    } catch (error) {
+      console.error("Erreur lors de la connexion :", error);
+    } finally {
+      setLoading(false);
+    }
   }
+
 
   const theme = {
     background: isDark ? "#1a1a2e" : "#ffffff",

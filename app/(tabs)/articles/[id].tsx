@@ -116,7 +116,6 @@ const ArticleDetailScreen = () => {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
       </View>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
           {/* Main Card */}

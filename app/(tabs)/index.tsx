@@ -4,14 +4,13 @@ import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useCallback, useEffect, useRef } from "react"
-import { 
-  Animated, 
-  StatusBar, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
-  View,
-  Platform
+import {
+  Animated,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native"
 
 // Constantes pour une meilleure maintenabilité
@@ -169,7 +168,7 @@ export default function HomeScreen() {
           style={styles.subtitle}
           accessibilityLabel="Description de l'application"
         >
-          Cette application vous permet de découvrir et de postuler à nos études en cours. Et bien d'autres fonctionnalités vous attendent.
+          Cette application vous permet de découvrir et de postuler à nos études en cours. Et bien d&#39;autres fonctionnalités vous attendent.
         </Text>
       </Animated.View>
 
