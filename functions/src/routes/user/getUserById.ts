@@ -1,21 +1,20 @@
-import * as functions from "firebase-functions";
+import { Router } from "express";
 import { pool } from "../../utils/db";
 
-export const getUserById = functions.https.onRequest(async (req, res) => {
-  const userId = req.query.id;
-  if (!userId) {
-    res.status(400).send("ID utilisateur manquant");
-    return;
-  }
+const router = Router();
+
+router.get("/", async (req, res) => {
+  const id = req.query.id;
+  if (!id) return res.status(400).json({ message: "ID utilisateur manquant" });
+
   try {
-    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE ID_user = ?", [userId]);
-    if (rows.length === 0) {
-      res.status(404).send("Utilisateur non trouvé");
-      return;
-    }
-    res.status(200).json(rows[0]);
+    const [rows] = await pool.query("SELECT * FROM User WHERE ID_user = ?", [id]) as [import('mysql2/promise').RowDataPacket[], any];
+    if (rows.length === 0) return res.status(404).json({ message: "Utilisateur non trouvé" });
+    return res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Erreur MySQL :", err);
-    res.status(500).send("Erreur serveur");
+    return res.status(500).json({ message: "Erreur serveur" });
   }
 });
+
+export default router;

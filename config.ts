@@ -1,0 +1,1 @@
+export const urlAPI = "http://192.168.0.48:5001/application3A/us-central1";

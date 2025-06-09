@@ -21,6 +21,8 @@ import {
   View,
 } from "react-native"
 
+import api from "@/api/axiosClient"
+
 interface FormData {
   email: string
   password: string
@@ -143,56 +145,43 @@ const LoginScreen: React.FC = () => {
   })
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true);
+  setLoading(true);
+  try {
+    const response = await api.post("/auth/login", {
+      email: data.email,
+      password: data.password,
+    });
 
-    try {
-      const response = await fetch("http://192.168.x.x:5001/application3A/us-central1/getUserPasswordByEmail", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: data.email,
-          password: data.password,
-        }),
-      });
+    const { token, id, email } = response.data;
+    await AsyncStorage.setItem("session", token);
+    signIn({ token, id, email });
+    router.replace("/");
+  } catch (error: any) {
+    let message = "Erreur inconnue";
 
-      const resData = await response.json();
-
-      if (!response.ok) {
-        // Si la réponse n'est pas OK, on affiche l'erreur
-        console.error("Erreur de connexion :", resData.message);
-        if (resData.message === "Utilisateur non trouvé") {
-          alert("Utilisateur non trouvé. Veuillez vérifier votre email et mot de passe.");
-        }
-        if (resData.message === "Mot de passe incorrect") {
-          alert("Mot de passe incorrect. Veuillez réessayer.");
-        }
-        return;
+    // ✅ parsing propre de l'erreur
+    if (error.response?.data) {
+      const data = error.response.data;
+      if (typeof data === "string") {
+        message = data;
+      } else if (typeof data.message === "string") {
+        message = data.message;
       }
-      if (!resData || !resData.token) {
-        // Si la réponse ne contient pas de token, on affiche une erreur
-        console.error("Réponse invalide :", resData);
-        alert("Erreur lors de la connexion. Veuillez réessayer plus tard.");
-        return;
-      }
-      console.log("Connexion réussie :", resData);
-      await AsyncStorage.setItem("session", resData.token);
-      signIn({
-        token: resData.token,
-        id: resData.id,
-        email: resData.email
-      });
-      router.replace("/");
-      console.warn("Erreur côté serveur :", resData.message);
-
-    } catch (error) {
-      console.error("Erreur lors de la connexion :", error);
-    } finally {
-      setLoading(false);
     }
-  }
 
+    console.error("Erreur de connexion :", message);
+
+    if (message === "Utilisateur non trouvé") {
+      alert("Utilisateur non trouvé. Vérifie ton email/mot de passe.");
+    } else if (message === "Mot de passe incorrect") {
+      alert("Mot de passe incorrect.");
+    } else {
+      alert("Erreur lors de la connexion.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
 
   const theme = {
     background: isDark ? "#1a1a2e" : "#ffffff",

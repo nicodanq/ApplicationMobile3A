@@ -1,26 +1,24 @@
-import * as functions from 'firebase-functions';
-import { pool } from '../../utils/db';
+import { Router } from "express";
+import { pool } from "../../utils/db";
 
-export const getUserPasswordByEmail = functions.https.onRequest(async (req, res) => {
-  const email = req.query.email;
-  const password = req.query.password;
-  if (!email) {
-    res.status(400).send("Email manquant");
-    return;
+const router = Router();
+
+router.post("/", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email ou mot de passe manquant" });
   }
-  if (!password) {
-    res.status(400).send("Mot de passe manquant");
-    return;
-  }
+
   try {
-    const [rows] = await pool.query<any[]>("SELECT * FROM User WHERE email_user = ?", [email]);
-    if (rows.length === 0) {
-      res.status(404).send("Utilisateur non trouvé");
-      return;
-    }
-    res.status(200).send(rows); 
+    const [rows] = await pool.query("SELECT * FROM User WHERE email_user = ?", [email]) as [import('mysql2/promise').RowDataPacket[], any];
+    if (rows.length === 0) return res.status(404).json({ message: "Utilisateur non trouvé" });
+
+    // Vous pouvez rajouter une comparaison ici si besoin
+    return res.status(200).json(rows[0]);
   } catch (err) {
     console.error("Erreur MySQL :", err);
-    res.status(500).send("Erreur serveur");
+    return res.status(500).json({ message: "Erreur serveur" });
   }
 });
+
+export default router;
