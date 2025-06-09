@@ -3,7 +3,7 @@ import * as functions from 'firebase-functions';
 import { pool } from '../../utils/db';
 import { signToken } from '../../utils/jwt';
 
-export const getUserPasswordByEmail = functions.https.onRequest(async (req, res) => {
+export const getUserPasswordByEmailLogin = functions.https.onRequest(async (req, res) => {
   const email = typeof req.query.email === "string" ? req.query.email : undefined;
   const password = typeof req.query.password === "string" ? req.query.password : undefined;
   if (!email) {
