@@ -1,5 +1,5 @@
 // src/index.ts
-export { loginUser } from './routes/auth/login';
+export { getUserPasswordByEmailLogin } from './routes/auth/login';
 export { getRoles } from './routes/user/getRole';
 export { getUsers } from './routes/user/getUser';
 export { getUserByEmail } from './routes/user/getUserByEmail';
