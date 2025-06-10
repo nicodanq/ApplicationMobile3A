@@ -30,13 +30,17 @@ export default function RootLayout() {
 }
 
 function RootNavigator() {
-  const { session } = useSession();
+  const sessionContext = useSession();
+  // Replace 'session' below with the actual property name from your AuthContextType, e.g. 'user' or 'token'
+  const isAuthenticated = !!sessionContext.user; // Change 'user' to the correct property
+
   return (
     <Stack>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
-      <Stack.Protected guard={!session}>
+
+      <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="signin" options={{ headerShown: false }} />
       </Stack.Protected>
       <Stack.Screen name="+not-found" />

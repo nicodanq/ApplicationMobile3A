@@ -1,5 +1,5 @@
-
 "use client"
+
 
 import { useLocalSearchParams, useRouter } from "expo-router"
 import {
@@ -20,7 +20,9 @@ const ArticleDetailScreen = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
 
+
   const { articleTitle, articleDescription, articleTitleColor, articleBackgroundColor, id } = params
+
 
   // Images améliorées pour chaque type d'article
   const getArticleImage = (title: string) => {
@@ -117,7 +119,6 @@ const ArticleDetailScreen = () => {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
       </View>
-
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
           {/* Main Card */}

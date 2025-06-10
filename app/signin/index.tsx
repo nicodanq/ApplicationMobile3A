@@ -2,6 +2,7 @@
 
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import { useRouter } from "expo-router"
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
@@ -20,6 +21,8 @@ import {
   View,
 } from "react-native"
 
+import api from "@/api/axiosClient"
+
 interface FormData {
   email: string
   password: string
@@ -32,6 +35,8 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const { signIn } = useSession()
   const router = useRouter()
+
+  const [loading, setLoading] = useState(false)
 
   // Animations existantes
   const logoScale = useRef(new Animated.Value(1)).current
@@ -139,14 +144,44 @@ const LoginScreen: React.FC = () => {
     },
   })
 
-  const onSubmit = (data: FormData) => {
-    console.log("Form submitted:", data)
-    // Ajouter logique de connexion ici
-    signIn()
-    // Navigate after signing in. You may want to tweak this to ensure sign-in is
-    // successful before navigating.
-    router.replace("/")
-  }
+  const onSubmit = async (data: FormData) => {
+    setLoading(true);
+    try {
+      const response = await api.post("/auth/login", {
+        email: data.email,
+        password: data.password,
+      });
+
+      const { token, id, email } = response.data;
+      await AsyncStorage.setItem("session", token);
+      signIn({ token, id, email });
+      router.replace("/");
+    } catch (error: any) {
+      let message = "Erreur inconnue";
+
+      // ✅ parsing propre de l'erreur
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (typeof data === "string") {
+          message = data;
+        } else if (typeof data.message === "string") {
+          message = data.message;
+        }
+      }
+
+      console.error("Erreur de connexion :", message);
+
+      if (message === "Utilisateur non trouvé") {
+        alert("Utilisateur non trouvé. Vérifie ton email/mot de passe.");
+      } else if (message === "Mot de passe incorrect") {
+        alert("Mot de passe incorrect.");
+      } else {
+        alert("Erreur lors de la connexion.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const theme = {
     background: isDark ? "#1a1a2e" : "#ffffff",

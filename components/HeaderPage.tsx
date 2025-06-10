@@ -16,7 +16,7 @@ const HeaderPage: React.FC<HeaderPageProps> = ({ title }) => {
 
 const styles = StyleSheet.create({
     header: {
-        paddingTop: 60,
+        paddingTop: 28,
         paddingHorizontal: 24,
         paddingBottom: 20,
         backgroundColor: "#F8FAFC",
