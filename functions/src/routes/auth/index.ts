@@ -1,8 +1,8 @@
+// ✅ /functions/src/routes/auth/index.ts
 import express from "express";
-import { login } from "./login";
+import loginRouter from "./login";
 
 const router = express.Router();
-
-router.post("/login", login);
+router.use("/login", loginRouter);
 
 export default router;

@@ -4,8 +4,8 @@ import * as mysql from 'mysql2/promise';
 dotenv.config();
 
 export const pool = mysql.createPool({
-  host: "192.168.0.48",
-  user: "root",
-  password: process.env.MYSQL_PASSWORD,
+  host: "10.1.120.58",
+  user: "firebaseuser",
+  password: "firebase123",
   database: "application3A",
 });
