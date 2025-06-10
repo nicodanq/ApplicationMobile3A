@@ -1,1 +1,1 @@
-export const urlAPI = "http://10.1.120.58:5001/projet3a-app/us-central1/api";
+export const urlAPI = "http://192.168.179.224:5001/projet3a-app/us-central1/api";

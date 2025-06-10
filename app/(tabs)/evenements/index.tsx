@@ -1,5 +1,6 @@
 "use client"
 
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
 import React, { useEffect, useRef, useState } from "react"
@@ -17,10 +18,11 @@ import {
 } from "react-native"
 import { Calendar, LocaleConfig } from "react-native-calendars"
 import Animated2, { FadeInDown } from "react-native-reanimated"
-import Toast from "react-native-toast-message"
 
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
+
+import MiniBar from "@/components/MiniPopUp"
 
 //calendrier en francais
 
@@ -55,11 +57,13 @@ type Evenement = {
   gradientColors: [string, string]
 }
 
-const user = {
-  id: "12345",
-  nom: "Federico",
-  email: "fede@mail.com",
-}
+
+
+// const user = {
+//   id: "12345",
+//   nom: "Federico",
+//   email: "fede@mail.com",
+// }
 
 // Données d'événements avec styles harmonisés avec l'écran d'études
 const evenementsData: Evenement[] = [
@@ -136,6 +140,9 @@ const EvenementsScreen = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Evenement | null>(null)
   const [showCalendar, setShowCalendar] = useState(true)
+  const [showBar, setShowBar] = useState(false)
+  const [barMessage, setBarMessage] = useState("")
+  const{user, token}=useSession();
   
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current
@@ -202,23 +209,17 @@ const EvenementsScreen = () => {
     if (!selectedEvent) return
 
     const payload = {
-      userId: user.id,
-      eventId: selectedEvent.id,
-      nom: user.nom,
-      email: user.email,
-      eventTitre: selectedEvent.titre,
+      userId: user?.id,
+      // eventId: selectedEvent.id,
+      // nom: user.nom,
+      email: user?.email,
+      // eventTitre: selectedEvent.titre,
     }
 
     console.log("Inscription envoyée :", payload)
 
-    Toast.show({
-      type: "success",
-      text1: "Inscription confirmée",
-      text2: `Vous êtes inscrit à "${selectedEvent.titre}"`,
-      visibilityTime: 3000,
-      position: "bottom",
-    })
-
+    setBarMessage(`Vous êtes inscrit à "${selectedEvent.titre}"`)
+    setShowBar(true)
     setModalVisible(false)
   }
 
@@ -503,7 +504,13 @@ const EvenementsScreen = () => {
         </Pressable>
       </Modal>
 
-      <Toast />
+      <MiniBar
+        visible={showBar}
+        message={barMessage}
+        onClose={() => setShowBar(false)}
+        duration={3000}
+        color="#10B981"
+      />
     </View>
   )
 }
