@@ -1,6 +1,5 @@
 "use client"
 
-
 import { useLocalSearchParams, useRouter } from "expo-router"
 import {
   Dimensions,
@@ -12,6 +11,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Alert,
 } from "react-native"
 
 const { width } = Dimensions.get("window")
@@ -20,9 +20,10 @@ const ArticleDetailScreen = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
 
+  const { articleTitle, articleDescription, articleTitleColor, articleBackgroundColor, id, returnTo } = params
 
-  const { articleTitle, articleDescription, articleTitleColor, articleBackgroundColor, id } = params
-
+  // Vérifier si on vient de la page des articles enregistrés
+  const isFromSavedArticles = returnTo === "articles-enregistres"
 
   // Images améliorées pour chaque type d'article
   const getArticleImage = (title: string) => {
@@ -39,6 +40,9 @@ const ArticleDetailScreen = () => {
       "React Native": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
       "UX Design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
       "Progressive Web Apps": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop",
+      "IT & Digital": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=800&h=400&fit=crop",
+      "Ingénierie des Systèmes": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop",
+      "Conseil": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop",
     }
 
     return (
@@ -84,6 +88,33 @@ const ArticleDetailScreen = () => {
         publishDate: "8 janvier 2024",
         tags: ["Sécurité", "Réseau", "Firewall"],
       },
+      "IT & Digital": {
+        category: "Technologie : IT & Digital",
+        fullTitle: "IT & Digital",
+        fullDescription: `Les technologies numériques continuent d'évoluer à un rythme effréné...`,
+        author: "Expert EPF",
+        readTime: "5 min",
+        publishDate: "Aujourd'hui",
+        tags: ["Innovation", "Technologie"],
+      },
+      "Ingénierie des Systèmes": {
+        category: "Innovation : Ingénierie des Systèmes",
+        fullTitle: "Ingénierie des Systèmes",
+        fullDescription: `L'ingénierie des systèmes fait face à des défis croissants...`,
+        author: "Expert EPF",
+        readTime: "5 min",
+        publishDate: "Aujourd'hui",
+        tags: ["Innovation", "Technologie"],
+      },
+      "Conseil": {
+        category: "Stratégie : Conseil",
+        fullTitle: "Conseil",
+        fullDescription: `La transformation digitale est devenue un enjeu majeur...`,
+        author: "Expert EPF",
+        readTime: "5 min",
+        publishDate: "Aujourd'hui",
+        tags: ["Innovation", "Technologie"],
+      },
     }
 
     return (
@@ -99,6 +130,40 @@ const ArticleDetailScreen = () => {
         tags: ["Innovation", "Technologie"],
       }
     )
+  }
+
+  // Fonction pour gérer la sauvegarde/suppression
+  const handleBookmarkAction = () => {
+    if (isFromSavedArticles) {
+      // Si on vient des articles enregistrés, on propose de supprimer
+      Alert.alert(
+        "Supprimer l'article",
+        `Êtes-vous sûr de vouloir supprimer "${titleString}" de vos articles enregistrés ?`,
+        [
+          { 
+            text: "Annuler", 
+            style: "cancel" 
+          },
+          { 
+            text: "Supprimer", 
+            style: "destructive",
+            onPress: () => {
+              // Ici vous pouvez ajouter la logique pour supprimer l'article
+              // Par exemple, appeler une fonction qui met à jour le state global
+              Alert.alert("Article supprimé", "L'article a été retiré de vos favoris", [
+                {
+                  text: "OK",
+                  onPress: () => router.back() // Retourner à la page précédente
+                }
+              ])
+            }
+          }
+        ]
+      )
+    } else {
+      // Si on vient d'ailleurs, on sauvegarde
+      Alert.alert("Article sauvegardé", "L'article a été ajouté à vos favoris")
+    }
   }
 
   const titleString = Array.isArray(articleTitle) ? articleTitle[0] : articleTitle || ""
@@ -119,6 +184,7 @@ const ArticleDetailScreen = () => {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
       </View>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
           {/* Main Card */}
@@ -173,31 +239,23 @@ const ArticleDetailScreen = () => {
                   <Text style={styles.actionIcon}>👍</Text>
                   <Text style={styles.actionText}>J'aime</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.bookmarkButton}>
-                  <Text style={styles.actionIcon}>🔖</Text>
-                  <Text style={styles.actionText}>Sauvegarder</Text>
+                
+                {/* Bouton dynamique : Sauvegarder ou Supprimer */}
+                <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmarkAction}>
+                  <Text style={styles.actionIcon}>
+                    {isFromSavedArticles ? "🗑️" : "🔖"}
+                  </Text>
+                  <Text style={[styles.actionText, isFromSavedArticles && styles.deleteText]}>
+                    {isFromSavedArticles ? "Supprimer" : "Sauvegarder"}
+                  </Text>
                 </TouchableOpacity>
+                
                 <TouchableOpacity style={styles.shareButtonAction}>
                   <Text style={styles.actionIcon}>📤</Text>
                   <Text style={styles.actionText}>Partager</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </View>
-
-          {/* Related articles section */}
-          <View style={styles.relatedSection}>
-            <Text style={styles.relatedTitle}>Articles similaires</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <TouchableOpacity style={styles.relatedCard}>
-                <View style={styles.relatedImage} />
-                <Text style={styles.relatedCardTitle}>Article connexe 1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.relatedCard}>
-                <View style={styles.relatedImage} />
-                <Text style={styles.relatedCardTitle}>Article connexe 2</Text>
-              </TouchableOpacity>
-            </ScrollView>
           </View>
         </View>
       </ScrollView>
@@ -241,7 +299,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#1E293B",
   },
-  
   scrollView: {
     flex: 1,
   },
@@ -402,39 +459,8 @@ const styles = StyleSheet.create({
     color: "#64748B",
     fontWeight: "500",
   },
-  relatedSection: {
-    marginTop: 20,
-  },
-  relatedTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1E293B",
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
-  relatedCard: {
-    width: 160,
-    marginRight: 16,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  relatedImage: {
-    width: "100%",
-    height: 80,
-    backgroundColor: "#E2E8F0",
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  relatedCardTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1E293B",
+  deleteText: {
+    color: "#EF4444", // Rouge pour le texte "Supprimer"
   },
 })
 
