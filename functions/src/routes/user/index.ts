@@ -1,6 +1,6 @@
 import express from "express";
-import { getAllRoles } from "./getRole";
-import { getAllUsers } from "./getUser";
+import { getAllRoles } from "./getAllRole";
+import { getAllUsers } from "./getAllUser";
 import { getUserByEmail } from "./getUserByEmail";
 import { getUserById } from "./getUserById";
 
