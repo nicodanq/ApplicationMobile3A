@@ -2,17 +2,17 @@
 
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
+import { useState } from "react"
 import {
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
-  Switch,
 } from "react-native"
-import { useState } from "react"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
 import FooterLogo from "@/components/FooterLogo"
@@ -233,7 +233,7 @@ const ParametresAdminScreen = () => {
           {/* Version Info */}
           <Animated.View entering={FadeInDown.delay(600)} style={styles.versionInfo}>
             <Text style={styles.versionText}>Version 1.0.0</Text>
-            <Text style={styles.versionSubtext}>Plateforme d'administration</Text>
+            <Text style={styles.versionSubtext}>Plateforme d&#39;administration</Text>
           </Animated.View>
 
         </View>
