@@ -4,7 +4,7 @@ import * as mysql from 'mysql2/promise';
 dotenv.config();
 
 export const pool = mysql.createPool({
-  host: "10.1.120.58",
+  host: "172.20.10.3",
   user: "firebaseuser",
   password: "firebase123",
   database: "application3A",

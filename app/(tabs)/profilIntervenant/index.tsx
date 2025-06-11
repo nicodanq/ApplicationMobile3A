@@ -3,9 +3,11 @@ import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native"
 import HeaderPage from "@/components/HeaderPage"
+import { useSession } from "@/contexts/AuthContext"
 
 const Profile = () => {
   const router = useRouter()
+  const { user, token } = useSession();
 
    // Données d'exemple - vous pouvez les remplacer par des données réelles
   const userStats = {
@@ -13,10 +15,11 @@ const Profile = () => {
     evenements: 5, // Nombre d'événements auxquels l'utilisateur participe
     articles: 8, // Nombre d'articles enregistrés
   }
+  
 
   return (
     <View style={styles.container}>
-      <HeaderPage title="Profil"/>
+    <HeaderPage title="Profil"/>
 
       {/* Profile Card */}
       <View style={styles.profileCard}>
@@ -29,7 +32,7 @@ const Profile = () => {
         </View>
 
         {/* Profile Name */}
-        <Text style={styles.profileName}>Lina BENABDELOUAHED</Text>
+        <Text style={styles.profileName}>{user?.email}</Text>
         <Text style={styles.profileRole}>Étudiante en ingénierie</Text>
 
         {/* Stats */}
