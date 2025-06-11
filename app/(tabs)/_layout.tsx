@@ -59,7 +59,7 @@ export default function TabLayout() {
         options={{
           title: 'Evènements',
 
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
 
         }}
       />
@@ -68,7 +68,7 @@ export default function TabLayout() {
         options={{
           title: 'Articles',
 
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.line.text.clipboard" color={color} />,
         }}
       />
       <Tabs.Screen
