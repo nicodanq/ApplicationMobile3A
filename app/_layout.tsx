@@ -5,8 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { SessionProvider, useSession } from "../contexts/AuthContext"; // <--- Chemin correct selon où est ton fichier ctx.tsx
-import { SplashScreenController } from '../screens/splash'; // <--- Chemin vers ton SplashScreenController
+import { SessionProvider, useSession } from "../contexts/AuthContext";
+import { SplashScreenController } from '../screens/splash';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -20,11 +20,11 @@ export default function RootLayout() {
 
   return (
     <SessionProvider>
-      <SplashScreenController />
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <RootNavigator />
-        <StatusBar style="auto" />
-      </ThemeProvider>
+        <SplashScreenController />
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <RootNavigator />
+          <StatusBar style="auto" />
+        </ThemeProvider>
     </SessionProvider>
   );
 }
@@ -39,6 +39,7 @@ function RootNavigator() {
       <Stack.Protected guard={isAuthenticated}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
+
       <Stack.Protected guard={!isAuthenticated}>
         <Stack.Screen name="signin" options={{ headerShown: false }} />
       </Stack.Protected>

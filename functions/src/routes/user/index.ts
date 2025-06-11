@@ -1,16 +1,14 @@
 import express from "express";
-import getRole from "./getRole";
-import getUser from "./getUser";
-import getUserByEmail from "./getUserByEmail";
-import getUserById from "./getUserById";
-import getUserPasswordByEmail from "./getUserPasswordByEmail";
+import { getAllRoles } from "./getAllRole";
+import { getAllUsers } from "./getAllUser";
+import { getUserByEmail } from "./getUserByEmail";
+import { getUserById } from "./getUserById";
 
 const router = express.Router();
 
-router.get("/role", getRole);
-router.get("/user", getUser); // À adapter si besoin
+router.get("/", getAllUsers);
+router.get("/id/:id", getUserById);
 router.get("/email", getUserByEmail);
-router.get("/id", getUserById);
-router.get("/check", getUserPasswordByEmail); // ⚠️ à sécuriser
+router.get("/role", getAllRoles);
 
 export default router;

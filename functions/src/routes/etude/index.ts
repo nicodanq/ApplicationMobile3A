@@ -1,7 +1,7 @@
 import express from "express";
-import { loginHandler } from "./login";
+import { getAllEtudes } from "./getAllEtudes";
 
 const router = express.Router();
-router.post("/", loginHandler);
+router.get("/", getAllEtudes);
 
 export default router;

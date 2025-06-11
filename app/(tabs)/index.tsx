@@ -1,9 +1,10 @@
 "use client"
 
+import api from "@/api/axiosClient"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Animated,
   StatusBar,
@@ -38,7 +39,27 @@ const COLORS = {
 export default function HomeScreen() {
   const router = useRouter()
   const { signOut } = useSession()
+ const [details, setDetails] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user, token, isLoading } = useSession();
 
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchDetails = async () => {
+      try {
+        const response = await api.get(`/user/id/${user.id}`);
+        setDetails(response.data); 
+      } catch (err) {
+        console.error("Erreur récupération utilisateur:", err);
+        setDetails(null); 
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDetails();
+  }, [user]);
   // Regroupement des références d'animation
   const animations = useRef({
     title: {
@@ -151,7 +172,7 @@ export default function HomeScreen() {
           accessibilityRole="header"
           accessibilityLabel="Titre de bienvenue"
         >
-          Bienvenue 👋
+          Bienvenue 👋 {user?.email} nom: {details?.nom_user} prénom: {details?.prenom_user}
         </Text>
       </Animated.View>
 

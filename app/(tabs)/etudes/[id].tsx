@@ -21,15 +21,100 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
 
+// Type pour les informations additionnelles
+type AdditionalInfo = {
+  period: string;
+  funding: string;
+  participants: string;
+  publicationDate: string;
+  description: string;
+  team: Array<{
+    id: number;
+    name: string;
+    role: string;
+  }>;
+}
+
+// Données fictives pour compléter les informations manquantes
+const additionalInfo: Record<string, AdditionalInfo> = {
+  "1": {
+    period: "15 Sept - 15 Mars 2024",
+    funding: "18 000 €",
+    participants: "3 développeurs",
+    publicationDate: "5 juin 2023",
+    description: "Cette formation complète en développement web moderne couvre les technologies front-end et back-end les plus demandées sur le marché. Vous apprendrez React, Node.js et les bases de données SQL et NoSQL pour devenir un développeur full-stack compétent.",
+    team: [
+      { id: 1, name: "Marie Dupont", role: "Lead Developer" },
+      { id: 2, name: "Thomas Martin", role: "UX Designer" },
+      { id: 3, name: "Julie Lefebvre", role: "Backend Developer" }
+    ]
+  },
+  "2": {
+    period: "1 Oct - 1 Juin 2024",
+    funding: "25 000 €",
+    participants: "4 chercheurs",
+    publicationDate: "12 mai 2023",
+    description: "Cette formation avancée en intelligence artificielle vous permettra de maîtriser les techniques d'apprentissage automatique et de deep learning. Vous travaillerez sur des projets concrets utilisant TensorFlow et PyTorch pour développer des solutions IA innovantes.",
+    team: [
+      { id: 4, name: "Dr. Sophie Bernard", role: "Directrice de recherche" },
+      { id: 5, name: "Alexandre Petit", role: "Data Scientist" },
+      { id: 6, name: "Emma Dubois", role: "Chercheuse" },
+      { id: 7, name: "Lucas Moreau", role: "Chercheur" }
+    ]
+  },
+  "3": {
+    period: "15 Nov - 15 Avril 2024",
+    funding: "15 000 €",
+    participants: "3 experts",
+    publicationDate: "20 juillet 2023",
+    description: "Cette formation en cybersécurité vous apprendra à identifier et contrer les menaces informatiques modernes. Vous développerez des compétences en ethical hacking, analyse de vulnérabilités et mise en place de systèmes de protection robustes.",
+    team: [
+      { id: 8, name: "Nicolas Robert", role: "Expert en sécurité" },
+      { id: 9, name: "Camille Leroy", role: "Analyste" },
+      { id: 10, name: "Maxime Girard", role: "Pentester" }
+    ]
+  }
+}
+
+// Valeurs par défaut
+const defaultInfo: AdditionalInfo = {
+  period: "Non spécifié",
+  funding: "Non spécifié",
+  participants: "Non spécifié",
+  publicationDate: "Non spécifié",
+  description: "Aucune description disponible",
+  team: []
+}
+
 export default function EtudeDetailScreen() {
   const [bookmarked, setBookmarked] = useState(false)
-  const { id } = useLocalSearchParams()
+  const params = useLocalSearchParams()
   const router = useRouter()
+  
+  // Récupération des paramètres
+  const { 
+    id, 
+    studyTitle, 
+    studyDescription, 
+    studyDuration, 
+    studyLevel, 
+    studyImage,
+    categoryTitle,
+    categoryColor,
+    categoryBackground
+  } = params
+
+  // Récupération des informations additionnelles avec type safety
+  const studyId = Array.isArray(id) ? id[0] : id || ""
+  const info = additionalInfo[studyId] || {
+    ...defaultInfo,
+    description: Array.isArray(studyDescription) ? studyDescription[0] : studyDescription || defaultInfo.description
+  }
 
   const handlePostuler = () => {
     Alert.alert(
       "Candidature envoyée",
-      "Votre candidature a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.",
+      `Votre candidature pour "${Array.isArray(studyTitle) ? studyTitle[0] : studyTitle}" a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.`,
       [{ text: "OK", onPress: () => console.log("OK Pressed") }]
     )
   }
@@ -42,7 +127,7 @@ export default function EtudeDetailScreen() {
       <View style={styles.headerContainer}>
         <Image
           source={{
-            uri: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1374&q=80",
+            uri: Array.isArray(studyImage) ? studyImage[0] : studyImage || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1374&q=80",
           }}
           style={styles.headerImage}
         />
@@ -65,28 +150,53 @@ export default function EtudeDetailScreen() {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.contentContainer}>
-          <Animated.View entering={FadeInDown.delay(100).springify()} style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>Changement Climatique : {id}</Text>
+          <Animated.View 
+            entering={FadeInDown.delay(100).springify()} 
+            style={[
+              styles.categoryBadge, 
+              { 
+                backgroundColor: Array.isArray(categoryBackground) 
+                  ? categoryBackground[0] 
+                  : categoryBackground || "rgba(59, 130, 246, 0.1)" 
+              }
+            ]}
+          >
+            <Text 
+              style={[
+                styles.categoryText, 
+                { 
+                  color: Array.isArray(categoryColor) 
+                    ? categoryColor[0] 
+                    : categoryColor || "#3B82F6" 
+                }
+              ]}
+            >
+              {Array.isArray(categoryTitle) ? categoryTitle[0] : categoryTitle || "Catégorie"}
+            </Text>
           </Animated.View>
 
           <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.title}>
-            Impact du changement climatique sur la biodiversité mondiale
+            {Array.isArray(studyTitle) ? studyTitle[0] : studyTitle || "Titre de l'étude"}
           </Animated.Text>
 
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.infoCardsContainer}>
             <View style={styles.infoCard}>
               <MaterialCommunityIcons name="calendar-range" size={20} color="#3B82F6" />
               <View>
-                <Text style={styles.infoLabel}>Période</Text>
-                <Text style={styles.infoValue}>15 Juin - 30 Sept 2023</Text>
+                <Text style={styles.infoLabel}>Durée</Text>
+                <Text style={styles.infoValue}>
+                  {Array.isArray(studyDuration) ? studyDuration[0] : studyDuration || info.period}
+                </Text>
               </View>
             </View>
 
             <View style={styles.infoCard}>
-              <MaterialCommunityIcons name="currency-eur" size={20} color="#3B82F6" />
+              <MaterialCommunityIcons name="school-outline" size={20} color="#3B82F6" />
               <View>
-                <Text style={styles.infoLabel}>Financement</Text>
-                <Text style={styles.infoValue}>25 000 €</Text>
+                <Text style={styles.infoLabel}>Niveau</Text>
+                <Text style={styles.infoValue}>
+                  {Array.isArray(studyLevel) ? studyLevel[0] : studyLevel || "Intermédiaire"}
+                </Text>
               </View>
             </View>
 
@@ -94,60 +204,43 @@ export default function EtudeDetailScreen() {
               <FontAwesome5 name="users" size={18} color="#3B82F6" />
               <View>
                 <Text style={styles.infoLabel}>Participants</Text>
-                <Text style={styles.infoValue}>4 chercheurs</Text>
+                <Text style={styles.infoValue}>{info.participants}</Text>
               </View>
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
-            <Text style={styles.sectionTitle}>À propos de cette étude</Text>
+            <Text style={styles.sectionTitle}>À propos de cette formation</Text>
             <Text style={styles.description}>
-              Un récent article de recherche publié dans une revue scientifique internationale explore les effets du
-              changement climatique sur la biodiversité.
+              {info.description}
             </Text>
-            <Text style={styles.description}>
-              Leur étude montre que l&apos;augmentation des températures et la modification des précipitations ont un impact
-              direct sur les habitats naturels, entraînant la disparition de certaines espèces et le déplacement
-              d&apos;autres vers de nouvelles zones.
-            </Text>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(500).springify()} style={styles.section}>
-            <Text style={styles.sectionTitle}>Objectifs de recherche</Text>
-            {[
-              "Analyser les données climatiques des 50 dernières années",
-              "Cartographier les changements dans la distribution des espèces",
-              "Développer des modèles prédictifs pour les écosystèmes vulnérables",
-              "Proposer des stratégies d’adaptation et de conservation",
-            ].map((text, index) => (
-              <View key={index} style={styles.objectiveItem}>
-                <View style={styles.objectiveDot} />
-                <Text style={styles.objectiveText}>{text}</Text>
-              </View>
-            ))}
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.section}>
-            <Text style={styles.sectionTitle}>Équipe de recherche</Text>
+            <Text style={styles.sectionTitle}>Équipe pédagogique</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.teamScroll}>
-              {[1, 2, 3, 4].map((item) => (
-                <View key={item} style={styles.teamMember}>
+              {(info.team.length > 0 ? info.team : [
+                { id: 1, name: "Dr. Nom Prénom", role: "Directeur de formation" },
+                { id: 2, name: "Dr. Nom Prénom", role: "Formateur" },
+                { id: 3, name: "Dr. Nom Prénom", role: "Formateur" }
+              ]).map((member, index) => (
+                <View key={member.id} style={styles.teamMember}>
                   <Image
                     source={{
-                      uri: `https://randomuser.me/api/portraits/${item % 2 === 0 ? "women" : "men"}/${item + 10}.jpg`,
+                      uri: `https://randomuser.me/api/portraits/${index % 2 === 0 ? "women" : "men"}/${index + 10}.jpg`,
                     }}
                     style={styles.teamMemberImage}
                   />
-                  <Text style={styles.teamMemberName}>Dr. Nom Prénom</Text>
-                  <Text style={styles.teamMemberRole}>{item === 1 ? "Directeur de recherche" : "Chercheur"}</Text>
+                  <Text style={styles.teamMemberName}>{member.name}</Text>
+                  <Text style={styles.teamMemberRole}>{member.role}</Text>
                 </View>
               ))}
             </ScrollView>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.publicationInfo}>
-            <Text style={styles.publicationLabel}>Étude postée le:</Text>
-            <Text style={styles.publicationDate}>12 mai 2023</Text>
+            <Text style={styles.publicationLabel}>Formation publiée le:</Text>
+            <Text style={styles.publicationDate}>{info.publicationDate}</Text>
           </Animated.View>
 
           <AnimatedTouchable
@@ -157,12 +250,15 @@ export default function EtudeDetailScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={["#3B82F6", "#2563EB"]}
+              colors={[
+                Array.isArray(categoryColor) ? categoryColor[0] : categoryColor || "#3B82F6", 
+                Array.isArray(categoryColor) ? categoryColor[0] : categoryColor || "#2563EB"
+              ]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.applyButtonGradient}
             >
-              <Text style={styles.applyButtonText}>Postuler à cette étude</Text>
+              <Text style={styles.applyButtonText}>S'inscrire à cette formation</Text>
               <Ionicons name="arrow-forward" size={20} color="white" />
             </LinearGradient>
           </AnimatedTouchable>
@@ -231,7 +327,6 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   categoryBadge: {
-    backgroundColor: "rgba(59, 130, 246, 0.1)",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -239,7 +334,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   categoryText: {
-    color: "#3B82F6",
     fontSize: 14,
     fontWeight: "600",
   },
@@ -287,25 +381,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: "#475569",
     marginBottom: 12,
-  },
-  objectiveItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  objectiveDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#3B82F6",
-    marginTop: 8,
-    marginRight: 12,
-  },
-  objectiveText: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-    color: "#475569",
   },
   teamScroll: {
     marginLeft: -8,
