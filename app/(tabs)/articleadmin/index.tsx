@@ -1,33 +1,48 @@
 "use client"
 
+import { Ionicons } from "@expo/vector-icons"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import {
-    Alert,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  FlatList,
+  Image,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native"
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+
+const { width } = Dimensions.get("window")
+const cardWidth = width * 0.75
 
 const AdminArticlesScreen = () => {
   const router = useRouter()
-  const [isAddModalVisible, setIsAddModalVisible] = useState(false)
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false)
+  const [isAddArticleModalVisible, setIsAddArticleModalVisible] = useState(false)
+  const [isEditArticleModalVisible, setIsEditArticleModalVisible] = useState(false)
+  const [isAddCategoryModalVisible, setIsAddCategoryModalVisible] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
+  
   const [newArticle, setNewArticle] = useState({
+    titre_article: "",
+    description_article: "",
+    datePublication_article: "",
+    img_article: "",
+    auteur_article: "",
+  })
+
+  const [newCategory, setNewCategory] = useState({
     title: "",
-    description: "",
-    category: "",
-    iconType: "web",
   })
 
   const [categoriesData, setCategoriesData] = useState([
@@ -37,27 +52,21 @@ const AdminArticlesScreen = () => {
       articles: [
         {
           id: "1",
-          title: "Développement Web",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "WEB DEVELOPMENT",
-          iconType: "web",
+          titre_article: "Développement Web",
+          description_article: "Formation complète en développement web moderne avec React, Node.js et bases de données",
+          datePublication_article: "2024-01-15",
+          img_article: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
+          auteur_article: "Jean Dupont",
+          readTime: "8 min"
         },
         {
           id: "2",
-          title: "Base de Données",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "DATABASE",
-          iconType: "database",
-        },
-        {
-          id: "3",
-          title: "DevOps",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "DEVOPS",
-          iconType: "devops",
+          titre_article: "Base de Données",
+          description_article: "Maîtrisez les concepts avancés des bases de données relationnelles et NoSQL",
+          datePublication_article: "2024-01-12",
+          img_article: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=300&h=200&fit=crop",
+          auteur_article: "Marie Martin",
+          readTime: "12 min"
         },
       ],
     },
@@ -66,28 +75,13 @@ const AdminArticlesScreen = () => {
       title: "Intelligence Artificielle & Data",
       articles: [
         {
-          id: "4",
-          title: "Machine Learning",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "MACHINE LEARNING",
-          iconType: "ai",
-        },
-        {
-          id: "5",
-          title: "Data Science",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "DATA SCIENCE",
-          iconType: "data",
-        },
-        {
-          id: "6",
-          title: "Deep Learning",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "DEEP LEARNING",
-          iconType: "neural",
+          id: "3",
+          titre_article: "Machine Learning",
+          description_article: "Introduction aux algorithmes d'apprentissage automatique et leurs applications",
+          datePublication_article: "2024-01-10",
+          img_article: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop",
+          auteur_article: "Pierre Durand",
+          readTime: "10 min"
         },
       ],
     },
@@ -96,28 +90,28 @@ const AdminArticlesScreen = () => {
       title: "Cybersécurité",
       articles: [
         {
-          id: "7",
-          title: "Sécurité Réseau",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "NETWORK SECURITY",
-          iconType: "security",
+          id: "4",
+          titre_article: "Sécurité Réseau",
+          description_article: "Protection des infrastructures réseau et détection d'intrusions",
+          datePublication_article: "2024-01-08",
+          img_article: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop",
+          auteur_article: "Sophie Bernard",
+          readTime: "11 min"
         },
+      ],
+    },
+    {
+      id: "cloud-infrastructure",
+      title: "Cloud Computing et Infrastructures",
+      articles: [
         {
-          id: "8",
-          title: "Cryptographie",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "CRYPTOGRAPHY",
-          iconType: "crypto",
-        },
-        {
-          id: "9",
-          title: "Ethical Hacking",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "ETHICAL HACKING",
-          iconType: "hacking",
+          id: "5",
+          titre_article: "AWS Solutions",
+          description_article: "Services cloud Amazon et architecture scalable",
+          datePublication_article: "2024-01-05",
+          img_article: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&h=200&fit=crop",
+          auteur_article: "Luc Moreau",
+          readTime: "17 min"
         },
       ],
     },
@@ -126,73 +120,136 @@ const AdminArticlesScreen = () => {
       title: "Web, Mobile & UX/UI",
       articles: [
         {
+          id: "6",
+          titre_article: "React Native",
+          description_article: "Développement d'applications mobiles cross-platform avec React Native",
+          datePublication_article: "2024-01-03",
+          img_article: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=300&h=200&fit=crop",
+          auteur_article: "Emma Leroy",
+          readTime: "13 min"
+        },
+      ],
+    },
+    {
+      id: "industrial-tech",
+      title: "Technologies industrielles",
+      articles: [
+        {
+          id: "7",
+          titre_article: "Industrie 4.0",
+          description_article: "Transformation digitale des processus industriels et automatisation",
+          datePublication_article: "2024-01-01",
+          img_article: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop",
+          auteur_article: "Thomas Roux",
+          readTime: "14 min"
+        },
+      ],
+    },
+    {
+      id: "societal-ethics",
+      title: "Enjeux sociétaux, éthiques et environnementaux",
+      articles: [
+        {
+          id: "8",
+          titre_article: "IA Éthique",
+          description_article: "Développement responsable de l'intelligence artificielle",
+          datePublication_article: "2023-12-28",
+          img_article: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=300&h=200&fit=crop",
+          auteur_article: "Julie Blanc",
+          readTime: "13 min"
+        },
+      ],
+    },
+    {
+      id: "trends-markets",
+      title: "Tendances & Marchés",
+      articles: [
+        {
+          id: "9",
+          titre_article: "Fintech",
+          description_article: "Innovation financière et technologies de paiement",
+          datePublication_article: "2023-12-25",
+          img_article: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop",
+          auteur_article: "Antoine Petit",
+          readTime: "15 min"
+        },
+      ],
+    },
+    {
+      id: "research-innovation",
+      title: "Recherche & Innovation",
+      articles: [
+        {
           id: "10",
-          title: "React Native",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "MOBILE DEV",
-          iconType: "mobile",
-        },
-        {
-          id: "11",
-          title: "UX Design",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "UX DESIGN",
-          iconType: "design",
-        },
-        {
-          id: "12",
-          title: "Progressive Web Apps",
-          description: "Cet article parle des sciences ou au sein des soci étés babla blabla blablabla blablabla",
-          backgroundColor: "#E3F2FD",
-          category: "PWA",
-          iconType: "pwa",
+          titre_article: "Quantum Computing",
+          description_article: "Informatique quantique et algorithmes révolutionnaires",
+          datePublication_article: "2023-12-20",
+          img_article: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=300&h=200&fit=crop",
+          auteur_article: "Nicolas Fabre",
+          readTime: "18 min"
         },
       ],
     },
   ])
 
-  const handleArticlePress = (article: any) => {
+  // Calcul des statistiques
+  const totalArticles = categoriesData.reduce((total, category) => total + category.articles.length, 0)
+  const totalCategories = categoriesData.length
+
+  const handleArticlePress = (article: any, category: any) => {
+    // Naviguer vers la page de détail avec les paramètres nécessaires pour l'administration
     router.push({
-      pathname: "/(tabs)/articles/[id]",
+      pathname: "/(tabs)/articleadmin/[id]",
       params: {
         id: article.id,
-        articleTitle: article.title,
-        articleDescription: article.description,
-        articleBackgroundColor: article.backgroundColor,
+        categoryId: category.id,
+        isAdmin: "true", // Convertir en string
+        articleTitle: article.titre_article,
+        articleDescription: article.description_article,
+        articleImage: article.img_article,
+        articleAuthor: article.auteur_article,
+        articleDate: article.datePublication_article,
+        articleReadTime: article.readTime
       },
     })
   }
 
   const handleAddArticle = () => {
-    if (selectedCategory && newArticle.title && newArticle.description) {
+    if (selectedCategory && newArticle.titre_article && newArticle.description_article && newArticle.auteur_article) {
       const updatedCategories = [...categoriesData]
       const categoryIndex = updatedCategories.findIndex((cat) => cat.id === selectedCategory.id)
 
       if (categoryIndex !== -1) {
-        const newId = String(Math.max(...updatedCategories[categoryIndex].articles.map((a) => Number(a.id))) + 1)
+        const newId = String(Math.max(...updatedCategories.flatMap(cat => cat.articles.map(a => Number(a.id)))) + 1)
 
         updatedCategories[categoryIndex].articles.push({
           id: newId,
-          title: newArticle.title,
-          description: newArticle.description,
-          backgroundColor: "#E3F2FD",
-          category: newArticle.category || selectedCategory.title.toUpperCase(),
-          iconType: newArticle.iconType || "web",
+          titre_article: newArticle.titre_article,
+          description_article: newArticle.description_article,
+          datePublication_article: newArticle.datePublication_article || new Date().toISOString().split('T')[0],
+          img_article: newArticle.img_article || "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
+          auteur_article: newArticle.auteur_article,
+          readTime: "10 min"
         })
 
         setCategoriesData(updatedCategories)
-        setNewArticle({ title: "", description: "", category: "", iconType: "web" })
-        setIsAddModalVisible(false)
+        setNewArticle({
+          titre_article: "",
+          description_article: "",
+          datePublication_article: "",
+          img_article: "",
+          auteur_article: "",
+        })
+        setIsAddArticleModalVisible(false)
+        Alert.alert("Succès", "Article ajouté avec succès!")
       }
     } else {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires")
+      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires (titre, description, auteur)")
     }
   }
 
   const handleEditArticle = () => {
-    if (selectedCategory && selectedArticle && selectedArticle.title && selectedArticle.description) {
+    if (selectedCategory && selectedArticle && selectedArticle.titre_article && selectedArticle.description_article) {
       const updatedCategories = [...categoriesData]
       const categoryIndex = updatedCategories.findIndex((cat) => cat.id === selectedCategory.id)
 
@@ -206,7 +263,8 @@ const AdminArticlesScreen = () => {
 
           setCategoriesData(updatedCategories)
           setSelectedArticle(null)
-          setIsEditModalVisible(false)
+          setIsEditArticleModalVisible(false)
+          Alert.alert("Succès", "Article modifié avec succès!")
         }
       }
     } else {
@@ -232,193 +290,201 @@ const AdminArticlesScreen = () => {
               (a) => a.id !== articleId,
             )
             setCategoriesData(updatedCategories)
+            Alert.alert("Succès", "Article supprimé avec succès!")
           }
         },
       },
     ])
   }
 
-  const getIconContent = (iconType: string) => {
-    const iconMap: { [key: string]: string } = {
-      web: "</>",
-      database: "DB",
-      devops: "⚙️",
-      ai: "🤖",
-      data: "📊",
-      neural: "🧠",
-      security: "🔒",
-      crypto: "🔐",
-      hacking: "💻",
-      mobile: "📱",
-      design: "🎨",
-      pwa: "⚡",
-      cloud: "☁️",
-      kubernetes: "K8s",
-      microservices: "🔗",
-      industry: "🏭",
-      iot: "📡",
-      automation: "🤖",
-      ethics: "⚖️",
-      green: "🌱",
-      social: "👥",
-      fintech: "💰",
-      ecommerce: "🛒",
-      startup: "🚀",
-      quantum: "⚛️",
-      biotech: "🧬",
-      nanotech: "🔬",
-      vr: "🥽",
-      ar: "👓",
-      metaverse: "🌐",
+  const handleAddCategory = () => {
+    if (newCategory.title.trim()) {
+      const newId = `category-${Date.now()}`
+      const updatedCategories = [...categoriesData, {
+        id: newId,
+        title: newCategory.title,
+        articles: []
+      }]
+      
+      setCategoriesData(updatedCategories)
+      setNewCategory({ title: "" })
+      setIsAddCategoryModalVisible(false)
+      Alert.alert("Succès", "Catégorie ajoutée avec succès!")
+    } else {
+      Alert.alert("Erreur", "Veuillez saisir un nom de catégorie")
     }
-    return iconMap[iconType] || "💻"
   }
 
   const ArticleCard = ({ article, category }: { article: any; category: any }) => (
-    <View style={styles.articleCardContainer}>
-      <TouchableOpacity
-        style={[styles.articleCard, { backgroundColor: article.backgroundColor }]}
-        onPress={() => handleArticlePress(article)}
-        activeOpacity={0.7}
-      >
-        <View style={styles.leftSection}>
-          <View style={styles.iconCircle}>
-            <View style={styles.decorativeElement1} />
-            <View style={styles.decorativeElement2} />
-            <View style={styles.decorativeElement3} />
-            <View style={styles.decorativeElement4} />
-            <View style={styles.decorativeElement5} />
-
-            <View style={styles.centralIcon}>
-              <Text style={styles.iconText}>{getIconContent(article.iconType)}</Text>
-            </View>
+    <TouchableOpacity
+      style={styles.articleCard}
+      onPress={() => handleArticlePress(article, category)}
+      activeOpacity={0.7}
+    >
+      <Image source={{ uri: article.img_article }} style={styles.articleImage} />
+      <View style={styles.articleContent}>
+        <Text style={styles.articleTitle} numberOfLines={2}>{article.titre_article}</Text>
+        <Text style={styles.articleDescription} numberOfLines={3}>{article.description_article}</Text>
+        <View style={styles.articleFooter}>
+          <View style={styles.readTimeInfo}>
+            <Ionicons name="time-outline" size={16} color="#64748B" />
+            <Text style={styles.readTimeText}>{article.readTime}</Text>
           </View>
-          <Text style={styles.categoryText}>{article.category}</Text>
+          <Text style={styles.authorText}>Par {article.auteur_article}</Text>
         </View>
-
-        <View style={styles.rightSection}>
-          <Text style={styles.articleTitle} numberOfLines={2} ellipsizeMode="tail">
-            {article.title}
-          </Text>
-          <Text style={styles.articleDescription} numberOfLines={3} ellipsizeMode="tail">
-            {article.description}
-          </Text>
-        </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Admin Controls */}
       <View style={styles.adminControls}>
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => {
+          onPress={(e) => {
+            e.stopPropagation();
             setSelectedArticle({ ...article })
             setSelectedCategory(category)
-            setIsEditModalVisible(true)
+            setIsEditArticleModalVisible(true)
           }}
         >
-          <Text style={styles.editButtonText}>✏️</Text>
+          <Ionicons name="create-outline" size={16} color="#3B82F6" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteArticle(category.id, article.id)}>
-          <Text style={styles.deleteButtonText}>🗑️</Text>
+        <TouchableOpacity 
+          style={styles.deleteButton} 
+          onPress={(e) => {
+            e.stopPropagation();
+            handleDeleteArticle(category.id, article.id)
+          }}
+        >
+          <Ionicons name="trash-outline" size={16} color="#EF4444" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   )
 
-  const CategorySection = ({ category }: { category: any }) => (
-    <View style={styles.categorySection}>
-      <View style={styles.categoryHeader}>
-        <Text style={styles.categoryTitle}>{category.title}</Text>
-        <TouchableOpacity
-          style={styles.addArticleButton}
-          onPress={() => {
-            setSelectedCategory(category)
-            setIsAddModalVisible(true)
-          }}
-        >
-          <Text style={styles.addArticleButtonText}>+</Text>
-        </TouchableOpacity>
+  const renderArticlesList = (category: any, delay: number) => (
+    <Animated.View entering={FadeInDown.delay(delay)} style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{category.title}</Text>
+        <View style={styles.sectionActions}>
+          <Text style={styles.sectionCount}>{category.articles.length}</Text>
+          <TouchableOpacity
+            style={styles.addArticleButton}
+            onPress={() => {
+              setSelectedCategory(category)
+              setIsAddArticleModalVisible(true)
+            }}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
       </View>
-      <ScrollView
+      <FlatList
+        data={category.articles}
+        renderItem={({ item }) => <ArticleCard article={item} category={category} />}
+        keyExtractor={(item) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.horizontalScrollContainer}
-        style={styles.horizontalScroll}
-      >
-        {category.articles.map((article: any, index: number) => (
-          <View
-            key={article.id}
-            style={[styles.horizontalCardWrapper, index === category.articles.length - 1 && styles.lastCard]}
-          >
-            <ArticleCard article={article} category={category} />
-          </View>
-        ))}
-      </ScrollView>
-    </View>
+        contentContainerStyle={styles.listContainer}
+        ItemSeparatorComponent={() => <View style={{ width: 16 }} />}
+      />
+    </Animated.View>
   )
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header with Add Button */}
-      <View style={styles.headerContainer}>
-        <HeaderPage title="Articles" />
+      {/* Header */}
+      <View style={styles.header}>
+        <HeaderPage title = "Articles"/>
         <TouchableOpacity
           style={styles.addCategoryButton}
-          onPress={() => {
-            // Logique pour ajouter une catégorie
-            Alert.alert("Fonctionnalité", "Ajout de catégorie à implémenter")
-          }}
+          onPress={() => setIsAddCategoryModalVisible(true)}
         >
-          <Text style={styles.addCategoryButtonText}>+</Text>
+          <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
-      {/* Categories List */}
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {categoriesData.map((category) => (
-          <CategorySection key={category.id} category={category} />
-        ))}
+        <View style={styles.scrollContent}>
+          
+          {/* Statistiques */}
+          <Animated.View entering={FadeInUp.delay(100)} style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{totalArticles}</Text>
+              <Text style={styles.statLabel}>Articles</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{totalCategories}</Text>
+              <Text style={styles.statLabel}>Catégories</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>Admin</Text>
+              <Text style={styles.statLabel}>Mode</Text>
+            </View>
+          </Animated.View>
 
-        {/* EPF Projects Logo */}
-        <FooterLogo />
+          {/* Sections des articles */}
+          {categoriesData.map((category, index) => 
+            renderArticlesList(category, 200 + index * 100)
+          )}
+
+        </View>
       </ScrollView>
 
+      <FooterLogo />
+
       {/* Add Article Modal */}
-      <Modal visible={isAddModalVisible} animationType="slide" transparent>
+      <Modal visible={isAddArticleModalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Ajouter un article</Text>
             <Text style={styles.modalSubtitle}>Catégorie: {selectedCategory?.title}</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Titre de l'article"
-              value={newArticle.title}
-              onChangeText={(text) => setNewArticle({ ...newArticle, title: text })}
-            />
+            <ScrollView style={styles.modalScrollView}>
+              <TextInput
+                style={styles.input}
+                placeholder="Titre de l'article *"
+                value={newArticle.titre_article}
+                onChangeText={(text) => setNewArticle({ ...newArticle, titre_article: text })}
+              />
 
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description de l'article"
-              multiline
-              numberOfLines={4}
-              value={newArticle.description}
-              onChangeText={(text) => setNewArticle({ ...newArticle, description: text })}
-            />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Description de l'article *"
+                multiline
+                numberOfLines={4}
+                value={newArticle.description_article}
+                onChangeText={(text) => setNewArticle({ ...newArticle, description_article: text })}
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Catégorie (optionnel)"
-              value={newArticle.category}
-              onChangeText={(text) => setNewArticle({ ...newArticle, category: text })}
-            />
+              <TextInput
+                style={styles.input}
+                placeholder="Auteur de l'article *"
+                value={newArticle.auteur_article}
+                onChangeText={(text) => setNewArticle({ ...newArticle, auteur_article: text })}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Date de publication (YYYY-MM-DD)"
+                value={newArticle.datePublication_article}
+                onChangeText={(text) => setNewArticle({ ...newArticle, datePublication_article: text })}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="URL de l'image"
+                value={newArticle.img_article}
+                onChangeText={(text) => setNewArticle({ ...newArticle, img_article: text })}
+              />
+            </ScrollView>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsAddModalVisible(false)}
+                onPress={() => setIsAddArticleModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
@@ -431,44 +497,88 @@ const AdminArticlesScreen = () => {
       </Modal>
 
       {/* Edit Article Modal */}
-      <Modal visible={isEditModalVisible} animationType="slide" transparent>
+      <Modal visible={isEditArticleModalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Modifier l'article</Text>
             <Text style={styles.modalSubtitle}>Catégorie: {selectedCategory?.title}</Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Titre de l'article"
-              value={selectedArticle?.title}
-              onChangeText={(text) => setSelectedArticle({ ...selectedArticle, title: text })}
-            />
+            <ScrollView style={styles.modalScrollView}>
+              <TextInput
+                style={styles.input}
+                placeholder="Titre de l'article *"
+                value={selectedArticle?.titre_article}
+                onChangeText={(text) => setSelectedArticle({ ...selectedArticle, titre_article: text })}
+              />
 
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description de l'article"
-              multiline
-              numberOfLines={4}
-              value={selectedArticle?.description}
-              onChangeText={(text) => setSelectedArticle({ ...selectedArticle, description: text })}
-            />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Description de l'article *"
+                multiline
+                numberOfLines={4}
+                value={selectedArticle?.description_article}
+                onChangeText={(text) => setSelectedArticle({ ...selectedArticle, description_article: text })}
+              />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Catégorie"
-              value={selectedArticle?.category}
-              onChangeText={(text) => setSelectedArticle({ ...selectedArticle, category: text })}
-            />
+              <TextInput
+                style={styles.input}
+                placeholder="Auteur de l'article *"
+                value={selectedArticle?.auteur_article}
+                onChangeText={(text) => setSelectedArticle({ ...selectedArticle, auteur_article: text })}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="Date de publication (YYYY-MM-DD)"
+                value={selectedArticle?.datePublication_article}
+                onChangeText={(text) => setSelectedArticle({ ...selectedArticle, datePublication_article: text })}
+              />
+
+              <TextInput
+                style={styles.input}
+                placeholder="URL de l'image"
+                value={selectedArticle?.img_article}
+                onChangeText={(text) => setSelectedArticle({ ...selectedArticle, img_article: text })}
+              />
+            </ScrollView>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsEditModalVisible(false)}
+                onPress={() => setIsEditArticleModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleEditArticle}>
                 <Text style={styles.saveButtonText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Add Category Modal */}
+      <Modal visible={isAddCategoryModalVisible} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Ajouter une catégorie</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Nom de la catégorie *"
+              value={newCategory.title}
+              onChangeText={(text) => setNewCategory({ ...newCategory, title: text })}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setIsAddCategoryModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleAddCategory}>
+                <Text style={styles.saveButtonText}>Ajouter</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -481,227 +591,195 @@ const AdminArticlesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#FFFFFF",
   },
-  headerContainer: {
-    position: "relative",
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#E5E5E5",
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000000",
   },
   addCategoryButton: {
-    position: "absolute",
-    right: 20,
-    top: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: "#000",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#3B82F6",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 10,
-  },
-  addCategoryButtonText: {
-    color: "#FFF",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: -2,
   },
   scrollView: {
     flex: 1,
-    paddingHorizontal: 20,
+    backgroundColor: "#F8FAFC",
   },
-  categorySection: {
-    marginVertical: 15,
+  scrollContent: {
+    paddingTop: 20,
   },
-  categoryHeader: {
+  statsContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  categoryTitle: {
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 20,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: "#000000",
+    flex: 1,
+  },
+  sectionActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  sectionCount: {
+    fontSize: 16,
+    color: "#64748B",
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   addArticleButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#4CAF50",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#10B981",
     justifyContent: "center",
     alignItems: "center",
   },
-  addArticleButtonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginTop: -2,
-  },
-  horizontalScroll: {
-    marginHorizontal: -20,
-  },
-  horizontalScrollContainer: {
+  listContainer: {
     paddingHorizontal: 20,
-    alignItems: "stretch",
-  },
-  horizontalCardWrapper: {
-    width: 280,
-    marginRight: 12,
-    height: 120,
-  },
-  lastCard: {
-    marginRight: 20,
-  },
-  articleCardContainer: {
-    position: "relative",
-    height: 120,
   },
   articleCard: {
-    borderRadius: 20,
-    padding: 16,
-    height: 120,
+    position: "relative",
+    width: cardWidth,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  articleImage: {
     width: "100%",
+    height: 120,
+    backgroundColor: "#F1F5F9",
+  },
+  articleContent: {
+    padding: 16,
+  },
+  articleTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000000",
+    marginBottom: 8,
+  },
+  articleDescription: {
+    fontSize: 14,
+    color: "#64748B",
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  articleFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  readTimeInfo: {
     flexDirection: "row",
     alignItems: "center",
+  },
+  readTimeText: {
+    fontSize: 12,
+    color: "#64748B",
+    marginLeft: 4,
+  },
+  authorText: {
+    fontSize: 12,
+    color: "#64748B",
+    fontStyle: "italic",
   },
   adminControls: {
     position: "absolute",
     top: 8,
     right: 8,
     flexDirection: "row",
+    gap: 8,
     zIndex: 10,
   },
   editButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#FFF",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 6,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
-  },
-  editButtonText: {
-    fontSize: 14,
   },
   deleteButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "#FFF",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 3,
-  },
-  deleteButtonText: {
-    fontSize: 14,
-  },
-  leftSection: {
-    width: 100,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rightSection: {
-    flex: 1,
-    paddingLeft: 16,
-    justifyContent: "center",
-  },
-  iconCircle: {
-    width: 70,
-    height: 70,
-    backgroundColor: "#C8E6C9",
-    borderRadius: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    position: "relative",
-    marginBottom: 8,
-  },
-  centralIcon: {
-    width: 40,
-    height: 30,
-    backgroundColor: "#2d5a3d",
-    borderRadius: 6,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  iconText: {
-    color: "#ffffff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  decorativeElement1: {
-    position: "absolute",
-    top: 8,
-    left: 15,
-    width: 4,
-    height: 4,
-    backgroundColor: "#4CAF50",
-    borderRadius: 2,
-  },
-  decorativeElement2: {
-    position: "absolute",
-    top: 15,
-    right: 12,
-    width: 6,
-    height: 2,
-    backgroundColor: "#4CAF50",
-  },
-  decorativeElement3: {
-    position: "absolute",
-    bottom: 12,
-    left: 8,
-    width: 8,
-    height: 8,
-    borderWidth: 1,
-    borderColor: "#4CAF50",
-    borderRadius: 4,
-  },
-  decorativeElement4: {
-    position: "absolute",
-    top: 25,
-    left: 5,
-    width: 3,
-    height: 3,
-    backgroundColor: "#4CAF50",
-    borderRadius: 1.5,
-  },
-  decorativeElement5: {
-    position: "absolute",
-    bottom: 8,
-    right: 15,
-    width: 5,
-    height: 5,
-    backgroundColor: "#4CAF50",
-    transform: [{ rotate: "45deg" }],
-  },
-  categoryText: {
-    fontSize: 8,
-    fontWeight: "600",
-    color: "#666",
-    textAlign: "center",
-    letterSpacing: 0.5,
-  },
-  articleTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 6,
-    height: 40,
-    lineHeight: 20,
-  },
-  articleDescription: {
-    fontSize: 11,
-    color: "#666",
-    lineHeight: 14,
-    height: 42,
-    overflow: "hidden",
   },
   modalContainer: {
     flex: 1,
@@ -711,7 +789,8 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "90%",
-    backgroundColor: "#FFF",
+    maxHeight: "80%",
+    backgroundColor: "#FFFFFF",
     borderRadius: 20,
     padding: 20,
     shadowColor: "#000",
@@ -724,20 +803,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     marginBottom: 5,
-    color: "#333",
+    color: "#000000",
   },
   modalSubtitle: {
     fontSize: 16,
-    color: "#666",
+    color: "#64748B",
     marginBottom: 20,
+  },
+  modalScrollView: {
+    maxHeight: 300,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#DDD",
-    borderRadius: 10,
+    borderColor: "#E2E8F0",
+    borderRadius: 12,
     padding: 12,
     marginBottom: 15,
     fontSize: 16,
+    backgroundColor: "#F8FAFC",
   },
   textArea: {
     height: 100,
@@ -746,17 +829,17 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 20,
+    gap: 12,
   },
   modalButton: {
     flex: 1,
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
   },
   cancelButton: {
     backgroundColor: "#F1F5F9",
-    marginRight: 10,
   },
   cancelButtonText: {
     color: "#64748B",
@@ -764,10 +847,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   saveButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: "#3B82F6",
   },
   saveButtonText: {
-    color: "#FFF",
+    color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 16,
   },
