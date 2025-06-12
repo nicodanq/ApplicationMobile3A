@@ -1,7 +1,8 @@
 "use client"
-
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import { useSession } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/hooks/useUserDetails";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   Dimensions,
   Image,
@@ -12,65 +13,66 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native"
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+} from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-import FooterLogo from "@/components/FooterLogo"
-import HeaderPage from "@/components/HeaderPage"
+import FooterLogo from "@/components/FooterLogo";
+import HeaderPage from "@/components/HeaderPage";
+import { useCallback } from "react";
 
 const { width } = Dimensions.get("window")
 
-// Données fictives pour l'administrateur
-const adminData = {
-  name: "Admin Système",
-  email: "admin@plateforme.com",
-  role: "Administrateur",
-  avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
-  stats: {
-    users: 156,
-    formations: 24,
-    events: 12
-  }
-}
+
 
 const ProfilAdminScreen = () => {
-  const router = useRouter()
+  const router = useRouter();
+  const { user, signOut } = useSession();
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null);;
+
+  const userRole = role?.toLowerCase();
+
+  const handleSignOut = useCallback(() => {
+    signOut()
+  }, [signOut])
+
+  if (loading) return <Text>Chargement...</Text>;
+  if (error) return <Text>Erreur lors du chargement</Text>;
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header simple */}
-      
-      <HeaderPage title = "Profil"/>
-     
+
+      <HeaderPage title="Profil" />
+
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          
+
           {/* Profil Section */}
           <Animated.View entering={FadeInUp.delay(100)} style={styles.profileSection}>
             <View style={styles.avatarContainer}>
-              <Image source={{ uri: adminData.avatar }} style={styles.avatar} />
+              <Image source={{ uri: "https://example.com/avatar-default.png" }} style={styles.avatar} />
             </View>
-            <Text style={styles.email}>{adminData.email}</Text>
-            <Text style={styles.role}>{adminData.role}</Text>
+            <Text style={styles.email}>{details?.email_user}</Text>
+            <Text style={styles.role}>{userRole}</Text>
           </Animated.View>
 
           {/* Stats Section */}
           <Animated.View entering={FadeInUp.delay(200)} style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{adminData.stats.users}</Text>
+              <Text style={styles.statNumber}>XX</Text>
               <Text style={styles.statLabel}>Utilisateurs</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{adminData.stats.formations}</Text>
+              <Text style={styles.statNumber}>XX</Text>
               <Text style={styles.statLabel}>Formations</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{adminData.stats.events}</Text>
+              <Text style={styles.statNumber}>XX</Text>
               <Text style={styles.statLabel}>Événements</Text>
             </View>
           </Animated.View>
@@ -103,7 +105,83 @@ const ProfilAdminScreen = () => {
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
+                  <View style={[styles.iconContainer, { backgroundColor: '#E8F5E9' }]}>
+                    <Ionicons name="school-outline" size={24} color="#4CAF50" />
+                  </View>
+                  <View style={styles.menuTextContainer}>
+                    <Text style={styles.menuTitle}>Mes études</Text>
+                    <Text style={styles.menuSubtitle}>Parcours, formations, certifications</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400)}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.menuItemContent}>
+                  <View style={[styles.iconContainer, { backgroundColor: '#E0F7FA' }]}>
+                    <Ionicons name="calendar-outline" size={24} color="#00BCD4" />
+                  </View>
+                  <View style={styles.menuTextContainer}>
+                    <Text style={styles.menuTitle}>Mes événements</Text>
+                    <Text style={styles.menuSubtitle}>Événements auxquels vous participez</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400)}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.menuItemContent}>
+                  <View style={[styles.iconContainer, { backgroundColor: '#FFF3E0' }]}>
+                    <Ionicons name="bookmark-outline" size={24} color="#FF9800" />
+                  </View>
+                  <View style={styles.menuTextContainer}>
+                    <Text style={styles.menuTitle}>Articles enregistrés</Text>
+                    <Text style={styles.menuSubtitle}>Articles que vous avez sauvegardés</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400)}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.menuItemContent}>
                   <View style={[styles.iconContainer, { backgroundColor: '#FDF2F8' }]}>
+                    <Ionicons name="settings-outline" size={24} color="#E91E63" />
+                  </View>
+                  <View style={styles.menuTextContainer}>
+                    <Text style={styles.menuTitle}>Paramètres</Text>
+                    <Text style={styles.menuSubtitle}>Confidentialité, notifications, sécurité</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400)}>
+              <TouchableOpacity
+                style={styles.menuItem}
+                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                activeOpacity={0.7}
+              >
+                <View style={styles.menuItemContent}>
+                  <View style={[styles.iconContainer, { backgroundColor: '#FCE4EC' }]}>
                     <Ionicons name="settings-outline" size={24} color="#EC4899" />
                   </View>
                   <View style={styles.menuTextContainer}>
@@ -116,25 +194,57 @@ const ProfilAdminScreen = () => {
             </Animated.View>
           </View>
 
+          {/* Autres sections */}
+
+
           {/* Admin Info Card */}
-          <Animated.View entering={FadeInDown.delay(600)} style={styles.adminInfoCard}>
-            <View style={styles.adminInfoIcon}>
-              <Ionicons name="shield-checkmark" size={24} color="#10B981" />
-            </View>
-            <Text style={styles.adminInfoTitle}>Accès Administrateur</Text>
-            <Text style={styles.adminInfoText}>
-              Vous avez accès à toutes les fonctionnalités d&apos;administration de la plateforme.
-            </Text>
-          </Animated.View>
+          {userRole === "admin" ? (
+            <Animated.View entering={FadeInDown.delay(500)} style={styles.adminInfoCard}>
+              <View style={styles.adminInfoIcon}>
+                <Ionicons name="shield-checkmark" size={24} color="#10B981" />
+              </View>
+              <Text style={styles.adminInfoTitle}>Accès Administrateur</Text>
+              <Text style={styles.adminInfoText}>
+                Vous avez accès à toutes les fonctionnalités d&apos;administration de la plateforme.
+              </Text>
+            </Animated.View>
+          ) : userRole === "intervenant" ? (
+            <Animated.View entering={FadeInDown.delay(500)} style={[styles.adminInfoCard, { backgroundColor: "#FFF7ED" }]}>
+              <View style={[styles.adminInfoIcon, { backgroundColor: "#FFEDD5" }]}>
+                <Ionicons name="briefcase-outline" size={24} color="#F97316" />
+              </View>
+              <Text style={[styles.adminInfoTitle, { color: "#C2410C" }]}>
+                Espace Intervenant
+              </Text>
+              <Text style={[styles.adminInfoText, { color: "#EA580C" }]}>
+                Vous pouvez accéder à vos missions, événements et articles.
+              </Text>
+            </Animated.View>
+          ) : null}
+
 
           {/* Bouton d'action rapide */}
+          {userRole === "admin" && (
+            <Animated.View entering={FadeInDown.delay(600)} style={styles.quickActionsContainer}>
+              <TouchableOpacity
+                style={[styles.quickActionButton, { backgroundColor: '#3B82F6' }]}
+                onPress={() => router.push('/profiladmin/liste_utilisateurs')}
+              >
+                <Ionicons name="people" size={20} color="white" />
+                <Text style={styles.quickActionText}>Gérer les utilisateurs</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          {/* Autres actions rapides */}
           <Animated.View entering={FadeInDown.delay(700)} style={styles.quickActionsContainer}>
-            <TouchableOpacity 
-              style={[styles.quickActionButton, { backgroundColor: '#3B82F6' }]}
-              onPress={() => router.push('/(tabs)/profiladmin/liste_utilisateurs')}
+            <TouchableOpacity
+              style={[styles.quickActionButton, { backgroundColor: '#f63b3b' }]}
+              onPress={handleSignOut}
+              activeOpacity={0.7}
             >
-              <Ionicons name="people" size={20} color="white" />
-              <Text style={styles.quickActionText}>Gérer les utilisateurs</Text>
+              <Ionicons name="exit" size={20} color="white" />
+              <Text style={styles.quickActionText}>Se deconnecter</Text>
             </TouchableOpacity>
           </Animated.View>
 
@@ -300,6 +410,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   quickActionsContainer: {
+    marginTop: 20,
     alignItems: "center",
   },
   quickActionButton: {

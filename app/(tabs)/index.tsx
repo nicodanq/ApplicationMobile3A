@@ -1,10 +1,10 @@
 "use client"
 
-import api from "@/api/axiosClient"
-import { useSession } from "@/contexts/AuthContext"
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useSession } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/hooks/useUserDetails";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useCallback, useEffect, useRef } from "react";
 import {
   Animated,
   StatusBar,
@@ -12,7 +12,7 @@ import {
   Text,
   TouchableOpacity,
   View
-} from "react-native"
+} from "react-native";
 
 // Constantes pour une meilleure maintenabilité
 const ANIMATION_CONFIG = {
@@ -38,28 +38,9 @@ const COLORS = {
 
 export default function HomeScreen() {
   const router = useRouter()
-  const { signOut } = useSession()
- const [details, setDetails] = useState<any | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { user, token, isLoading } = useSession();
+  const { user, signOut } = useSession();
 
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchDetails = async () => {
-      try {
-        const response = await api.get(`/user/id/${user.id}`);
-        setDetails(response.data); 
-      } catch (err) {
-        console.error("Erreur récupération utilisateur:", err);
-        setDetails(null); 
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [user]);
+  const { details, loading, error } = useUserDetails(user?.id ?? null);
   // Regroupement des références d'animation
   const animations = useRef({
     title: {
@@ -154,6 +135,9 @@ export default function HomeScreen() {
     signOut()
   }, [signOut])
 
+  if (loading) return <Text>Chargement...</Text>;
+  if (error) return <Text>Erreur lors du chargement</Text>;
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.BACKGROUND} />
@@ -167,7 +151,7 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <Text 
+        <Text
           style={styles.title}
           accessibilityRole="header"
           accessibilityLabel="Titre de bienvenue"
@@ -185,7 +169,7 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <Text 
+        <Text
           style={styles.subtitle}
           accessibilityLabel="Description de l'application"
         >
@@ -202,19 +186,19 @@ export default function HomeScreen() {
           },
         ]}
       >
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleNavigation}
           accessibilityRole="button"
           accessibilityLabel="Voir les études disponibles"
           accessibilityHint="Navigue vers la liste des études"
           activeOpacity={0.8}
         >
-          <Ionicons 
-            name="book-outline" 
-            size={20} 
-            color={COLORS.WHITE} 
-            style={styles.buttonIcon} 
+          <Ionicons
+            name="book-outline"
+            size={20}
+            color={COLORS.WHITE}
+            style={styles.buttonIcon}
           />
           <Text style={styles.buttonText}>Voir les études</Text>
         </TouchableOpacity>

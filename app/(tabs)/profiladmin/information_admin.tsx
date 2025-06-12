@@ -1,148 +1,314 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import FooterLogo from "@/components/FooterLogo";
+import { useSession } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/hooks/useUserDetails";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
+  Image,
+  Keyboard,
+  Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
-  TouchableOpacity,
-  View,
   TextInput,
-  Image,
-} from "react-native"
-import Animated, { FadeInDown } from "react-native-reanimated"
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
-import FooterLogo from "@/components/FooterLogo"
+
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const MesInformationsAdminScreen = () => {
-  const router = useRouter()
+  const isIOS = Platform.OS === "ios";
+  const router = useRouter();
+  const { user } = useSession();
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null);
+
+  // États locaux pour l’édition des champs
+  const [nom, setNom] = useState("");
+  const [prenom, setPrenom] = useState("");
+  const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [adresse, setAdresse] = useState("");
+  const [ville, setVille] = useState("");
+  const [codePostal, setCodePostal] = useState("");
+  const [bio, setBio] = useState("");
+  const [github, setGithub] = useState("");
+  const [dateNaissance, setDateNaissance] = useState(new Date());
+  const [showPicker, setShowPicker] = useState(false);
+
+  const formatDate = (date: Date) => {
+    return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
+  useEffect(() => {
+    if (details) {
+      setNom(details.nom_user || "");
+      setPrenom(details.prenom_user || "");
+      setEmail(details.email_user || "");
+      setTelephone(details.telephone_user || "");
+      setAdresse(details.adresse_user || "");
+      setVille(details.ville_user || "");
+      setCodePostal(details.code_postal_user || "");
+      setBio(details.bio_user || "");
+      setGithub(details.github_user || "");
+      if (details.date_naissance_user && !isNaN(Date.parse(details.date_naissance_user))) {
+        setDateNaissance(new Date(details.date_naissance_user));
+      }
+    }
+  }, [details]);
+
+  if (loading) return <Text>Chargement...</Text>;
+  if (error || !details) return <Text>Erreur de chargement</Text>;
+
+  // 👉 Fonction à appeler pour faire l’appel API
+  const handleSave = async () => {
+    const updatedData = {
+      nom,
+      prenom,
+      email,
+      telephone,
+      adresse,
+      ville,
+      code_postal: codePostal,
+      bio,
+      github,
+      date_naissance: dateNaissance.toISOString().split("T")[0],
+    };
+
+
+
+    console.log("Données à envoyer à l'API :", updatedData);
+    // await api.put(`/user/update/${user.id}`, updatedData)
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Mes informations</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <View style={styles.scrollContent}>
-          
-          {/* Photo de profil */}
-          <Animated.View entering={FadeInDown.delay(100)} style={styles.avatarSection}>
-            <Image 
-              source={{ uri: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" }} 
-              style={styles.avatar} 
-            />
-            <TouchableOpacity style={styles.changePhotoButton}>
-              <Text style={styles.changePhotoText}>Changer la photo</Text>
-            </TouchableOpacity>
-          </Animated.View>
+      <TouchableWithoutFeedback
+        onPress={() => {
+          Keyboard.dismiss();
+          setShowPicker(false); // Ferme le picker quand on clique ailleurs
+        }}
+      >
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
 
-          {/* Informations personnelles */}
-          <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
-            <Text style={styles.sectionTitle}>Informations personnelles</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nom complet</Text>
-              <TextInput
-                style={styles.input}
-                value="Admin Système"
-                placeholder="Votre nom complet"
+          <View style={styles.scrollContent}>
+            <Animated.View entering={FadeInDown.delay(100)} style={styles.avatarSection}>
+              <Image
+                source={{ uri: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" }}
+                style={styles.avatar}
               />
-            </View>
+              <TouchableOpacity style={styles.changePhotoButton}>
+                <Text style={styles.changePhotoText}>Changer la photo</Text>
+              </TouchableOpacity>
+            </Animated.View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email</Text>
-              <TextInput
-                style={styles.input}
-                value="admin@plateforme.com"
-                placeholder="Votre email"
-                keyboardType="email-address"
-              />
-            </View>
+            <Animated.View entering={FadeInDown.delay(200)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Informations personnelles</Text>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Téléphone</Text>
-              <TextInput
-                style={styles.input}
-                value="+33 6 12 34 56 78"
-                placeholder="Votre numéro de téléphone"
-                keyboardType="phone-pad"
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nom</Text>
+                <TextInput
+                  style={styles.input}
+                  value={nom}
+                  onChangeText={setNom}
+                  placeholder="Votre nom"
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Rôle</Text>
-              <View style={styles.roleContainer}>
-                <Text style={styles.roleText}>Administrateur</Text>
-                <View style={styles.roleBadge}>
-                  <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Prénom</Text>
+                <TextInput
+                  style={styles.input}
+                  value={prenom}
+                  onChangeText={setPrenom}
+                  placeholder="Votre prénom"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Date de naissance</Text>
+                <TouchableOpacity onPress={() => setShowPicker(true)} style={styles.input}>
+                  <Text>{formatDate(dateNaissance)}</Text>
+                </TouchableOpacity>
+                {showPicker && isIOS && (
+                  <Modal transparent animationType="fade" visible={showPicker}>
+                    <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
+                      <View style={styles.modalBackground}>
+                        <TouchableWithoutFeedback>
+                          <View style={styles.pickerContainer}>
+                            <DateTimePicker
+                              value={dateNaissance}
+                              mode="date"
+                              display="spinner"
+                              onChange={(_, selectedDate) => {
+                                if (selectedDate) {
+                                  setDateNaissance(selectedDate);
+                                }
+                              }}
+                              style={{ backgroundColor: "#fff" }}
+                            />
+                          </View>
+                        </TouchableWithoutFeedback>
+                      </View>
+                    </TouchableWithoutFeedback>
+                  </Modal>
+                )}
+
+                {showPicker && !isIOS && (
+                  <DateTimePicker
+                    value={dateNaissance}
+                    mode="date"
+                    display="default"
+                    onChange={(_, selectedDate) => {
+                      if (selectedDate) {
+                        setDateNaissance(selectedDate);
+                      }
+                      setShowPicker(false);
+                    }}
+                  />
+                )}
+
+              </View>
+
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Email</Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Votre email"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Téléphone</Text>
+                <TextInput
+                  style={styles.input}
+                  value={telephone}
+                  onChangeText={setTelephone}
+                  placeholder="Votre numéro de téléphone"
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Rôle</Text>
+                <View style={styles.roleContainer}>
+                  <Text style={styles.roleText}>
+                    {role === "admin" ? "Administrateur" : role === "intervenant" ? "Intervenant" : "Utilisateur"}
+                  </Text>
+                  <View style={styles.roleBadge}>
+                    <Ionicons
+                      name={
+                        role === "admin"
+                          ? "shield-checkmark"
+                          : role === "intervenant"
+                            ? "briefcase-outline"
+                            : "person-outline"
+                      }
+                      size={16}
+                      color="#10B981"
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          </Animated.View>
+            </Animated.View>
 
-          {/* Informations de contact */}
-          <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
-            <Text style={styles.sectionTitle}>Informations de contact</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Adresse</Text>
-              <TextInput
-                style={styles.input}
-                value="123 Rue de l'Administration"
-                placeholder="Votre adresse"
-                multiline
-              />
-            </View>
+            <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Informations de contact</Text>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Ville</Text>
-              <TextInput
-                style={styles.input}
-                value="Paris"
-                placeholder="Votre ville"
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Adresse</Text>
+                <TextInput
+                  style={styles.input}
+                  value={adresse}
+                  onChangeText={setAdresse}
+                  placeholder="Votre adresse"
+                  multiline
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Code postal</Text>
-              <TextInput
-                style={styles.input}
-                value="75001"
-                placeholder="Code postal"
-                keyboardType="numeric"
-              />
-            </View>
-          </Animated.View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Ville</Text>
+                <TextInput
+                  style={styles.input}
+                  value={ville}
+                  onChangeText={setVille}
+                  placeholder="Votre ville"
+                />
+              </View>
 
-          {/* Bouton de sauvegarde */}
-          <Animated.View entering={FadeInDown.delay(400)}>
-            <TouchableOpacity style={styles.saveButton}>
-              <Text style={styles.saveButtonText}>Sauvegarder les modifications</Text>
-            </TouchableOpacity>
-          </Animated.View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Code postal</Text>
+                <TextInput
+                  style={styles.input}
+                  value={codePostal}
+                  onChangeText={setCodePostal}
+                  placeholder="Code postal"
+                  keyboardType="numeric"
+                />
+              </View>
+            </Animated.View>
 
-        </View>
+            <Animated.View entering={FadeInDown.delay(300)} style={styles.section}>
+              <Text style={styles.sectionTitle}>Autres Informations</Text>
 
-        <FooterLogo />
-      </ScrollView>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Bio</Text>
+                <TextInput
+                  style={styles.input}
+                  value={bio}
+                  onChangeText={setBio}
+                  placeholder="Votre bio"
+                  multiline
+                />
+              </View>
 
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Lien GitHub</Text>
+                <TextInput
+                  style={styles.input}
+                  value={github}
+                  onChangeText={setGithub}
+                  placeholder="Votre lien GitHub"
+                />
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400)}>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+                <Text style={styles.saveButtonText}>Sauvegarder les modifications</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+
+          <FooterLogo />
+        </ScrollView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -265,6 +431,23 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 16,
     fontWeight: "600",
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  pickerContainer: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
 })
 

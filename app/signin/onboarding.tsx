@@ -29,7 +29,7 @@ const WelcomeScreen: React.FC = () => {
   // Check if the user has already seen the welcome screen
   useEffect(() => {
     const checkWelcomeScreen = async () => {
-      await AsyncStorage.removeItem("hasSeenWelcome"); // <-- à retirer après le test
+      // await AsyncStorage.removeItem("hasSeenWelcome"); // <-- à retirer après le test
       const hasSeenWelcome = await AsyncStorage.getItem("hasSeenWelcome");
       console.log("Has seen welcome screen:", hasSeenWelcome);
       if (hasSeenWelcome === "true") {
