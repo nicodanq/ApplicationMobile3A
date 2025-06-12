@@ -1,9 +1,9 @@
 "use client"
+import HeaderPage from "@/components/HeaderPage"
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native"
-import HeaderPage from "@/components/HeaderPage"
-import { useSession } from "@/contexts/AuthContext"
 
 const Profile = () => {
   const router = useRouter()
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   profileCard: {
-    backgroundColor: "#FFFFFF",
+
     borderRadius: 16,
     padding: 16,
     alignItems: "center",

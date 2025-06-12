@@ -147,7 +147,7 @@ const LoginScreen: React.FC = () => {
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
-      const response = await api.post("/auth/login", {
+      const response = await api.post("/auth/", {
         email: data.email,
         password: data.password,
       });
