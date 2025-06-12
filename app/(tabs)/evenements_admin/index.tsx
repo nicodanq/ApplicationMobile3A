@@ -4,7 +4,7 @@ import { useState } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { Button } from "../../../components/button"
-import { Card, CardContent, CardHeader } from "../../../components/card"
+import { Card, CardContent } from "../../../components/card"
 import {
   Dialog,
   DialogContent,
@@ -15,9 +15,35 @@ import {
 } from "../../../components/dialog"
 import { Badge } from "../../../components/badge"
 
-
 import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
+
+import { Calendar, LocaleConfig } from "react-native-calendars"
+import { LinearGradient } from "expo-linear-gradient"
+import Animated2, { FadeInDown } from "react-native-reanimated"
+
+//calendrier en francais
+LocaleConfig.locales["fr"] = {
+  monthNames: [
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
+  ],
+  monthNamesShort: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."],
+  dayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
+  dayNamesShort: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
+}
+
+LocaleConfig.defaultLocale = "fr"
 
 // Types
 type Evenement = {
@@ -111,8 +137,13 @@ const AdminEventsScreen = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<string | null>(null)
 
+  const [selectedDate, setSelectedDate] = useState<string | null>(null)
+  const [showCalendar, setShowCalendar] = useState(true)
+
   const today = new Date().toISOString().split("T")[0]
   const upcomingEvents = events.filter((event) => event.date >= today).sort((a, b) => a.date.localeCompare(b.date))
+
+  const evenementsFiltres = selectedDate ? events.filter((event) => event.date === selectedDate) : upcomingEvents
 
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
@@ -165,6 +196,50 @@ const AdminEventsScreen = () => {
     setIsDeleteModalOpen(true)
   }
 
+  const getMarkedDates = () => {
+    const marked: { [date: string]: any } = {}
+    events.forEach((event) => {
+      marked[event.date] = {
+        ...(marked[event.date] || {}),
+        marked: true,
+        dotColor: event.color,
+      }
+    })
+    if (selectedDate) {
+      marked[selectedDate] = {
+        ...(marked[selectedDate] || {}),
+        selected: true,
+        selectedColor: "#003366",
+        dotColor: "white",
+      }
+    }
+
+    // Style pour aujourd'hui
+    marked[today] = {
+      ...(marked[today] || {}),
+      customStyles: {
+        container: {
+          backgroundColor: "#E0F2FE",
+          borderRadius: 20,
+        },
+        text: {
+          color: "#003366",
+          fontWeight: "bold",
+        },
+      },
+    }
+
+    return marked
+  }
+
+  const handleDayPress = (day: { dateString: string }) => {
+    setSelectedDate(selectedDate === day.dateString ? null : day.dateString)
+  }
+
+  const toggleCalendar = () => {
+    setShowCalendar(!showCalendar)
+  }
+
   return (
     <View style={styles.container}>
       <HeaderPage title="Administration des Événements" />
@@ -179,72 +254,149 @@ const AdminEventsScreen = () => {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.subtitleContainer}>
-          <Text style={styles.subtitle}>Prochains événements ({upcomingEvents.length})</Text>
+        {/* En-tête du calendrier avec bouton toggle */}
+        <View style={styles.calendarHeader}>
+          <Text style={styles.calendarTitle}>
+            {selectedDate ? formatDate(selectedDate) : "Calendrier des événements"}
+          </Text>
+          <TouchableOpacity style={styles.calendarToggle} onPress={toggleCalendar} activeOpacity={0.7}>
+            <Text style={styles.calendarToggleText}>{showCalendar ? "Masquer" : "Afficher"}</Text>
+            <Ionicons name={showCalendar ? "chevron-up" : "chevron-down"} size={16} color="#003366" />
+          </TouchableOpacity>
         </View>
 
-        {upcomingEvents.length === 0 ? (
-          <Card>
+        {/* Calendrier */}
+        {showCalendar && (
+          <View style={styles.calendarContainer}>
+            <Calendar
+              onDayPress={handleDayPress}
+              markedDates={getMarkedDates()}
+              markingType="custom"
+              enableSwipeMonths={true}
+              firstDay={1} // commencer lundi
+              theme={{
+                calendarBackground: "#ffffff",
+                textSectionTitleColor: "#003366",
+                selectedDayBackgroundColor: "#003366",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#003366",
+                dayTextColor: "#1E293B",
+                textDisabledColor: "#94A3B8",
+                dotColor: "#003366",
+                selectedDotColor: "#ffffff",
+                arrowColor: "#003366",
+                monthTextColor: "#003366",
+                textMonthFontWeight: "bold",
+                textDayFontWeight: "600",
+                textDayHeaderFontWeight: "600",
+                textDayFontSize: 14,
+                textMonthFontSize: 18,
+                textDayHeaderFontSize: 14,
+              }}
+              style={styles.calendar}
+            />
+          </View>
+        )}
+
+        <View className="mb-6">
+          <View style={styles.subtitleContainer}>
+            <Text style={styles.subtitle}>
+              {selectedDate
+                ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}`
+                : `Prochains événements (${evenementsFiltres.length})`}
+            </Text>
+            {selectedDate && (
+              <TouchableOpacity onPress={() => setSelectedDate(null)} style={styles.resetButton}>
+                <Text style={styles.resetButtonText}>Tout voir</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {evenementsFiltres.length === 0 ? (
+          <Card className="text-center py-12">
             <CardContent>
               <View style={styles.emptyContainer}>
                 <View style={styles.emptyIconContainer}>
                   <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
                 </View>
-                <Text style={styles.emptyText}>Aucun événement à venir.</Text>
+                <Text style={styles.emptyText}>Aucun événement {selectedDate ? "ce jour-là" : "à venir"}.</Text>
               </View>
             </CardContent>
           </Card>
         ) : (
-          upcomingEvents.map((event) => (
-            <Card key={event.id} style={styles.eventCard}>
-              <CardHeader>
-                <View style={styles.cardHeaderContent}>
-                  <View style={styles.cardHeaderLeft}>
-                    <View style={[styles.iconContainer, { backgroundColor: event.color }]}>
-                      <Ionicons name={getCategoryIcon(event.categorie)} size={20} color="#FFFFFF" />
+          evenementsFiltres.map((event, index) => (
+            <Animated2.View key={event.id} entering={FadeInDown.delay(index * 100).springify()}>
+              <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8} onPress={() => openEventDetail(event)}>
+                <LinearGradient
+                  colors={event.gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.card}
+                >
+                  <View style={styles.cardContent}>
+                    <View style={styles.imageContainer}>
+                      <View style={[styles.iconContainer, { backgroundColor: event.color }]}>
+                        <Ionicons name={getCategoryIcon(event.categorie)} size={24} color="white" />
+                      </View>
+                      <View style={styles.imageOverlay} />
                     </View>
-                    <Badge style={{ backgroundColor: `${event.color}20` }} textStyle={{ color: event.color }}>
-                      {event.categorie}
-                    </Badge>
-                  </View>
-                  <View style={styles.cardActions}>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => openEditModal(event)}>
-                      <Ionicons name="create-outline" size={20} color="#3B82F6" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionButton} onPress={() => confirmDelete(event.id)}>
-                      <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                <Text style={[styles.cardTitle, { color: event.color }]}>{event.titre}</Text>
-              </CardHeader>
-              <CardContent>
-                <Text style={styles.cardDescription} numberOfLines={2}>
-                  {event.description}
-                </Text>
 
-                <View style={styles.eventDetails}>
-                  <View style={styles.eventDetailItem}>
-                    <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                    <Text style={styles.eventDetailText}>
-                      {formatDate(event.date).split(" ").slice(0, 2).join(" ")}
-                    </Text>
-                  </View>
-                  <View style={styles.eventDetailItem}>
-                    <Ionicons name="time-outline" size={14} color="#64748B" />
-                    <Text style={styles.eventDetailText}>{event.heure}</Text>
-                  </View>
-                  <View style={styles.eventDetailItem}>
-                    <Ionicons name="location-outline" size={14} color="#64748B" />
-                    <Text style={styles.eventDetailText}>{event.lieu}</Text>
-                  </View>
-                </View>
+                    <View style={styles.textContainer}>
+                      <View style={styles.cardHeaderContent}>
+                        <Text style={[styles.cardTitle, { color: event.color }]}>{event.titre}</Text>
+                        <View style={styles.cardActions}>
+                          <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={(e) => {
+                              e.stopPropagation()
+                              openEditModal(event)
+                            }}
+                          >
+                            <Ionicons name="create-outline" size={20} color="#3B82F6" />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={(e) => {
+                              e.stopPropagation()
+                              confirmDelete(event.id)
+                            }}
+                          >
+                            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
 
-                <Button variant="outline" onPress={() => openEventDetail(event)} style={styles.detailButton}>
-                  Voir les détails
-                </Button>
-              </CardContent>
-            </Card>
+                      <Text style={styles.cardDescription} numberOfLines={2}>
+                        {event.description}
+                      </Text>
+
+                      <View style={styles.eventDetails}>
+                        <View style={styles.eventDetailItem}>
+                          <Ionicons name="calendar-outline" size={14} color="#64748B" />
+                          <Text style={styles.eventDetailText}>
+                            {formatDate(event.date).split(" ").slice(0, 2).join(" ")}
+                          </Text>
+                        </View>
+                        <View style={styles.eventDetailItem}>
+                          <Ionicons name="time-outline" size={14} color="#64748B" />
+                          <Text style={styles.eventDetailText}>{event.heure}</Text>
+                        </View>
+                        <View style={styles.eventDetailItem}>
+                          <Ionicons name="location-outline" size={14} color="#64748B" />
+                          <Text style={styles.eventDetailText}>{event.lieu}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.learnMoreButton}>
+                        <Text style={[styles.learnMoreText, { color: event.color }]}>Voir les détails</Text>
+                        <Ionicons name="arrow-forward" size={16} color={event.color} style={styles.arrowIcon} />
+                      </View>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated2.View>
           ))
         )}
 
@@ -411,45 +563,132 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    padding: 20,
     paddingBottom: 40,
   },
+  calendarHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  calendarTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1E293B",
+  },
+  calendarToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+  },
+  calendarToggleText: {
+    color: "#003366",
+    fontWeight: "600",
+    fontSize: 14,
+    marginRight: 4,
+  },
+  calendarContainer: {
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  calendar: {
+    marginHorizontal: 20,
+    borderRadius: 20,
+    paddingVertical: 10,
+    backgroundColor: "#ffffff",
+  },
   subtitleContainer: {
-    marginBottom: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 20,
   },
   subtitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#1E293B",
   },
-  eventCard: {
-    marginBottom: 16,
+  resetButton: {
+    padding: 8,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 16,
+  },
+  resetButtonText: {
+    color: "#003366",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  cardContainer: {
+    marginBottom: 20,
+    marginHorizontal: 20,
+  },
+  card: {
+    borderRadius: 20,
+    overflow: "hidden",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
+  cardContent: {
+    flexDirection: "row",
+    padding: 20,
+    minHeight: 140,
+  },
+  imageContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    overflow: "hidden",
+    marginRight: 16,
+    position: "relative",
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  iconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.05)",
+  },
+  textContainer: {
+    flex: 1,
+    justifyContent: "space-between",
   },
   cardHeaderContent: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     marginBottom: 8,
-  },
-  cardHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 8,
   },
   cardActions: {
     flexDirection: "row",
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
@@ -458,28 +697,38 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
-    marginTop: 4,
+    flex: 1,
+    marginRight: 10,
   },
   cardDescription: {
     fontSize: 14,
     color: "#64748B",
     marginBottom: 12,
+    lineHeight: 20,
   },
   eventDetails: {
-    marginBottom: 16,
+    marginBottom: 12,
   },
   eventDetailItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   eventDetailText: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#64748B",
     marginLeft: 8,
   },
-  detailButton: {
-    marginTop: 8,
+  learnMoreButton: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  learnMoreText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  arrowIcon: {
+    marginLeft: 4,
   },
   emptyContainer: {
     alignItems: "center",
