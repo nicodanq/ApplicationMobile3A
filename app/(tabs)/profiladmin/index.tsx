@@ -173,25 +173,6 @@ const ProfilAdminScreen = () => {
                 </View>
               </TouchableOpacity>
             </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(400)}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.menuItemContent}>
-                  <View style={[styles.iconContainer, { backgroundColor: '#FCE4EC' }]}>
-                    <Ionicons name="settings-outline" size={24} color="#EC4899" />
-                  </View>
-                  <View style={styles.menuTextContainer}>
-                    <Text style={styles.menuTitle}>Paramètres</Text>
-                    <Text style={styles.menuSubtitle}>Confidentialité, notifications, sécurité</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color="#94A3B8" />
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
           </View>
 
           {/* Autres sections */}
@@ -249,9 +230,10 @@ const ProfilAdminScreen = () => {
           </Animated.View>
 
         </View>
+        <FooterLogo />
       </ScrollView>
 
-      <FooterLogo />
+      
     </SafeAreaView>
   )
 }
