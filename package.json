@@ -37,6 +37,7 @@
     "firebase-tools": "^14.5.1",
     "g": "^2.0.1",
     "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.514.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.56.4",
@@ -49,7 +50,8 @@
     "react-native-toast-message": "^2.3.0",
     "react-native-vector-icons": "^10.2.0",
     "react-native-web": "~0.20.0",
-    "react-native-webview": "13.13.5"
+    "react-native-webview": "13.13.5",
+    "@react-native-community/datetimepicker": "8.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
