@@ -3,10 +3,9 @@
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
-import React, { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import {
   Animated,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -24,25 +23,31 @@ import HeaderPage from "@/components/HeaderPage"
 
 import MiniBar from "@/components/MiniPopUp"
 
+import api from "@/api/axiosClient"
+
 //calendrier en francais
 
 LocaleConfig.locales["fr"] = {
   monthNames: [
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+    "janvier",
+    "février",
+    "mars",
+    "avril",
+    "mai",
+    "juin",
+    "juillet",
+    "août",
+    "septembre",
+    "octobre",
+    "novembre",
+    "décembre",
   ],
-  monthNamesShort: [
-    "janv.", "févr.", "mars", "avr.", "mai", "juin",
-    "juil.", "août", "sept.", "oct.", "nov.", "déc."
-  ],
-  dayNames: [
-    "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"
-  ],
+  monthNamesShort: ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."],
+  dayNames: ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"],
   dayNamesShort: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
 }
 
 LocaleConfig.defaultLocale = "fr"
-
 
 // Types
 type Evenement = {
@@ -57,8 +62,6 @@ type Evenement = {
   gradientColors: [string, string]
 }
 
-
-
 // const user = {
 //   id: "12345",
 //   nom: "Federico",
@@ -66,74 +69,74 @@ type Evenement = {
 // }
 
 // Données d'événements avec styles harmonisés avec l'écran d'études
-const evenementsData: Evenement[] = [
-  {
-    id: "1",
-    date: "2025-06-01",
-    titre: "Hackathon EPF",
-    heure: "10h - 17h",
-    lieu: "Cachan",
-    description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
-    categorie: "tech",
-    color: "#3B82F6", // Bleu comme IT & Digital
-    gradientColors: ["#EBF4FF", "#DBEAFE"],
-  },
-  {
-    id: "2",
-    date: "2025-06-01",
-    titre: "Forum Entreprises",
-    heure: "9h - 16h",
-    lieu: "Sceaux",
-    description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
-    categorie: "career",
-    color: "#10B981", // Vert comme Ingénierie des Systèmes
-    gradientColors: ["#ECFDF5", "#D1FAE5"],
-  },
-  {
-    id: "3",
-    date: "2025-06-05",
-    titre: "Conférence IA",
-    heure: "14h - 16h",
-    lieu: "Online",
-    description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
-    categorie: "conference",
-    color: "#EC4899", // Rose comme Conseil
-    gradientColors: ["#FDF2F8", "#FCE7F3"],
-  },
-  {
-    id: "4",
-    date: "2025-06-11",
-    titre: "Workshop Design",
-    heure: "10h - 17h",
-    lieu: "Cachan",
-    description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
-    categorie: "workshop",
-    color: "#06B6D4", // Cyan comme Traduction technique
-    gradientColors: ["#F0F9FF", "#E0F7FA"],
-  },
-  {
-    id: "5",
-    date: "2025-06-11",
-    titre: "Journée Portes Ouvertes",
-    heure: "9h - 16h",
-    lieu: "Sceaux",
-    description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
-    categorie: "open",
-    color: "#8B5CF6", // Violet pour varier
-    gradientColors: ["#F5F3FF", "#EDE9FE"],
-  },
-  {
-    id: "6",
-    date: "2025-06-13",
-    titre: "Séminaire Recherche",
-    heure: "14h - 16h",
-    lieu: "Online",
-    description: "Présentation des derniers travaux de recherche de nos laboratoires.",
-    categorie: "research",
-    color: "#F59E0B", // Ambre pour varier
-    gradientColors: ["#FFFBEB", "#FEF3C7"],
-  },
-]
+// const evenementsData: Evenement[] = [
+//   {
+//     id: "1",
+//     date: "2025-06-01",
+//     titre: "Hackathon EPF",
+//     heure: "10h - 17h",
+//     lieu: "Cachan",
+//     description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
+//     categorie: "tech",
+//     color: "#3B82F6", // Bleu comme IT & Digital
+//     gradientColors: ["#EBF4FF", "#DBEAFE"],
+//   },
+//   {
+//     id: "2",
+//     date: "2025-06-01",
+//     titre: "Forum Entreprises",
+//     heure: "9h - 16h",
+//     lieu: "Sceaux",
+//     description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
+//     categorie: "career",
+//     color: "#10B981", // Vert comme Ingénierie des Systèmes
+//     gradientColors: ["#ECFDF5", "#D1FAE5"],
+//   },
+//   {
+//     id: "3",
+//     date: "2025-06-05",
+//     titre: "Conférence IA",
+//     heure: "14h - 16h",
+//     lieu: "Online",
+//     description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
+//     categorie: "conference",
+//     color: "#EC4899", // Rose comme Conseil
+//     gradientColors: ["#FDF2F8", "#FCE7F3"],
+//   },
+//   {
+//     id: "4",
+//     date: "2025-06-11",
+//     titre: "Workshop Design",
+//     heure: "10h - 17h",
+//     lieu: "Cachan",
+//     description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
+//     categorie: "workshop",
+//     color: "#06B6D4", // Cyan comme Traduction technique
+//     gradientColors: ["#F0F9FF", "#E0F7FA"],
+//   },
+//   {
+//     id: "5",
+//     date: "2025-06-11",
+//     titre: "Journée Portes Ouvertes",
+//     heure: "9h - 16h",
+//     lieu: "Sceaux",
+//     description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
+//     categorie: "open",
+//     color: "#8B5CF6", // Violet pour varier
+//     gradientColors: ["#F5F3FF", "#EDE9FE"],
+//   },
+//   {
+//     id: "6",
+//     date: "2025-06-13",
+//     titre: "Séminaire Recherche",
+//     heure: "14h - 16h",
+//     lieu: "Online",
+//     description: "Présentation des derniers travaux de recherche de nos laboratoires.",
+//     categorie: "research",
+//     color: "#F59E0B", // Ambre pour varier
+//     gradientColors: ["#FFFBEB", "#FEF3C7"],
+//   },
+// ]
 
 const EvenementsScreen = () => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
@@ -142,23 +145,115 @@ const EvenementsScreen = () => {
   const [showCalendar, setShowCalendar] = useState(true)
   const [showBar, setShowBar] = useState(false)
   const [barMessage, setBarMessage] = useState("")
-  const{user, token}=useSession();
-  
+  const { user, token } = useSession()
+
   // Animations
   const fadeAnim = useRef(new Animated.Value(1)).current
   const scrollViewRef = useRef<ScrollView>(null)
 
   const today = new Date().toISOString().split("T")[0]
 
+  const [evenements, setEvenements] = useState<Evenement[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchEvenements = async () => {
+      try {
+        const response = await api.get("/evenement/")
+        const data = response.data
+
+        console.log("✅ Données reçues :", data) // 👈 est-ce que ça s'affiche bien dans la console ?
+
+        // Formatage des événements (adapter en fonction des noms SQL)
+        const mappedEvents = data.map((event: any) => ({
+          id: event.Id_Event.toString(),
+          titre: event.titre_Event,
+          description: event.description_Event,
+          date: event.date_Event.split("T")[0],
+          heure: event.horaire_Event,
+          lieu: event.lieu_Event,
+          categorie: getCategorie(event.ID_typeEvenement), // à définir plus bas
+          color: getColor(event.ID_typeEvenement),
+          gradientColors: getGradient(event.ID_typeEvenement),
+        }))
+
+        setEvenements(mappedEvents)
+      } catch (error) {
+        console.error("Erreur récupération événements :", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEvenements()
+  }, [])
+
+  const getCategorie = (typeId: number): string => {
+    switch (typeId) {
+      case 1:
+        return "tech"
+      case 2:
+        return "career"
+      case 3:
+        return "conference"
+      case 4:
+        return "workshop"
+      case 5:
+        return "open"
+      case 6:
+        return "research"
+      default:
+        return "default"
+    }
+  }
+
+  const getColor = (typeId: number): string => {
+    switch (typeId) {
+      case 1:
+        return "#3B82F6"
+      case 2:
+        return "#10B981"
+      case 3:
+        return "#EC4899"
+      case 4:
+        return "#06B6D4"
+      case 5:
+        return "#8B5CF6"
+      case 6:
+        return "#F59E0B"
+      default:
+        return "#64748B"
+    }
+  }
+
+  const getGradient = (typeId: number): [string, string] => {
+    switch (typeId) {
+      case 1:
+        return ["#EBF4FF", "#DBEAFE"]
+      case 2:
+        return ["#ECFDF5", "#D1FAE5"]
+      case 3:
+        return ["#FDF2F8", "#FCE7F3"]
+      case 4:
+        return ["#F0F9FF", "#E0F7FA"]
+      case 5:
+        return ["#F5F3FF", "#EDE9FE"]
+      case 6:
+        return ["#FFFBEB", "#FEF3C7"]
+      default:
+        return ["#F1F5F9", "#E2E8F0"]
+    }
+  }
+
   const evenementsFiltres = selectedDate
-    ? evenementsData.filter(event => event.date === selectedDate)
-    : evenementsData
-        .filter(event => event.date >= today)
+    ? evenements.filter((event) => event.date === selectedDate)
+    : evenements
+        .filter((event) => event.date >= today) // Filtrer les événements futurs et d'aujourd'hui
         .sort((a, b) => a.date.localeCompare(b.date))
 
   const getMarkedDates = () => {
     const marked: { [date: string]: any } = {}
-    evenementsData.forEach(event => {
+    evenements.forEach((event) => {
       marked[event.date] = {
         ...(marked[event.date] || {}),
         marked: true,
@@ -173,7 +268,7 @@ const EvenementsScreen = () => {
         dotColor: "white",
       }
     }
-    
+
     // Style pour aujourd'hui
     marked[today] = {
       ...(marked[today] || {}),
@@ -194,7 +289,7 @@ const EvenementsScreen = () => {
 
   const handleDayPress = (day: { dateString: string }) => {
     setSelectedDate(selectedDate === day.dateString ? null : day.dateString)
-    
+
     // Faire défiler vers la section des événements après sélection d'une date
     //setTimeout(() => {
     //  scrollViewRef.current?.scrollTo({ y: 400, animated: true })
@@ -236,10 +331,10 @@ const EvenementsScreen = () => {
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    const options: Intl.DateTimeFormatOptions = { 
-      day: "numeric", 
-      month: "long", 
-      year: "numeric" 
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     }
     return date.toLocaleDateString("fr-FR", options)
   }
@@ -267,9 +362,9 @@ const EvenementsScreen = () => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
-      
+
       <HeaderPage title="Évènements" />
-      
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.scrollView}
@@ -283,19 +378,9 @@ const EvenementsScreen = () => {
           <Text style={styles.calendarTitle}>
             {selectedDate ? formatDate(selectedDate) : "Calendrier des événements"}
           </Text>
-          <TouchableOpacity 
-            style={styles.calendarToggle} 
-            onPress={toggleCalendar}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.calendarToggleText}>
-              {showCalendar ? "Masquer" : "Afficher"}
-            </Text>
-            <Ionicons 
-              name={showCalendar ? "chevron-up" : "chevron-down"} 
-              size={16} 
-              color="#003366" 
-            />
+          <TouchableOpacity style={styles.calendarToggle} onPress={toggleCalendar} activeOpacity={0.7}>
+            <Text style={styles.calendarToggleText}>{showCalendar ? "Masquer" : "Afficher"}</Text>
+            <Ionicons name={showCalendar ? "chevron-up" : "chevron-down"} size={16} color="#003366" />
           </TouchableOpacity>
         </View>
 
@@ -335,15 +420,12 @@ const EvenementsScreen = () => {
         {/* Titre de section */}
         <View style={styles.subtitleContainer}>
           <Text style={styles.subtitle}>
-            {selectedDate 
-              ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}` 
+            {selectedDate
+              ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}`
               : "Prochains événements"}
           </Text>
           {selectedDate && (
-            <TouchableOpacity 
-              onPress={() => setSelectedDate(null)}
-              style={styles.resetButton}
-            >
+            <TouchableOpacity onPress={() => setSelectedDate(null)} style={styles.resetButton}>
               <Text style={styles.resetButtonText}>Tout voir</Text>
             </TouchableOpacity>
           )}
@@ -356,16 +438,11 @@ const EvenementsScreen = () => {
               <View style={styles.emptyIconContainer}>
                 <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
               </View>
-              <Text style={styles.emptyText}>
-                Aucun événement {selectedDate ? "ce jour-là" : "à venir"}.
-              </Text>
+              <Text style={styles.emptyText}>Aucun événement {selectedDate ? "ce jour-là" : "à venir"}.</Text>
             </View>
           ) : (
             evenementsFiltres.map((item, index) => (
-              <Animated2.View
-                key={item.id}
-                entering={FadeInDown.delay(index * 100).springify()}
-              >
+              <Animated2.View key={item.id} entering={FadeInDown.delay(index * 100).springify()}>
                 <TouchableOpacity
                   style={styles.cardContainer}
                   activeOpacity={0.8}
@@ -374,10 +451,10 @@ const EvenementsScreen = () => {
                     setModalVisible(true)
                   }}
                 >
-                  <LinearGradient 
-                    colors={item.gradientColors} 
-                    start={{ x: 0, y: 0 }} 
-                    end={{ x: 1, y: 1 }} 
+                  <LinearGradient
+                    colors={item.gradientColors}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={styles.card}
                   >
                     <View style={styles.cardContent}>
@@ -431,7 +508,7 @@ const EvenementsScreen = () => {
       {/* Modal détaillée de l'événement */}
       <Modal visible={modalVisible} transparent animationType="fade">
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
-          <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             {selectedEvent && (
               <>
                 <LinearGradient
@@ -441,56 +518,43 @@ const EvenementsScreen = () => {
                   style={styles.modalHeader}
                 >
                   <View style={[styles.modalIconContainer, { backgroundColor: selectedEvent.color }]}>
-                    <Ionicons 
-                      name={getCategoryIcon(selectedEvent.categorie)} 
-                      size={32} 
-                      color="white" 
-                    />
+                    <Ionicons name={getCategoryIcon(selectedEvent.categorie)} size={32} color="white" />
                   </View>
                 </LinearGradient>
-                
+
                 <View style={styles.closeIconContainer}>
-                  <Pressable 
-                    onPress={() => setModalVisible(false)}
-                    style={styles.closeButton}
-                  >
+                  <Pressable onPress={() => setModalVisible(false)} style={styles.closeButton}>
                     <Ionicons name="close" size={20} color="#64748B" />
                   </Pressable>
                 </View>
-                
+
                 <View style={styles.modalBody}>
-                  <Text style={[styles.modalTitle, { color: selectedEvent.color }]}>
-                    {selectedEvent.titre}
-                  </Text>
-                  
+                  <Text style={[styles.modalTitle, { color: selectedEvent.color }]}>{selectedEvent.titre}</Text>
+
                   <View style={styles.modalDetailsContainer}>
                     <View style={styles.modalDetailRow}>
                       <View style={styles.modalDetailItem}>
                         <Ionicons name="time-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
                         <Text style={styles.modalDetailText}>{selectedEvent.heure}</Text>
                       </View>
-                      
+
                       <View style={styles.modalDetailItem}>
                         <Ionicons name="location-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
                         <Text style={styles.modalDetailText}>{selectedEvent.lieu}</Text>
                       </View>
                     </View>
-                    
+
                     <View style={styles.modalDetailItem}>
                       <Ionicons name="calendar-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
-                      <Text style={styles.modalDetailText}>
-                        {formatDate(selectedEvent.date)}
-                      </Text>
+                      <Text style={styles.modalDetailText}>{formatDate(selectedEvent.date)}</Text>
                     </View>
                   </View>
-                  
+
                   <Text style={styles.modalDescriptionTitle}>Description</Text>
-                  <Text style={styles.modalDescription}>
-                    {selectedEvent.description}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    style={[styles.inscriptionButton, { backgroundColor: selectedEvent.color }]} 
+                  <Text style={styles.modalDescription}>{selectedEvent.description}</Text>
+
+                  <TouchableOpacity
+                    style={[styles.inscriptionButton, { backgroundColor: selectedEvent.color }]}
                     onPress={handleInscription}
                     activeOpacity={0.8}
                   >
@@ -685,21 +749,21 @@ const styles = StyleSheet.create({
     opacity: 0.6,
     marginBottom: 16,
   },
-  emptyText: { 
-    textAlign: "center", 
-    color: "#64748B", 
+  emptyText: {
+    textAlign: "center",
+    color: "#64748B",
     fontSize: 16,
   },
-  modalOverlay: { 
-    flex: 1, 
-    justifyContent: "center", 
-    alignItems: "center", 
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-  modalContent: { 
-    width: "90%", 
-    backgroundColor: "#FFFFFF", 
-    borderRadius: 20, 
+  modalContent: {
+    width: "90%",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     overflow: "hidden",
     elevation: 5,
     shadowColor: "#000",
@@ -726,9 +790,9 @@ const styles = StyleSheet.create({
   modalBody: {
     padding: 20,
   },
-  modalTitle: { 
-    fontSize: 22, 
-    fontWeight: "bold", 
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
     marginBottom: 16,
     textAlign: "center",
   },
@@ -786,10 +850,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginRight: 4,
   },
-  closeIconContainer: { 
-    position: "absolute", 
-    top: 10, 
-    right: 10, 
+  closeIconContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
     zIndex: 1,
   },
   closeButton: {
