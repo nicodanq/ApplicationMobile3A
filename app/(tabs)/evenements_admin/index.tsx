@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
+import { useState, useEffect, useCallback } from "react"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from "react-native"
+import { useFocusEffect } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
@@ -17,10 +18,14 @@ import { Badge } from "../../../components/badge"
 
 import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
+import CreateEventPage from "./create-event-page"
+import EditEventPage from "./edit-event-page"
 
 import { Calendar, LocaleConfig } from "react-native-calendars"
 import { LinearGradient } from "expo-linear-gradient"
 import Animated2, { FadeInDown } from "react-native-reanimated"
+
+import api from "@/api/axiosClient"
 
 //calendrier en francais
 LocaleConfig.locales["fr"] = {
@@ -58,84 +63,105 @@ type Evenement = {
   gradientColors: [string, string]
 }
 
+type EventFormData = {
+  titre: string
+  categorie: string
+  date: string
+  lieu: string
+  heure: string
+  description: string
+}
+
 // Données d'événements
-const evenementsData: Evenement[] = [
-  {
-    id: "1",
-    date: "2025-06-01",
-    titre: "Hackathon EPF",
-    heure: "10h - 17h",
-    lieu: "Cachan",
-    description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
-    categorie: "tech",
-    color: "#3B82F6",
-    gradientColors: ["#EBF4FF", "#DBEAFE"],
-  },
-  {
-    id: "2",
-    date: "2025-06-01",
-    titre: "Forum Entreprises",
-    heure: "9h - 16h",
-    lieu: "Sceaux",
-    description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
-    categorie: "career",
-    color: "#10B981",
-    gradientColors: ["#ECFDF5", "#D1FAE5"],
-  },
-  {
-    id: "3",
-    date: "2025-06-05",
-    titre: "Conférence IA",
-    heure: "14h - 16h",
-    lieu: "Online",
-    description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
-    categorie: "conference",
-    color: "#EC4899",
-    gradientColors: ["#FDF2F8", "#FCE7F3"],
-  },
-  {
-    id: "4",
-    date: "2025-06-11",
-    titre: "Workshop Design",
-    heure: "10h - 17h",
-    lieu: "Cachan",
-    description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
-    categorie: "workshop",
-    color: "#06B6D4",
-    gradientColors: ["#F0F9FF", "#E0F7FA"],
-  },
-  {
-    id: "5",
-    date: "2025-06-11",
-    titre: "Journée Portes Ouvertes",
-    heure: "9h - 16h",
-    lieu: "Sceaux",
-    description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
-    categorie: "open",
-    color: "#8B5CF6",
-    gradientColors: ["#F5F3FF", "#EDE9FE"],
-  },
-  {
-    id: "6",
-    date: "2025-06-13",
-    titre: "Séminaire Recherche",
-    heure: "14h - 16h",
-    lieu: "Online",
-    description: "Présentation des derniers travaux de recherche de nos laboratoires.",
-    categorie: "research",
-    color: "#F59E0B",
-    gradientColors: ["#FFFBEB", "#FEF3C7"],
-  },
-]
+// const evenementsData: Evenement[] = [
+//   {
+//     id: "1",
+//     date: "2025-06-01",
+//     titre: "Hackathon EPF",
+//     heure: "10h - 17h",
+//     lieu: "Cachan",
+//     description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
+//     categorie: "tech",
+//     color: "#3B82F6",
+//     gradientColors: ["#EBF4FF", "#DBEAFE"],
+//   },
+//   {
+//     id: "2",
+//     date: "2025-06-01",
+//     titre: "Forum Entreprises",
+//     heure: "9h - 16h",
+//     lieu: "Sceaux",
+//     description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
+//     categorie: "career",
+//     color: "#10B981",
+//     gradientColors: ["#ECFDF5", "#D1FAE5"],
+//   },
+//   {
+//     id: "3",
+//     date: "2025-06-05",
+//     titre: "Conférence IA",
+//     heure: "14h - 16h",
+//     lieu: "Online",
+//     description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
+//     categorie: "conference",
+//     color: "#EC4899",
+//     gradientColors: ["#FDF2F8", "#FCE7F3"],
+//   },
+//   {
+//     id: "4",
+//     date: "2025-06-11",
+//     titre: "Workshop Design",
+//     heure: "10h - 17h",
+//     lieu: "Cachan",
+//     description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
+//     categorie: "workshop",
+//     color: "#06B6D4",
+//     gradientColors: ["#F0F9FF", "#E0F7FA"],
+//   },
+//   {
+//     id: "5",
+//     date: "2025-06-11",
+//     titre: "Journée Portes Ouvertes",
+//     heure: "9h - 16h",
+//     lieu: "Sceaux",
+//     description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
+//     categorie: "open",
+//     color: "#8B5CF6",
+//     gradientColors: ["#F5F3FF", "#EDE9FE"],
+//   },
+//   {
+//     id: "6",
+//     date: "2025-06-13",
+//     titre: "Séminaire Recherche",
+//     heure: "14h - 16h",
+//     lieu: "Online",
+//     description: "Présentation des derniers travaux de recherche de nos laboratoires.",
+//     categorie: "research",
+//     color: "#F59E0B",
+//     gradientColors: ["#FFFBEB", "#FEF3C7"],
+//   },
+//]
+
+const categoryColors: { [key: string]: { color: string; gradientColors: [string, string] } } = {
+  tech: { color: "#3B82F6", gradientColors: ["#EBF4FF", "#DBEAFE"] },
+  career: { color: "#10B981", gradientColors: ["#ECFDF5", "#D1FAE5"] },
+  conference: { color: "#EC4899", gradientColors: ["#FDF2F8", "#FCE7F3"] },
+  workshop: { color: "#06B6D4", gradientColors: ["#F0F9FF", "#E0F7FA"] },
+  open: { color: "#8B5CF6", gradientColors: ["#F5F3FF", "#EDE9FE"] },
+  research: { color: "#F59E0B", gradientColors: ["#FFFBEB", "#FEF3C7"] },
+}
 
 const AdminEventsScreen = () => {
-  const [events, setEvents] = useState<Evenement[]>(evenementsData)
+  const [events, setEvents] = useState<Evenement[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Evenement | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<string | null>(null)
+  const [showCreatePage, setShowCreatePage] = useState(false)
+  const [showEditPage, setShowEditPage] = useState(false)
+  const [eventToEdit, setEventToEdit] = useState<Evenement | null>(null)
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [showCalendar, setShowCalendar] = useState(true)
@@ -144,6 +170,115 @@ const AdminEventsScreen = () => {
   const upcomingEvents = events.filter((event) => event.date >= today).sort((a, b) => a.date.localeCompare(b.date))
 
   const evenementsFiltres = selectedDate ? events.filter((event) => event.date === selectedDate) : upcomingEvents
+
+  useEffect(() => {
+    const fetchEvenements = async () => {
+      try {
+        const response = await api.get("/evenement/")
+        const data = response.data
+
+        console.log("✅ Données reçues (Admin) :", data)
+
+        // Formatage des événements (adapter en fonction des noms SQL)
+        const mappedEvents = data.map((event: any) => ({
+          id: event.Id_Event.toString(),
+          titre: event.titre_Event,
+          description: event.description_Event,
+          date: event.date_Event.split("T")[0],
+          heure: event.horaire_Event,
+          lieu: event.lieu_Event,
+          categorie: getCategorie(event.ID_typeEvenement),
+          color: getColor(event.ID_typeEvenement),
+          gradientColors: getGradient(event.ID_typeEvenement),
+        }))
+
+        setEvents(mappedEvents)
+      } catch (error) {
+        console.error("Erreur récupération événements (Admin) :", error)
+      }
+    }
+
+    fetchEvenements()
+  }, [])
+
+  const getCategorie = (typeId: number): string => {
+    switch (typeId) {
+      case 1:
+        return "tech"
+      case 2:
+        return "career"
+      case 3:
+        return "conference"
+      case 4:
+        return "workshop"
+      case 5:
+        return "open"
+      case 6:
+        return "research"
+      default:
+        return "default"
+    }
+  }
+
+  const getColor = (typeId: number): string => {
+    switch (typeId) {
+      case 1:
+        return "#3B82F6"
+      case 2:
+        return "#10B981"
+      case 3:
+        return "#EC4899"
+      case 4:
+        return "#06B6D4"
+      case 5:
+        return "#8B5CF6"
+      case 6:
+        return "#F59E0B"
+      default:
+        return "#64748B"
+    }
+  }
+
+  const getGradient = (typeId: number): [string, string] => {
+    switch (typeId) {
+      case 1:
+        return ["#EBF4FF", "#DBEAFE"]
+      case 2:
+        return ["#ECFDF5", "#D1FAE5"]
+      case 3:
+        return ["#FDF2F8", "#FCE7F3"]
+      case 4:
+        return ["#F0F9FF", "#E0F7FA"]
+      case 5:
+        return ["#F5F3FF", "#EDE9FE"]
+      case 6:
+        return ["#FFFBEB", "#FEF3C7"]
+      default:
+        return ["#F1F5F9", "#E2E8F0"]
+    }
+  }
+
+  // Gestion du bouton retour du téléphone
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (showCreatePage) {
+          setShowCreatePage(false)
+          return true // Empêche le comportement par défaut
+        }
+        if (showEditPage) {
+          setShowEditPage(false)
+          setEventToEdit(null)
+          return true // Empêche le comportement par défaut
+        }
+        return false // Laisse le comportement par défaut
+      }
+
+      const backHandler = BackHandler.addEventListener("hardwareBackPress", onBackPress)
+
+      return () => backHandler.remove()
+    }, [showCreatePage, showEditPage]),
+  )
 
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
@@ -176,9 +311,83 @@ const AdminEventsScreen = () => {
     }
   }
 
-  const handleDeleteEvent = (eventId: string) => {
-    setEvents(events.filter((event) => event.id !== eventId))
-    setEventToDelete(null)
+  const refreshEvents = async () => {
+    try {
+      const response = await api.get("/evenement/")
+      const data = response.data
+
+      const mappedEvents = data.map((event: any) => ({
+        id: event.Id_Event.toString(),
+        titre: event.titre_Event,
+        description: event.description_Event,
+        date: event.date_Event.split("T")[0],
+        heure: event.horaire_Event,
+        lieu: event.lieu_Event,
+        categorie: getCategorie(event.ID_typeEvenement),
+        color: getColor(event.ID_typeEvenement),
+        gradientColors: getGradient(event.ID_typeEvenement),
+      }))
+
+      setEvents(mappedEvents)
+    } catch (error) {
+      console.error("Erreur rafraîchissement événements :", error)
+    }
+  }
+
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await api.delete(`/evenement/${eventId}`)
+      await refreshEvents() // Rafraîchir la liste après suppression
+      setEventToDelete(null)
+      setIsDeleteModalOpen(false)
+    } catch (error) {
+      console.error("Erreur suppression événement :", error)
+      // Optionnel : afficher un message d'erreur à l'utilisateur
+    }
+  }
+
+  const handleCreateEvent = async (eventData: EventFormData) => {
+    // Logique de création via API (à implémenter selon votre backend)
+    // await api.post("/evenement/", eventData);
+
+    // Pour l'instant, on garde la logique locale et on rafraîchit
+    const categoryStyle = categoryColors[eventData.categorie] || categoryColors.tech
+    const newEvent: Evenement = {
+      id: Date.now().toString(),
+      ...eventData,
+      color: categoryStyle.color,
+      gradientColors: categoryStyle.gradientColors,
+    }
+    setEvents([...events, newEvent])
+    setShowCreatePage(false)
+
+    // Optionnel : rafraîchir depuis la base après création
+    // await refreshEvents();
+  }
+
+  const handleEditEvent = async (eventId: string, eventData: EventFormData) => {
+    // Logique de modification via API (à implémenter selon votre backend)
+    // await api.put(`/evenement/${eventId}`, eventData);
+
+    // Pour l'instant, on garde la logique locale
+    const categoryStyle = categoryColors[eventData.categorie] || categoryColors.tech
+    setEvents(
+      events.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              ...eventData,
+              color: categoryStyle.color,
+              gradientColors: categoryStyle.gradientColors,
+            }
+          : event,
+      ),
+    )
+    setShowEditPage(false)
+    setEventToEdit(null)
+
+    // Optionnel : rafraîchir depuis la base après modification
+    // await refreshEvents();
   }
 
   const openEventDetail = (event: Evenement) => {
@@ -186,9 +395,9 @@ const AdminEventsScreen = () => {
     setIsDetailModalOpen(true)
   }
 
-  const openEditModal = (event: Evenement) => {
-    setSelectedEvent(event)
-    setIsEditModalOpen(true)
+  const openEditPage = (event: Evenement) => {
+    setEventToEdit(event)
+    setShowEditPage(true)
   }
 
   const confirmDelete = (eventId: string) => {
@@ -240,17 +449,33 @@ const AdminEventsScreen = () => {
     setShowCalendar(!showCalendar)
   }
 
+  // Si on est sur la page de création, afficher cette page
+  if (showCreatePage) {
+    return <CreateEventPage onBack={() => setShowCreatePage(false)} onSave={handleCreateEvent} />
+  }
+
+  // Si on est sur la page de modification, afficher cette page
+  if (showEditPage && eventToEdit) {
+    return (
+      <EditEventPage
+        event={eventToEdit}
+        onBack={() => {
+          setShowEditPage(false)
+          setEventToEdit(null)
+        }}
+        onSave={handleEditEvent}
+      />
+    )
+  }
+
   return (
     <View style={styles.container}>
-      <HeaderPage title="Administration des Événements" />
-
-      <View style={styles.headerContainer}>
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>Événements</Text>
-          <TouchableOpacity style={styles.addButton} onPress={() => setIsAddModalOpen(true)}>
-            <Ionicons name="add" size={24} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
+      {/* Header */}
+      <View style={styles.header}>
+        <HeaderPage title="Administration des Événements" />
+        <TouchableOpacity style={styles.addButton} onPress={() => setShowCreatePage(true)} activeOpacity={0.7}>
+          <Ionicons name="add" size={24} color="#000000" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -350,7 +575,7 @@ const AdminEventsScreen = () => {
                             style={styles.actionButton}
                             onPress={(e) => {
                               e.stopPropagation()
-                              openEditModal(event)
+                              openEditPage(event)
                             }}
                           >
                             <Ionicons name="create-outline" size={20} color="#3B82F6" />
@@ -472,30 +697,6 @@ const AdminEventsScreen = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de modification */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier l'événement</DialogTitle>
-            <DialogDescription>
-              Fonctionnalité en cours de développement. Le formulaire de modification sera disponible prochainement.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedEvent && (
-            <View style={styles.editModalContent}>
-              <Text style={styles.editModalText}>
-                Événement sélectionné : <Text style={styles.editModalEventName}>{selectedEvent.titre}</Text>
-              </Text>
-            </View>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onPress={() => setIsEditModalOpen(false)}>
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Modal de confirmation de suppression */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
@@ -534,30 +735,31 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
-  headerContainer: {
+  header: {
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
     paddingHorizontal: 20,
     paddingVertical: 16,
-  },
-  headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#1E293B",
+    justifyContent: "space-between",
+    position: "relative",
   },
   addButton: {
-    backgroundColor: "#3B82F6",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
+    position: "absolute",
+    right: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,
@@ -794,17 +996,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#64748B",
     lineHeight: 22,
-  },
-  editModalContent: {
-    paddingVertical: 16,
-  },
-  editModalText: {
-    fontSize: 14,
-    color: "#64748B",
-  },
-  editModalEventName: {
-    fontWeight: "600",
-    color: "#1E293B",
   },
 })
 

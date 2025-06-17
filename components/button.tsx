@@ -9,8 +9,8 @@ interface ButtonProps {
   disabled?: boolean
   loading?: boolean
   className?: string
-  style?: ViewStyle
-  textStyle?: TextStyle
+  style?: import("react-native").StyleProp<ViewStyle>
+  textStyle?: import("react-native").StyleProp<TextStyle>
 }
 
 export const Button = ({
