@@ -1,10 +1,13 @@
 "use client"
 
+import api from "@/api/axiosClient";
 import { useSession } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/hooks/useUserDetails";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import {
+  Alert,
   Modal,
   SafeAreaView,
   ScrollView,
@@ -12,6 +15,7 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TextInput,
   TouchableOpacity,
   View
 } from "react-native";
@@ -35,18 +39,110 @@ interface SettingItem {
 interface SettingsGroup {
   title: string
   items: SettingItem[]
+  visible?: boolean | (() => boolean)
 }
 
 const ParametresAdminScreen = () => {
-  const router = useRouter();
   const { user, signOut } = useSession();
+  const router = useRouter();
+
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null);;
+  const userRole = role?.toLowerCase();
+
+  const handleSignOut = useCallback(() => {
+    signOut()
+  }, [signOut])
 
   // États pour les switches
   const [notifications, setNotifications] = useState(true)
   const [emailAlerts, setEmailAlerts] = useState(true)
   const [securityAlerts, setSecurityAlerts] = useState(true)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
+  const [apparenceMode, setapparenceMode] = useState(false)
+  const [isAdminMode, setIsAdminMode] = useState(false);
+
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  if (loading) return <Text>Chargement...</Text>;
+  if (error) return <Text>Erreur lors du chargement</Text>;
+
+  const onToogleAdminMode = () => {
+    setIsAdminMode(!isAdminMode);
+    Alert.alert(
+      "Mode Maintenance",
+      `Le mode maintenance est maintenant ${!apparenceMode ? "activé" : "désactivé"}.`,
+      [{ text: "OK" }]
+    );
+  }
+
+  const validatePassword = (password: string) => {
+    const hasMinLength = password.length >= 8;
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasNumber = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    return {
+      hasMinLength,
+      hasUpperCase,
+      hasNumber,
+      hasSpecialChar,
+      isValid: hasMinLength && hasUpperCase && hasNumber && hasSpecialChar
+    };
+  };
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword.trim()) {
+      Alert.alert("Erreur", "Veuillez saisir votre mot de passe actuel");
+      return;
+    }
+    const validation = validatePassword(newPassword);
+    if (!validation.isValid) {
+      Alert.alert("Erreur", "Le nouveau mot de passe ne respecte pas les critères requis");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
+      return;
+    }
+    try {
+      await api.put(`/user/updatePassword/${user?.id}`, {
+        oldPassword: currentPassword,
+        newPassword: newPassword,
+      });
+
+      Alert.alert("Succès", "Mot de passe modifié avec succès", [
+        {
+          text: "OK",
+          onPress: () => {
+            setShowPasswordModal(false);
+            resetPasswordModal();
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error("Erreur modification mot de passe :", error);
+
+      const message = error.response?.data?.message || "Une erreur est survenue";
+      Alert.alert("Erreur", message);
+    }
+  };
+
+
+  const resetPasswordModal = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
 
   const settingsGroups: SettingsGroup[] = [
     {
@@ -99,14 +195,15 @@ const ParametresAdminScreen = () => {
     },
     {
       title: "Administration",
+      visible: userRole === "admin",
       items: [
         {
           id: "maintenance",
           title: "Mode maintenance",
           subtitle: "Activer le mode maintenance de la plateforme",
           type: "switch",
-          value: maintenanceMode,
-          onToggle: setMaintenanceMode,
+          value: apparenceMode,
+          onToggle: onToogleAdminMode,
         },
         {
           id: "logs",
@@ -114,6 +211,19 @@ const ParametresAdminScreen = () => {
           subtitle: "Consulter les logs d'activité",
           type: "navigation",
           icon: "document-text-outline",
+        },
+      ]
+    },
+    {
+      title: "Apparence",
+      items: [
+        {
+          id: "theme",
+          title: "Mode sombre",
+          subtitle: "Personnaliser l'apparence de l'application",
+          type: "switch",
+          value: maintenanceMode,
+          onToggle: setMaintenanceMode,
         },
       ]
     },
@@ -142,17 +252,25 @@ const ParametresAdminScreen = () => {
   const handleItemPress = (item: SettingItem) => {
     if (item.type === "navigation") {
       if (item.id === "privacy") {
-        setShowPrivacyModal(true); // Affiche le modal
+        setShowPrivacyModal(true);
+      } else if (item.id === "password") {
+        setShowPasswordModal(true);
       } else {
         console.log(`Navigate to ${item.id}`);
       }
     } else if (item.type === "action") {
       if (item.id === "logout") {
-        signOut(); // Déconnexion de l'utilisateur
+        signOut();
       }
     }
+
   };
 
+  const filteredSettingsGroups = settingsGroups.filter(group => {
+    if (typeof group.visible === "boolean") return group.visible;
+    if (typeof group.visible === "function") return group.visible();
+    return true; // visible par défaut
+  });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -173,7 +291,7 @@ const ParametresAdminScreen = () => {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
 
-          {settingsGroups.map((group, groupIndex) => (
+          {filteredSettingsGroups.map((group, groupIndex) => (
             <Animated.View
               key={group.title}
               entering={FadeInDown.delay(100 + groupIndex * 100)}
@@ -290,6 +408,179 @@ const ParametresAdminScreen = () => {
               </Text>
 
               <Text style={styles.lastUpdated}>Dernière mise à jour : Janvier 2024</Text>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+      {/* Modal de changement de mot de passe */}
+      <Modal
+        visible={showPasswordModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => {
+          setShowPasswordModal(false);
+          resetPasswordModal();
+        }}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Changer le mot de passe</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => {
+                setShowPasswordModal(false);
+                resetPasswordModal();
+              }}
+            >
+              <Ionicons name="close" size={24} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.modalScrollContent}>
+
+              {/* Mot de passe actuel */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Mot de passe actuel</Text>
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={currentPassword}
+                    onChangeText={setCurrentPassword}
+                    secureTextEntry={!showCurrentPassword}
+                    placeholder="Saisissez votre mot de passe actuel"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowCurrentPassword(!showCurrentPassword)}
+                  >
+                    <Ionicons
+                      name={showCurrentPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Nouveau mot de passe */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Nouveau mot de passe</Text>
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={newPassword}
+                    onChangeText={setNewPassword}
+                    secureTextEntry={!showNewPassword}
+                    placeholder="Saisissez votre nouveau mot de passe"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowNewPassword(!showNewPassword)}
+                  >
+                    <Ionicons
+                      name={showNewPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Critères de validation */}
+                {newPassword.length > 0 && (
+                  <View style={styles.validationContainer}>
+                    <Text style={styles.validationTitle}>Critères requis :</Text>
+                    {[
+                      { key: 'hasMinLength', text: 'Au moins 8 caractères', valid: validatePassword(newPassword).hasMinLength },
+                      { key: 'hasUpperCase', text: 'Au moins une majuscule', valid: validatePassword(newPassword).hasUpperCase },
+                      { key: 'hasNumber', text: 'Au moins un chiffre', valid: validatePassword(newPassword).hasNumber },
+                      { key: 'hasSpecialChar', text: 'Au moins un caractère spécial', valid: validatePassword(newPassword).hasSpecialChar },
+                    ].map((criterion) => (
+                      <View key={criterion.key} style={styles.validationItem}>
+                        <Ionicons
+                          name={criterion.valid ? "checkmark-circle" : "close-circle"}
+                          size={16}
+                          color={criterion.valid ? "#10B981" : "#EF4444"}
+                        />
+                        <Text style={[
+                          styles.validationText,
+                          { color: criterion.valid ? "#10B981" : "#EF4444" }
+                        ]}>
+                          {criterion.text}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              {/* Confirmation du mot de passe */}
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Confirmer le nouveau mot de passe</Text>
+                <View style={styles.passwordInputContainer}>
+                  <TextInput
+                    style={styles.passwordInput}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    placeholder="Confirmez votre nouveau mot de passe"
+                    placeholderTextColor="#94A3B8"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeButton}
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    <Ionicons
+                      name={showConfirmPassword ? "eye-off" : "eye"}
+                      size={20}
+                      color="#64748B"
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Vérification de correspondance */}
+                {confirmPassword.length > 0 && (
+                  <View style={styles.validationItem}>
+                    <Ionicons
+                      name={newPassword === confirmPassword ? "checkmark-circle" : "close-circle"}
+                      size={16}
+                      color={newPassword === confirmPassword ? "#10B981" : "#EF4444"}
+                    />
+                    <Text style={[
+                      styles.validationText,
+                      { color: newPassword === confirmPassword ? "#10B981" : "#EF4444" }
+                    ]}>
+                      {newPassword === confirmPassword ? "Les mots de passe correspondent" : "Les mots de passe ne correspondent pas"}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Boutons d'action */}
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={() => {
+                    setShowPasswordModal(false);
+                    resetPasswordModal();
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Annuler</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.saveButton,
+                    (!validatePassword(newPassword).isValid || newPassword !== confirmPassword || !currentPassword.trim()) && styles.saveButtonDisabled
+                  ]}
+                  onPress={handlePasswordChange}
+                  disabled={!validatePassword(newPassword).isValid || newPassword !== confirmPassword || !currentPassword.trim()}
+                >
+                  <Text style={styles.saveButtonText}>Modifier</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </ScrollView>
         </SafeAreaView>
@@ -443,6 +734,93 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 20,
     fontStyle: "italic",
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  passwordInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#1E293B",
+  },
+  eyeButton: {
+    padding: 12,
+  },
+  validationContainer: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: "#F8FAFC",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  validationTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  validationItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  validationText: {
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 32,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    backgroundColor: "#3B82F6",
+    alignItems: "center",
+  },
+  saveButtonDisabled: {
+    backgroundColor: "#94A3B8",
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 
 })

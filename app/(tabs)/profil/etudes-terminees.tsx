@@ -71,7 +71,7 @@ const EtudesTermineesScreen = () => {
 
   const handleStudyPress = (study: any) => {
     router.push({
-      pathname: '/(tabs)/profilIntervenant/detail_etude',
+      pathname: '/profil/detail_etude',
       params: {
         id: study.id,
         title: study.title,

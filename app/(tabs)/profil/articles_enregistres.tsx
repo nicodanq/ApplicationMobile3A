@@ -204,7 +204,7 @@ const ArticlesEnregistresScreen = () => {
               </Text>
               <TouchableOpacity 
                 style={styles.exploreButton}
-                onPress={() => router.push('/(tabs)/profilIntervenant/detail_article')}
+                onPress={() => router.push('/profil/detail_article')}
               >
                 <Text style={styles.exploreButtonText}>Explorer les articles</Text>
               </TouchableOpacity>

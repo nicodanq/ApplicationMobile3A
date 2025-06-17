@@ -1,7 +1,10 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import api from "@/api/axiosClient";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   Alert,
   Dimensions,
@@ -12,81 +15,56 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native"
-import { useState } from "react"
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+} from "react-native";
 
-import FooterLogo from "@/components/FooterLogo"
+
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+
+import FooterLogo from "@/components/FooterLogo";
+
 
 const { width, height } = Dimensions.get("window")
 
+
 // Données fictives des utilisateurs
-const utilisateurs = [
-  {
-    ID_user: 1,
-    prenom_user: "Amandine",
-    nom_user: "BOULET",
-    email_user: "amandine.boulet@epfedu.fr",
-    bio_user: "Étudiante en informatique passionnée par le développement web",
-    github_user: "https://github.com/amandine-boulet",
-    dateCreation_user: "2024-01-15",
-    statut_user: true,
-    dateNaissance: "2004-02-23",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 2,
-    prenom_user: "Federico",
-    nom_user: "POSSAMAI",
-    email_user: "federico.possamai@epfedu.fr",
-    bio_user: "Développeur full-stack avec expertise en systèmes distribués",
-    github_user: "https://github.com/federico-possamai",
-    dateCreation_user: "2024-01-10",
-    statut_user: true,
-    dateNaissance: "2003-03-15",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 3,
-    prenom_user: "Lina",
-    nom_user: "BENABDELOUAHED",
-    email_user: "lina.benabdelouahed@epfedu.fr",
-    bio_user: "Spécialiste en intelligence artificielle et machine learning",
-    github_user: "https://github.com/lina-benabdelouahed",
-    dateCreation_user: "2024-01-08",
-    statut_user: false,
-    dateNaissance: "2004-07-08",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 4,
-    prenom_user: "Nicolas",
-    nom_user: "DANQUIGNY",
-    email_user: "nicolas.danquigny@epfedu.fr",
-    bio_user: "Expert en cybersécurité et développement sécurisé",
-    github_user: "https://github.com/nicolas-danquigny",
-    dateCreation_user: "2024-01-05",
-    statut_user: true,
-    dateNaissance: "2003-11-12",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-  }
-]
+
 
 const GererUtilisateursScreen = () => {
   const router = useRouter()
-  const [users, setUsers] = useState(utilisateurs)
+  const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [searchText, setSearchText] = useState("")
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     user.prenom_user.toLowerCase().includes(searchText.toLowerCase()) ||
     user.nom_user.toLowerCase().includes(searchText.toLowerCase()) ||
     user.email_user.toLowerCase().includes(searchText.toLowerCase())
+  )
+
+  const [loading, setLoading] = useState(true)
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUsers = async () => {
+        setLoading(true)
+        try {
+          const response = await api.get("/user")
+          setUsers(response.data)
+        } catch (error) {
+          console.error("Erreur lors du chargement des utilisateurs :", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchUsers()
+    }, [])
   )
 
   const handleUserPress = (user: any) => {
@@ -94,27 +72,49 @@ const GererUtilisateursScreen = () => {
     setModalVisible(true)
   }
 
-  const handleToggleStatus = (userId: number) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.ID_user === userId 
-          ? { ...user, statut_user: !user.statut_user }
-          : user
-      )
-    )
-    setSelectedUser((prev: any) => 
-      prev ? { ...prev, statut_user: !prev.statut_user } : null
-    )
-  }
+  const handleToggleStatus = async (userId: number) => {
+    const updatedUsers = users.map(user =>
+      user.ID_user === userId
+        ? { ...user, statut_user: !user.statut_user }
+        : user
+    );
+    setUsers(updatedUsers);
 
-  const handleDeleteUser = (userId: number) => {
+    const updatedUser = updatedUsers.find(u => u.ID_user === userId);
+    setSelectedUser(updatedUser ?? null);
+
+    try {
+      await api.put(`/user/updateStatus/${userId}`, {
+        statut_user: updatedUser?.statut_user,
+      });
+
+      Alert.alert(
+        "Succès",
+        `L'utilisateur a été ${updatedUser?.statut_user ? "activé" : "désactivé"}`
+      );
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du statut :", error);
+      Alert.alert(
+        "Erreur",
+        "Impossible de mettre à jour le statut de l'utilisateur"
+      );
+      // Optionnel : rollback en cas d'erreur
+      setUsers(users);
+      setSelectedUser(selectedUser);
+    }
+  };
+
+
+  const handleDeleteUser = async (userId: number) => {
+    console.log("Suppression de l'utilisateur avec ID :", userId)
+    await api.delete(`/user/delete/${userId}`)
     Alert.alert(
       "Supprimer l'utilisateur",
       "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.",
       [
         { text: "Annuler", style: "cancel" },
-        { 
-          text: "Supprimer", 
+        {
+          text: "Supprimer",
           style: "destructive",
           onPress: () => {
             setUsers(prev => prev.filter(user => user.ID_user !== userId))
@@ -247,7 +247,7 @@ const GererUtilisateursScreen = () => {
                       <Ionicons name="time-outline" size={20} color="#8B5CF6" />
                     </View>
                     <View style={styles.modalDetailContent}>
-                      <Text style={styles.modalDetailLabel}>Date d'inscription</Text>
+                      <Text style={styles.modalDetailLabel}>Date d&apos;inscription</Text>
                       <Text style={styles.modalDetailValue}>
                         {new Date(selectedUser.dateCreation_user).toLocaleDateString()}
                       </Text>
@@ -279,25 +279,17 @@ const GererUtilisateursScreen = () => {
 
                 {/* Actions */}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.modalActionButton,
-                      { backgroundColor: selectedUser.statut_user ? "#F59E0B" : "#10B981" }
-                    ]}
-                    onPress={() => handleToggleStatus(selectedUser.ID_user)}
-                  >
-                    <Ionicons 
-                      name={selectedUser.statut_user ? "pause" : "play"} 
-                      size={20} 
-                      color="white" 
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Statut</Text>
+                    <Switch
+                      value={selectedUser?.statut_user}
+                      onValueChange={() => handleToggleStatus(selectedUser.ID_user)}
+                      thumbColor={selectedUser?.statut_user ? "#10B981" : "#EF4444"}
+                      trackColor={{ false: "#FECACA", true: "#BBF7D0" }}
                     />
-                    <Text style={styles.modalActionText}>
-                      {selectedUser.statut_user ? "Désactiver" : "Activer"}
-                    </Text>
-                  </TouchableOpacity>
-
+                  </View>
                   <TouchableOpacity
-                    style={[styles.modalActionButton, { backgroundColor: "#EF4444" }]}
+                    style={[styles.modalActionButton, styles.deleteButton]}
                     onPress={() => handleDeleteUser(selectedUser.ID_user)}
                   >
                     <Ionicons name="trash-outline" size={20} color="white" />
@@ -318,17 +310,17 @@ const GererUtilisateursScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestion des utilisateurs</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(tabs)/profiladmin/creer-utilisateur')}
+          onPress={() => router.push('/profil/creer-utilisateur')}
           activeOpacity={0.7}
         >
           <Ionicons name="add" size={24} color="#000000" />
@@ -610,24 +602,46 @@ const styles = StyleSheet.create({
   linkText: {
     color: "#3B82F6",
   },
+
   modalActions: {
     flexDirection: "row",
-    gap: 12,
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
   },
+
   modalActionButton: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
-    gap: 8,
+    backgroundColor: "#EF4444",
   },
+
+  deleteButton: {
+    flexShrink: 1,
+  },
+
   modalActionText: {
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+    marginLeft: 8,
   },
+
+  switchContainer: {
+    alignItems: "center",
+    marginLeft: 16,
+  },
+
+  switchLabel: {
+    fontSize: 12,
+    color: "#64748B",
+    marginBottom: 4,
+  },
+
 })
 
 export default GererUtilisateursScreen

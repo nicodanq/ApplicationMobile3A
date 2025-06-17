@@ -12,10 +12,12 @@ export async function updateUser(req: Request, res: Response) {
     github_user,
     dateNaissance,
     telephone_user,
-    statut_user,
+    adresse_user,
+    ville_user,
+    code_postal_user,
   } = req.body;
 
-  if (!prenom_user || !nom_user || !email_user || statut_user === undefined) {
+  if (!prenom_user || !nom_user || !email_user) {
     return res.status(400).json({ message: "Champs requis manquants." });
   }
 
@@ -29,7 +31,9 @@ export async function updateUser(req: Request, res: Response) {
            github_user = ?,
            dateNaissance = ?,
            telephone_user = ?,
-           statut_user = ?
+           adresse_user = ?,
+           ville_user = ?,
+           code_postal_user = ?
        WHERE ID_user = ?`,
       [
         prenom_user,
@@ -39,7 +43,9 @@ export async function updateUser(req: Request, res: Response) {
         github_user || null,
         dateNaissance || null,
         telephone_user || null,
-        statut_user,
+        adresse_user || null,
+        ville_user || null,
+        code_postal_user || null,
         userId
       ]
     );

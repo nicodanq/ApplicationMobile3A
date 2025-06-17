@@ -19,62 +19,48 @@ import FooterLogo from "@/components/FooterLogo"
 
 const { width } = Dimensions.get("window")
 
-// Données fictives pour les études postulées
-const postuledStudies = [
+// Données fictives pour les études en cours
+const currentStudies = [
   {
     id: "1",
-    title: "Intelligence Artificielle Avancée",
-    description: "Formation complète sur l'IA et le machine learning avec Python et TensorFlow",
-    image: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=200&fit=crop",
-    status: "En attente",
-    appliedDate: "15 Jan 2024",
-    duration: "6 mois",
-    level: "Avancé",
-    statusColor: "#F59E0B",
-    type: "postulée"
+    title: "Développement Web Full-Stack",
+    description: "Formation complète en développement web moderne avec React, Node.js et bases de données",
+    image: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400&h=200&fit=crop",
+    progress: 65,
+    nextSession: "Lundi 22 Jan - 14h00",
+    modules: { completed: 8, total: 12 },
+    color: "#10B981",
+    type: "enCours"
   },
   {
     id: "2",
-    title: "Cybersécurité Éthique",
-    description: "Apprenez les techniques de hacking éthique et de protection des systèmes",
-    image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&h=200&fit=crop",
-    status: "En cours d'évaluation",
-    appliedDate: "10 Jan 2024",
-    duration: "4 mois",
-    level: "Intermédiaire",
-    statusColor: "#3B82F6",
-    type: "postulée"
-  },
-  {
-    id: "3",
-    title: "Data Science & Analytics",
-    description: "Maîtrisez l'analyse de données et la visualisation avec R et Python",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
-    status: "Dossier incomplet",
-    appliedDate: "5 Jan 2024",
-    duration: "5 mois",
-    level: "Intermédiaire",
-    statusColor: "#EF4444",
-    type: "postulée"
+    title: "Gestion de Projet Digital",
+    description: "Maîtrisez les outils et méthodes de gestion de projet dans l'environnement digital",
+    image: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop",
+    progress: 30,
+    nextSession: "Mercredi 24 Jan - 10h00",
+    modules: { completed: 3, total: 10 },
+    color: "#8B5CF6",
+    type: "enCours"
   }
 ]
 
-const EtudesPostuleesScreen = () => {
+const EtudesEnCoursScreen = () => {
   const router = useRouter()
 
   const handleStudyPress = (study: any) => {
     router.push({
-      pathname: '/(tabs)/profilIntervenant/detail_etude',
+      pathname: '/profil/detail_etude',
       params: {
         id: study.id,
         title: study.title,
         description: study.description,
         image: study.image,
-        status: study.status,
-        appliedDate: study.appliedDate,
-        duration: study.duration,
-        level: study.level,
-        statusColor: study.statusColor,
+        progress: study.progress.toString(),
+        nextSession: study.nextSession,
+        modulesCompleted: study.modules.completed.toString(),
+        modulesTotal: study.modules.total.toString(),
+        color: study.color,
         type: study.type
       }
     })
@@ -93,7 +79,7 @@ const EtudesPostuleesScreen = () => {
         >
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Études postulées</Text>
+        <Text style={styles.headerTitle}>Études en cours</Text>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -102,28 +88,28 @@ const EtudesPostuleesScreen = () => {
           {/* Stats */}
           <Animated.View entering={FadeInDown.delay(100)} style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{postuledStudies.length}</Text>
-              <Text style={styles.statLabel}>Candidatures</Text>
+              <Text style={styles.statNumber}>{currentStudies.length}</Text>
+              <Text style={styles.statLabel}>Formations actives</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>
-                {postuledStudies.filter(s => s.status === "En attente").length}
+                {Math.round(currentStudies.reduce((acc, study) => acc + study.progress, 0) / currentStudies.length)}%
               </Text>
-              <Text style={styles.statLabel}>En attente</Text>
+              <Text style={styles.statLabel}>Progression</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>
-                {postuledStudies.filter(s => s.status === "En cours d'évaluation").length}
+                {currentStudies.reduce((acc, study) => acc + study.modules.completed, 0)}
               </Text>
-              <Text style={styles.statLabel}>En évaluation</Text>
+              <Text style={styles.statLabel}>Modules terminés</Text>
             </View>
           </Animated.View>
 
           {/* Liste des études */}
           <View style={styles.studiesContainer}>
-            {postuledStudies.map((study, index) => (
+            {currentStudies.map((study, index) => (
               <Animated.View
                 key={study.id}
                 entering={FadeInDown.delay(200 + index * 100)}
@@ -139,26 +125,44 @@ const EtudesPostuleesScreen = () => {
                     <Text style={styles.studyTitle}>{study.title}</Text>
                     <Text style={styles.studyDescription}>{study.description}</Text>
                     
-                    <View style={styles.studyMeta}>
-                      <View style={styles.metaItem}>
-                        <Ionicons name="time-outline" size={16} color="#64748B" />
-                        <Text style={styles.metaText}>{study.duration}</Text>
+                    {/* Barre de progression */}
+                    <View style={styles.progressContainer}>
+                      <View style={styles.progressHeader}>
+                        <Text style={styles.progressLabel}>Progression</Text>
+                        <Text style={[styles.progressPercent, { color: study.color }]}>
+                          {study.progress}%
+                        </Text>
                       </View>
-                      <View style={styles.metaItem}>
-                        <Ionicons name="bar-chart-outline" size={16} color="#64748B" />
-                        <Text style={styles.metaText}>{study.level}</Text>
+                      <View style={styles.progressBar}>
+                        <View 
+                          style={[
+                            styles.progressFill, 
+                            { 
+                              width: `${study.progress}%`,
+                              backgroundColor: study.color
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.modulesText}>
+                        {study.modules.completed}/{study.modules.total} modules terminés
+                      </Text>
+                    </View>
+
+                    {/* Prochaine session */}
+                    <View style={styles.nextSessionContainer}>
+                      <View style={styles.sessionIcon}>
+                        <Ionicons name="calendar-outline" size={16} color="#3B82F6" />
+                      </View>
+                      <View>
+                        <Text style={styles.sessionLabel}>Prochaine session</Text>
+                        <Text style={styles.sessionText}>{study.nextSession}</Text>
                       </View>
                     </View>
 
-                    <View style={styles.studyFooter}>
-                      <View style={[styles.statusBadge, { backgroundColor: `${study.statusColor}15` }]}>
-                        <View style={[styles.statusDot, { backgroundColor: study.statusColor }]} />
-                        <Text style={[styles.statusText, { color: study.statusColor }]}>
-                          {study.status}
-                        </Text>
-                      </View>
-                      <Text style={styles.appliedDate}>Postulé le {study.appliedDate}</Text>
-                    </View>
+                    <TouchableOpacity style={[styles.continueButton, { backgroundColor: study.color }]}>
+                      <Text style={styles.continueButtonText}>Continuer</Text>
+                    </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
               </Animated.View>
@@ -262,48 +266,77 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748B",
     lineHeight: 20,
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  studyMeta: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 16,
+  progressContainer: {
+    marginBottom: 20,
   },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  metaText: {
-    fontSize: 14,
-    color: "#64748B",
-  },
-  studyFooter: {
+  progressHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginBottom: 8,
   },
-  statusBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+  progressLabel: {
+    fontSize: 14,
+    color: "#64748B",
   },
-  statusDot: {
-    width: 6,
+  progressPercent: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  progressBar: {
     height: 6,
+    backgroundColor: "#E2E8F0",
+    borderRadius: 3,
+    overflow: "hidden",
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: "100%",
     borderRadius: 3,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  appliedDate: {
+  modulesText: {
     fontSize: 12,
     color: "#94A3B8",
   },
+  nextSessionContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 20,
+    gap: 12,
+  },
+  sessionIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  sessionLabel: {
+    fontSize: 12,
+    color: "#64748B",
+    marginBottom: 2,
+  },
+  sessionText: {
+    fontSize: 14,
+    color: "#1E293B",
+    fontWeight: "500",
+  },
+  continueButton: {
+    paddingVertical: 12,
+    borderRadius: 25,
+    alignItems: "center",
+  },
+  continueButtonText: {
+    color: "white",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 })
 
-export default EtudesPostuleesScreen
+export default EtudesEnCoursScreen

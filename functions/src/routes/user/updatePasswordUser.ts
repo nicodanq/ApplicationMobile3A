@@ -13,15 +13,15 @@ export async function updatePassword(req: Request, res: Response) {
   try {
     // Récupération du mot de passe actuel hashé
     const [rows] = await pool.query("SELECT mdp_user FROM user WHERE ID_user = ?", [userId]);
-
+    console.log("Résultat requête SELECT :", (rows as any)[0].mdp_user);
+    
     if ((rows as any[]).length === 0) {
       return res.status(404).json({ message: "Utilisateur non trouvé." });
     }
-
     const hashedPassword = (rows as any)[0].mdp_user;
 
-    const isMatch = await bcrypt.compare(oldPassword, hashedPassword);
-
+    //const isMatch = await bcrypt.compare(oldPassword, hashedPassword);
+    const isMatch = oldPassword === hashedPassword;
     if (!isMatch) {
       return res.status(401).json({ message: "Ancien mot de passe incorrect." });
     }
@@ -33,6 +33,7 @@ export async function updatePassword(req: Request, res: Response) {
     return res.status(200).json({ message: "Mot de passe mis à jour avec succès." });
   } catch (err) {
     console.error("Erreur lors du changement de mot de passe :", err);
+
     return res.status(500).json({ message: "Erreur serveur." });
   }
 }
