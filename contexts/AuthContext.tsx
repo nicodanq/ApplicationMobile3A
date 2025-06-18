@@ -9,17 +9,21 @@ type User = {
 interface AuthContextType {
   signIn: (userData: { token: string; id: number; email: string }) => void;
   signOut: () => void;
+  toggleAdminMode: () => void;
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  isAdminMode: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
   signIn: () => {},
   signOut: () => {},
+  toggleAdminMode: () => {},
   user: null,
   token: null,
   isLoading: true,
+  isAdminMode: false,
 });
 
 export function useSession() {
@@ -34,6 +38,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(true);
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -66,6 +71,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
     await AsyncStorage.multiRemove(['session', 'user']);
     setToken(null);
     setUser(null);
+    setIsAdminMode(false); // On désactive le mode admin à la déconnexion
+  };
+
+  const toggleAdminMode = () => {
+    setIsAdminMode((prev) => !prev);
   };
 
   return (
@@ -73,9 +83,11 @@ export function SessionProvider({ children }: PropsWithChildren) {
       value={{
         signIn,
         signOut,
+        toggleAdminMode,
         user,
         token,
         isLoading,
+        isAdminMode,
       }}
     >
       {children}

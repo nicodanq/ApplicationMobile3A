@@ -1,10 +1,15 @@
 import express from "express";
 import { createUser } from "./createUser";
+import { deleteUser } from "./deleteUser";
 import { getAllRoles } from "./getAllRole";
 import { getAllUsers } from "./getAllUser";
+import { getArticleByUser } from "./getArticlebyUser";
+import { getEventsByUser } from "./getEventsByUser";
 import { getUserByEmail } from "./getUserByEmail";
 import { getUserById } from "./getUserById";
+import { getUserStats } from "./getUserStats";
 import { updatePassword } from "./updatePasswordUser";
+import { updateStatusUser } from "./UpdateStatusUser";
 import { updateUser } from "./updateUser";
 
 const router = express.Router();
@@ -16,5 +21,11 @@ router.get("/role", getAllRoles);
 router.post("/", createUser);
 router.put("/update/:id", updateUser);
 router.put("/updatePassword/:id", updatePassword);
+router.delete("/delete/:id", deleteUser);
+router.put("/updateStatus/:id", updateStatusUser);
+router.get("/stats/:id", getUserStats);
+router.get("/events/:id", getEventsByUser);
+router.get("/articles/:id", getArticleByUser);
+
 
 export default router;

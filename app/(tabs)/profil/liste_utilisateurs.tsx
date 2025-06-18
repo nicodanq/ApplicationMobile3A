@@ -1,7 +1,11 @@
 "use client"
 
+import api from "@/api/axiosClient"
+import FooterLogo from "@/components/FooterLogo"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { useRouter } from "expo-router"
+import React, { useState } from "react"
 import {
   Alert,
   Dimensions,
@@ -12,81 +16,71 @@ import {
   ScrollView,
   StatusBar,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native"
-import { useState } from "react"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
-
-import FooterLogo from "@/components/FooterLogo"
 
 const { width, height } = Dimensions.get("window")
 
-// Données fictives des utilisateurs
-const utilisateurs = [
-  {
-    ID_user: 1,
-    prenom_user: "Amandine",
-    nom_user: "BOULET",
-    email_user: "amandine.boulet@epfedu.fr",
-    bio_user: "Étudiante en informatique passionnée par le développement web",
-    github_user: "https://github.com/amandine-boulet",
-    dateCreation_user: "2024-01-15",
-    statut_user: true,
-    dateNaissance: "2004-02-23",
-    avatar: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 2,
-    prenom_user: "Federico",
-    nom_user: "POSSAMAI",
-    email_user: "federico.possamai@epfedu.fr",
-    bio_user: "Développeur full-stack avec expertise en systèmes distribués",
-    github_user: "https://github.com/federico-possamai",
-    dateCreation_user: "2024-01-10",
-    statut_user: true,
-    dateNaissance: "2003-03-15",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 3,
-    prenom_user: "Lina",
-    nom_user: "BENABDELOUAHED",
-    email_user: "lina.benabdelouahed@epfedu.fr",
-    bio_user: "Spécialiste en intelligence artificielle et machine learning",
-    github_user: "https://github.com/lina-benabdelouahed",
-    dateCreation_user: "2024-01-08",
-    statut_user: false,
-    dateNaissance: "2004-07-08",
-    avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
-  },
-  {
-    ID_user: 4,
-    prenom_user: "Nicolas",
-    nom_user: "DANQUIGNY",
-    email_user: "nicolas.danquigny@epfedu.fr",
-    bio_user: "Expert en cybersécurité et développement sécurisé",
-    github_user: "https://github.com/nicolas-danquigny",
-    dateCreation_user: "2024-01-05",
-    statut_user: true,
-    dateNaissance: "2003-11-12",
-    avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
-  }
-]
-
 const GererUtilisateursScreen = () => {
   const router = useRouter()
-  const [users, setUsers] = useState(utilisateurs)
+  const [users, setUsers] = useState<any[]>([])
   const [selectedUser, setSelectedUser] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [searchText, setSearchText] = useState("")
 
-  const filteredUsers = users.filter(user => 
-    user.prenom_user.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.nom_user.toLowerCase().includes(searchText.toLowerCase()) ||
-    user.email_user.toLowerCase().includes(searchText.toLowerCase())
+  // Nouveaux états pour les filtres
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all")
+  const [dateFilter, setDateFilter] = useState<"newest" | "oldest">("newest")
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Fonction de filtrage améliorée
+  const filteredUsers = users
+    .filter((user) => {
+      // Filtre par texte de recherche
+      const matchesSearch =
+        user.prenom_user.toLowerCase().includes(searchText.toLowerCase()) ||
+        user.nom_user.toLowerCase().includes(searchText.toLowerCase()) ||
+        user.email_user.toLowerCase().includes(searchText.toLowerCase())
+
+      // Filtre par statut
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && user.statut_user) ||
+        (statusFilter === "inactive" && !user.statut_user)
+
+      return matchesSearch && matchesStatus
+    })
+    .sort((a, b) => {
+      // Tri par date de création
+      const dateA = new Date(a.dateCreation_user).getTime()
+      const dateB = new Date(b.dateCreation_user).getTime()
+
+      return dateFilter === "newest" ? dateB - dateA : dateA - dateB
+    })
+
+  const [loading, setLoading] = useState(true)
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchUsers = async () => {
+        setLoading(true)
+        try {
+          const response = await api.get("/user")
+          setUsers(response.data)
+        } catch (error) {
+          console.error("Erreur lors du chargement des utilisateurs :", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchUsers()
+    }, []),
   )
 
   const handleUserPress = (user: any) => {
@@ -94,61 +88,130 @@ const GererUtilisateursScreen = () => {
     setModalVisible(true)
   }
 
-  const handleToggleStatus = (userId: number) => {
-    setUsers(prev => 
-      prev.map(user => 
-        user.ID_user === userId 
-          ? { ...user, statut_user: !user.statut_user }
-          : user
-      )
+  const handleToggleStatus = async (userId: number) => {
+    const updatedUsers = users.map((user) =>
+      user.ID_user === userId ? { ...user, statut_user: !user.statut_user } : user,
     )
-    setSelectedUser((prev: any) => 
-      prev ? { ...prev, statut_user: !prev.statut_user } : null
-    )
+    setUsers(updatedUsers)
+
+    const updatedUser = updatedUsers.find((u) => u.ID_user === userId)
+    setSelectedUser(updatedUser ?? null)
+
+    try {
+      await api.put(`/user/updateStatus/${userId}`, {
+        statut_user: updatedUser?.statut_user,
+      })
+
+      Alert.alert("Succès", `L'utilisateur a été ${updatedUser?.statut_user ? "activé" : "désactivé"}`)
+    } catch (error) {
+      console.error("Erreur lors de la mise à jour du statut :", error)
+      Alert.alert("Erreur", "Impossible de mettre à jour le statut de l'utilisateur")
+      setUsers(users)
+      setSelectedUser(selectedUser)
+    }
   }
 
-  const handleDeleteUser = (userId: number) => {
+  const handleDeleteUser = async (userId: number) => {
+    console.log("Suppression de l'utilisateur avec ID :", userId)
+    await api.delete(`/user/delete/${userId}`)
     Alert.alert(
       "Supprimer l'utilisateur",
       "Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.",
       [
         { text: "Annuler", style: "cancel" },
-        { 
-          text: "Supprimer", 
+        {
+          text: "Supprimer",
           style: "destructive",
           onPress: () => {
-            setUsers(prev => prev.filter(user => user.ID_user !== userId))
+            setUsers((prev) => prev.filter((user) => user.ID_user !== userId))
             setModalVisible(false)
             Alert.alert("Succès", "L'utilisateur a été supprimé")
-          }
-        }
-      ]
+          },
+        },
+      ],
     )
   }
 
+  // Composant pour les filtres
+  const FilterSection = () => (
+    <Animated.View entering={FadeInDown.delay(250)} style={styles.filterSection}>
+      <View style={styles.filterRow}>
+        <Text style={styles.filterLabel}>Statut:</Text>
+        <View style={styles.filterButtons}>
+          <TouchableOpacity
+            style={[styles.filterButton, statusFilter === "all" && styles.filterButtonActive]}
+            onPress={() => setStatusFilter("all")}
+          >
+            <Text style={[styles.filterButtonText, statusFilter === "all" && styles.filterButtonTextActive]}>Tous</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, statusFilter === "active" && styles.filterButtonActive]}
+            onPress={() => setStatusFilter("active")}
+          >
+            <Text style={[styles.filterButtonText, statusFilter === "active" && styles.filterButtonTextActive]}>
+              Actifs
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, statusFilter === "inactive" && styles.filterButtonActive]}
+            onPress={() => setStatusFilter("inactive")}
+          >
+            <Text style={[styles.filterButtonText, statusFilter === "inactive" && styles.filterButtonTextActive]}>
+              Inactifs
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.filterRow}>
+        <Text style={styles.filterLabel}>Tri par date:</Text>
+        <View style={styles.filterButtons}>
+          <TouchableOpacity
+            style={[styles.filterButton, dateFilter === "newest" && styles.filterButtonActive]}
+            onPress={() => setDateFilter("newest")}
+          >
+            <Ionicons
+              name="arrow-down"
+              size={16}
+              color={dateFilter === "newest" ? "#FFFFFF" : "#64748B"}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={[styles.filterButtonText, dateFilter === "newest" && styles.filterButtonTextActive]}>
+              Plus récents
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.filterButton, dateFilter === "oldest" && styles.filterButtonActive]}
+            onPress={() => setDateFilter("oldest")}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={16}
+              color={dateFilter === "oldest" ? "#FFFFFF" : "#64748B"}
+              style={{ marginRight: 4 }}
+            />
+            <Text style={[styles.filterButtonText, dateFilter === "oldest" && styles.filterButtonTextActive]}>
+              Plus anciens
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  )
+
   const UserCard = ({ user }: { user: any }) => (
-    <TouchableOpacity
-      style={styles.userCard}
-      onPress={() => handleUserPress(user)}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={styles.userCard} onPress={() => handleUserPress(user)} activeOpacity={0.7}>
       <Image source={{ uri: user.avatar }} style={styles.userAvatar} />
       <View style={styles.userInfo}>
-        <Text style={styles.userName}>{user.prenom_user} {user.nom_user}</Text>
-        <Text style={styles.userEmail}>{user.email_user}</Text>
-        <Text style={styles.userDate}>
-          Inscrit le {new Date(user.dateCreation_user).toLocaleDateString()}
+        <Text style={styles.userName}>
+          {user.prenom_user} {user.nom_user}
         </Text>
+        <Text style={styles.userEmail}>{user.email_user}</Text>
+        <Text style={styles.userDate}>Inscrit le {new Date(user.dateCreation_user).toLocaleDateString()}</Text>
       </View>
       <View style={styles.userStatus}>
-        <View style={[
-          styles.statusIndicator,
-          { backgroundColor: user.statut_user ? "#10B981" : "#EF4444" }
-        ]} />
-        <Text style={[
-          styles.statusText,
-          { color: user.statut_user ? "#10B981" : "#EF4444" }
-        ]}>
+        <View style={[styles.statusIndicator, { backgroundColor: user.statut_user ? "#10B981" : "#EF4444" }]} />
+        <Text style={[styles.statusText, { color: user.statut_user ? "#10B981" : "#EF4444" }]}>
           {user.statut_user ? "Actif" : "Inactif"}
         </Text>
       </View>
@@ -167,10 +230,7 @@ const GererUtilisateursScreen = () => {
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* Header du modal */}
             <View style={styles.modalHeader}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setModalVisible(false)}
-              >
+              <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
                 <Ionicons name="close" size={24} color="#64748B" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Profil utilisateur</Text>
@@ -185,14 +245,13 @@ const GererUtilisateursScreen = () => {
                   <Text style={styles.modalUserName}>
                     {selectedUser.prenom_user} {selectedUser.nom_user}
                   </Text>
-                  <View style={[
-                    styles.modalStatusBadge,
-                    { backgroundColor: selectedUser.statut_user ? "#DCFCE7" : "#FEE2E2" }
-                  ]}>
-                    <Text style={[
-                      styles.modalStatusText,
-                      { color: selectedUser.statut_user ? "#166534" : "#DC2626" }
-                    ]}>
+                  <View
+                    style={[
+                      styles.modalStatusBadge,
+                      { backgroundColor: selectedUser.statut_user ? "#DCFCE7" : "#FEE2E2" },
+                    ]}
+                  >
+                    <Text style={[styles.modalStatusText, { color: selectedUser.statut_user ? "#166534" : "#DC2626" }]}>
                       {selectedUser.statut_user ? "Compte actif" : "Compte inactif"}
                     </Text>
                   </View>
@@ -247,7 +306,7 @@ const GererUtilisateursScreen = () => {
                       <Ionicons name="time-outline" size={20} color="#8B5CF6" />
                     </View>
                     <View style={styles.modalDetailContent}>
-                      <Text style={styles.modalDetailLabel}>Date d'inscription</Text>
+                      <Text style={styles.modalDetailLabel}>Date d&apos;inscription</Text>
                       <Text style={styles.modalDetailValue}>
                         {new Date(selectedUser.dateCreation_user).toLocaleDateString()}
                       </Text>
@@ -270,34 +329,24 @@ const GererUtilisateursScreen = () => {
                     </View>
                     <View style={styles.modalDetailContent}>
                       <Text style={styles.modalDetailLabel}>GitHub</Text>
-                      <Text style={[styles.modalDetailValue, styles.linkText]}>
-                        {selectedUser.github_user}
-                      </Text>
+                      <Text style={[styles.modalDetailValue, styles.linkText]}>{selectedUser.github_user}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
 
                 {/* Actions */}
                 <View style={styles.modalActions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.modalActionButton,
-                      { backgroundColor: selectedUser.statut_user ? "#F59E0B" : "#10B981" }
-                    ]}
-                    onPress={() => handleToggleStatus(selectedUser.ID_user)}
-                  >
-                    <Ionicons 
-                      name={selectedUser.statut_user ? "pause" : "play"} 
-                      size={20} 
-                      color="white" 
+                  <View style={styles.switchContainer}>
+                    <Text style={styles.switchLabel}>Statut</Text>
+                    <Switch
+                      value={selectedUser?.statut_user}
+                      onValueChange={() => handleToggleStatus(selectedUser.ID_user)}
+                      thumbColor={selectedUser?.statut_user ? "#10B981" : "#EF4444"}
+                      trackColor={{ false: "#FECACA", true: "#BBF7D0" }}
                     />
-                    <Text style={styles.modalActionText}>
-                      {selectedUser.statut_user ? "Désactiver" : "Activer"}
-                    </Text>
-                  </TouchableOpacity>
-
+                  </View>
                   <TouchableOpacity
-                    style={[styles.modalActionButton, { backgroundColor: "#EF4444" }]}
+                    style={[styles.modalActionButton, styles.deleteButton]}
                     onPress={() => handleDeleteUser(selectedUser.ID_user)}
                   >
                     <Ionicons name="trash-outline" size={20} color="white" />
@@ -318,17 +367,13 @@ const GererUtilisateursScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Gestion des utilisateurs</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.addButton}
-          onPress={() => router.push('/(tabs)/profiladmin/creer-utilisateur')}
+          onPress={() => router.push("/profil/creer-utilisateur")}
           activeOpacity={0.7}
         >
           <Ionicons name="add" size={24} color="#000000" />
@@ -343,17 +388,17 @@ const GererUtilisateursScreen = () => {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{users.filter(u => u.statut_user).length}</Text>
+          <Text style={styles.statNumber}>{users.filter((u) => u.statut_user).length}</Text>
           <Text style={styles.statLabel}>Actifs</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{users.filter(u => !u.statut_user).length}</Text>
+          <Text style={styles.statNumber}>{users.filter((u) => !u.statut_user).length}</Text>
           <Text style={styles.statLabel}>Inactifs</Text>
         </View>
       </Animated.View>
 
-      {/* Barre de recherche */}
+      {/* Barre de recherche avec bouton filtres */}
       <Animated.View entering={FadeInDown.delay(200)} style={styles.searchContainer}>
         <Ionicons name="search" size={20} color="#64748B" />
         <TextInput
@@ -362,13 +407,35 @@ const GererUtilisateursScreen = () => {
           value={searchText}
           onChangeText={setSearchText}
         />
+        <TouchableOpacity
+          style={styles.filterToggleButton}
+          onPress={() => setShowFilters(!showFilters)}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={showFilters ? "options" : "options-outline"}
+            size={20}
+            color={showFilters ? "#3B82F6" : "#64748B"}
+          />
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* Section des filtres */}
+      {showFilters && <FilterSection />}
+
+      {/* Compteur de résultats */}
+      <Animated.View entering={FadeInDown.delay(300)} style={styles.resultsCounter}>
+        <Text style={styles.resultsText}>
+          {filteredUsers.length} utilisateur{filteredUsers.length > 1 ? "s" : ""} trouvé
+          {filteredUsers.length > 1 ? "s" : ""}
+        </Text>
       </Animated.View>
 
       {/* Liste des utilisateurs */}
       <FlatList
         data={filteredUsers}
         renderItem={({ item, index }) => (
-          <Animated.View entering={FadeInDown.delay(300 + index * 50)}>
+          <Animated.View entering={FadeInDown.delay(400 + index * 50)}>
             <UserCard user={item} />
           </Animated.View>
         )}
@@ -464,9 +531,68 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#000000",
   },
+  filterToggleButton: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  // Nouveaux styles pour les filtres
+  filterSection: {
+    backgroundColor: "#F8FAFC",
+    marginHorizontal: 20,
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+  },
+  filterRow: {
+    marginBottom: 16,
+  },
+  filterLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 8,
+  },
+  filterButtons: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  filterButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+  },
+  filterButtonActive: {
+    backgroundColor: "#3B82F6",
+    borderColor: "#3B82F6",
+  },
+  filterButtonText: {
+    fontSize: 14,
+    color: "#64748B",
+    fontWeight: "500",
+  },
+  filterButtonTextActive: {
+    color: "#FFFFFF",
+  },
+  resultsCounter: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  resultsText: {
+    fontSize: 14,
+    color: "#64748B",
+    fontStyle: "italic",
+  },
   usersList: {
     flex: 1,
-    marginTop: 20,
+    marginTop: 8,
   },
   usersListContent: {
     paddingHorizontal: 20,
@@ -612,21 +738,36 @@ const styles = StyleSheet.create({
   },
   modalActions: {
     flexDirection: "row",
-    gap: 12,
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
   },
   modalActionButton: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 12,
-    gap: 8,
+    backgroundColor: "#EF4444",
+  },
+  deleteButton: {
+    flexShrink: 1,
   },
   modalActionText: {
     color: "white",
     fontSize: 14,
     fontWeight: "600",
+    marginLeft: 8,
+  },
+  switchContainer: {
+    alignItems: "center",
+    marginLeft: 16,
+  },
+  switchLabel: {
+    fontSize: 12,
+    color: "#64748B",
+    marginBottom: 4,
   },
 })
 

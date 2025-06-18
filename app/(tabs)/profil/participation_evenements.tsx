@@ -1,57 +1,72 @@
 "use client"
-
+import api from "@/api/axiosClient"
+import { useSession } from "@/contexts/AuthContext"
+import { useUserDetails } from "@/hooks/useUserDetails"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
-    Alert,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native"
+
+function getCategoryColor(type: string): string {
+  switch (type.toLowerCase()) {
+    case "formation":
+      return "#2196F3"
+    case "atelier":
+      return "#4CAF50"
+    case "forum":
+      return "#FF9800"
+    default:
+      return "#9E9E9E"
+  }
+}
 
 const ParticipationEvenementsScreen = () => {
   const router = useRouter()
+  const { user } = useSession()
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null)
+
+  const [events, setEvents] = useState<any[]>([])
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
 
-  // Données d'exemple des événements auxquels l'utilisateur participe
-  const participatingEvents = [
-    {
-      id: "1",
-      title: "Apprendre à coder",
-      category: "Formation",
-      date: "24/05/2025",
-      address: "55 avenue du Président Wilson, 94230 Cachan",
-      time: "18h-22h",
-      categoryColor: "#2196F3",
-    },
-    {
-      id: "2",
-      title: "Apprendre à coder",
-      category: "Formation",
-      date: "24/05/2025",
-      address: "55 avenue du Président Wilson, 94230 Cachan",
-      time: "18h-22h",
-      categoryColor: "#2196F3",
-    },
-    {
-      id: "3",
-      title: "Workshop Design Thinking",
-      category: "Atelier",
-      date: "15/06/2025",
-      address: "12 rue de la Innovation, 75001 Paris",
-      time: "14h-17h",
-      categoryColor: "#4CAF50",
-    },
-  ]
+  useEffect(() => {
+    if (!user?.id) return
 
-  const [events, setEvents] = useState(participatingEvents)
+    const fetchEvents = async () => {
+      try {
+        const response = await api.get(`/user/events/${user.id}`)
+        console.log("Événements récupérés :", response.data);
+        const fetchedEvents = response.data
+
+        const formattedEvents = fetchedEvents.map((event: any) => ({
+          id: String(event.Id_Event),
+          title: event.titre_Event,
+          category: event.typeEvent,
+          date: new Date(event.date_Event).toLocaleDateString("fr-FR"),
+          address: event.lieu_Event,
+          time: event.horaire_Event?.slice(0, 5) || "00:00",
+          categoryColor: getCategoryColor(event.typeEvent),
+        }))
+
+        setEvents(formattedEvents)
+      } catch (error) {
+        console.error("Erreur lors de la récupération des événements :", error)
+        Alert.alert("Erreur", "Impossible de récupérer les événements.")
+      }
+    }
+
+    fetchEvents()
+  }, [user?.id])
 
   const handleUnsubscribe = (eventId: string) => {
     setSelectedEventId(eventId)
@@ -64,6 +79,7 @@ const ParticipationEvenementsScreen = () => {
       setShowConfirmModal(false)
       setSelectedEventId(null)
       Alert.alert("Succès", "Vous ne participez plus à cet événement")
+      // Tu peux ici appeler une API pour désinscrire en BDD
     }
   }
 
@@ -95,7 +111,6 @@ const ParticipationEvenementsScreen = () => {
           ) : (
             events.map((event) => (
               <View key={event.id} style={styles.eventCard}>
-                {/* Header with title and unsubscribe button */}
                 <View style={styles.eventHeader}>
                   <Text style={styles.eventTitle}>{event.title}</Text>
                   <TouchableOpacity style={styles.unsubscribeButton} onPress={() => handleUnsubscribe(event.id)}>
@@ -103,23 +118,19 @@ const ParticipationEvenementsScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Category Badge */}
                 <View style={[styles.categoryBadge, { backgroundColor: event.categoryColor + "20" }]}>
                   <Text style={[styles.categoryText, { color: event.categoryColor }]}>{event.category}</Text>
                 </View>
 
-                {/* Event Details */}
                 <View style={styles.eventDetails}>
                   <View style={styles.detailRow}>
                     <Ionicons name="calendar-outline" size={16} color="#64748B" />
                     <Text style={styles.detailText}>{event.date}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Ionicons name="location-outline" size={16} color="#64748B" />
                     <Text style={styles.detailText}>{event.address}</Text>
                   </View>
-
                   <View style={styles.detailRow}>
                     <Ionicons name="time-outline" size={16} color="#64748B" />
                     <Text style={styles.detailText}>{event.time}</Text>
@@ -146,7 +157,6 @@ const ParticipationEvenementsScreen = () => {
               <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={cancelUnsubscribe}>
                 <Text style={styles.cancelButtonText}>Non</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={confirmUnsubscribe}>
                 <Text style={styles.confirmButtonText}>Oui</Text>
               </TouchableOpacity>
@@ -157,6 +167,7 @@ const ParticipationEvenementsScreen = () => {
     </SafeAreaView>
   )
 }
+
 
 const styles = StyleSheet.create({
   container: {

@@ -21,7 +21,7 @@ export async function roleByIdUser(req: Request, res: Response) {
       return res.status(404).json({ message: 'No roles found for this user' });
     }
 
-    return res.status(200).json(rows[0]); // Return the first role found
+    return res.status(200).json(rows); 
   } catch (err) {
     console.error('Erreur MySQL :', err);
     return res.status(500).json({ message: 'Erreur serveur' });

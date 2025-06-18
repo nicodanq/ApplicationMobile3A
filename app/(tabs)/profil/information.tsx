@@ -1,5 +1,5 @@
 "use client"
-
+import api from "@/api/axiosClient";
 import FooterLogo from "@/components/FooterLogo";
 import { useSession } from "@/contexts/AuthContext";
 import { useUserDetails } from "@/hooks/useUserDetails";
@@ -62,8 +62,8 @@ const MesInformationsAdminScreen = () => {
       setCodePostal(details.code_postal_user || "");
       setBio(details.bio_user || "");
       setGithub(details.github_user || "");
-      if (details.date_naissance_user && !isNaN(Date.parse(details.date_naissance_user))) {
-        setDateNaissance(new Date(details.date_naissance_user));
+      if (details.dateNaissance && !isNaN(Date.parse(details.dateNaissance))) {
+        setDateNaissance(new Date(details.dateNaissance));
       }
     }
   }, [details]);
@@ -71,26 +71,30 @@ const MesInformationsAdminScreen = () => {
   if (loading) return <Text>Chargement...</Text>;
   if (error || !details) return <Text>Erreur de chargement</Text>;
 
-  // 👉 Fonction à appeler pour faire l’appel API
-  const handleSave = async () => {
-    const updatedData = {
-      nom,
-      prenom,
-      email,
-      telephone,
-      adresse,
-      ville,
-      code_postal: codePostal,
-      bio,
-      github,
-      date_naissance: dateNaissance.toISOString().split("T")[0],
-    };
-
-
-
-    console.log("Données à envoyer à l'API :", updatedData);
-    // await api.put(`/user/update/${user.id}`, updatedData)
+ const handleSave = async () => {
+  const updatedData = {
+    nom_user: nom,
+    prenom_user: prenom,
+    email_user: email,
+    telephone_user: telephone,
+    adresse_user: adresse,
+    ville_user: ville,
+    code_postal_user: codePostal,
+    bio_user: bio,
+    github_user: github,
+    dateNaissance: dateNaissance.toISOString().split("T")[0],
   };
+  console.log("Données à mettre à jour :", dateNaissance.toISOString().split("T")[0]);
+  console.log("Données à envoyer :", dateNaissance);
+  try {
+    await api.put(`/user/update/${user?.id}`, updatedData);
+    alert("Modifications sauvegardées !");
+  } catch (err) {
+    console.error("Erreur lors de la mise à jour :", err);
+    alert("Une erreur est survenue");
+  }
+};
+
 
   return (
     <SafeAreaView style={styles.container}>

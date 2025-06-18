@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import { Request, Response } from "express";
 import { pool } from "../../utils/db";
 import { signToken } from "../../utils/jwt";
@@ -20,8 +21,11 @@ export async function loginHandler(req: Request, res: Response) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
-    // ⛔ à sécuriser avec bcrypt dans un vrai cas
-    const isMatch = password === rows[0].mdp_user;
+
+    //cas de test, on compare le mot de passe en clair
+    //const isMatch= rows[0].mdp_user === password; // Comparaison directe, à remplacer par bcrypt dans un vrai cas
+    const isMatch = await bcrypt.compare(password, rows[0].mdp_user);
+
     if (!isMatch) {
       return res.status(401).json({ message: "Mot de passe incorrect" });
     }

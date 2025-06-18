@@ -1,4 +1,6 @@
 "use client"
+
+import api from "@/api/axiosClient";
 import { useSession } from "@/contexts/AuthContext";
 import { useUserDetails } from "@/hooks/useUserDetails";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,25 +20,56 @@ import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
 import FooterLogo from "@/components/FooterLogo";
 import HeaderPage from "@/components/HeaderPage";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
+
+
 
 const { width } = Dimensions.get("window")
 
 
 
-const ProfilAdminScreen = () => {
+const ProfilScreen = () => {
   const router = useRouter();
   const { user, signOut } = useSession();
-  const { details, role, loading, error } = useUserDetails(user?.id ?? null);;
-
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null);
   const userRole = role?.toLowerCase();
+
+  const [etudesCount, setEtudesCount] = useState(0);
+  const [eventsCount, setEventsCount] = useState(0);
+  const [articlesCount, setArticlesCount] = useState(0);
 
   const handleSignOut = useCallback(() => {
     signOut()
   }, [signOut])
 
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const fetchData = async () => {
+      try {
+        const response = await api.get(`/user/stats/${user.id}`);
+        const { etudes, participations, articles } = response.data;
+
+        setEtudesCount(etudes);
+        setEventsCount(participations);
+        setArticlesCount(articles);
+      } catch (err) {
+        console.error("Erreur lors de la récupération des stats utilisateur :", err);
+      }
+    };
+
+    fetchData();
+  }, [user?.id]);
+
+
+
   if (loading) return <Text>Chargement...</Text>;
   if (error) return <Text>Erreur lors du chargement</Text>;
+
+  console.log("User details:", details);
+  console.log("User role:", userRole);
+
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -62,19 +95,20 @@ const ProfilAdminScreen = () => {
           {/* Stats Section */}
           <Animated.View entering={FadeInUp.delay(200)} style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>XX</Text>
-              <Text style={styles.statLabel}>Utilisateurs</Text>
+              <Text style={styles.statNumber}>{etudesCount}</Text>
+              <Text style={styles.statLabel}>Études</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>XX</Text>
-              <Text style={styles.statLabel}>Formations</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>XX</Text>
+              <Text style={styles.statNumber}>{eventsCount}</Text>
               <Text style={styles.statLabel}>Événements</Text>
             </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{articlesCount}</Text>
+              <Text style={styles.statLabel}>Articles</Text>
+            </View>
+
           </Animated.View>
 
           {/* Menu Items - Navigation directe */}
@@ -82,7 +116,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(300)}>
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/information_admin')}
+                onPress={() => router.push('/profil/information')}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
@@ -101,7 +135,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(400)}>
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                onPress={() => router.push('/profil/mes_etudes')}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
@@ -120,7 +154,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(400)}>
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                onPress={() => router.push('/profil/participation_evenements')}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
@@ -139,7 +173,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(400)}>
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                onPress={() => router.push('/profil/articles_enregistres')}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
@@ -158,7 +192,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(400)}>
               <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(tabs)/profiladmin/parametres')}
+                onPress={() => router.push('/profil/parametres')}
                 activeOpacity={0.7}
               >
                 <View style={styles.menuItemContent}>
@@ -209,7 +243,7 @@ const ProfilAdminScreen = () => {
             <Animated.View entering={FadeInDown.delay(600)} style={styles.quickActionsContainer}>
               <TouchableOpacity
                 style={[styles.quickActionButton, { backgroundColor: '#3B82F6' }]}
-                onPress={() => router.push('/profiladmin/liste_utilisateurs')}
+                onPress={() => router.push('/profil/liste_utilisateurs')}
               >
                 <Ionicons name="people" size={20} color="white" />
                 <Text style={styles.quickActionText}>Gérer les utilisateurs</Text>
@@ -233,7 +267,7 @@ const ProfilAdminScreen = () => {
         <FooterLogo />
       </ScrollView>
 
-      
+
     </SafeAreaView>
   )
 }
@@ -418,4 +452,6 @@ const styles = StyleSheet.create({
   },
 })
 
-export default ProfilAdminScreen
+export default ProfilScreen
+
+

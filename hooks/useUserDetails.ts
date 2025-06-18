@@ -34,7 +34,7 @@ export function useUserDetails(userId: number | null) {
     const fetchRole = async () => {
       try {
         const response = await api.get(`/posseder/role/${details.ID_user}`);
-        setRole(response.data?.role?.toLowerCase() ?? null);
+        setRole(response.data?.[0]?.role?.toLowerCase() ?? null);
       } catch (err) {
         console.error("Erreur récupération des rôles :", err);
         setError(err);

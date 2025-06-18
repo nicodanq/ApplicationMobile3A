@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function AdminLayout() {
+export default function ProfilLayout() {
   return (
     <Stack
       screenOptions={{
