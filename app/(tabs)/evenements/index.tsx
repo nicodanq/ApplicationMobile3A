@@ -54,7 +54,8 @@ type Evenement = {
   id: string
   date: string
   titre: string
-  heure: string
+  heureDebut: string
+  heureFin: string
   lieu: string
   description: string
   categorie?: string
@@ -170,7 +171,8 @@ const EvenementsScreen = () => {
           titre: event.titre_Event,
           description: event.description_Event,
           date: event.date_Event.split("T")[0],
-          heure: event.horaire_Event,
+          heureDebut: event.horaire_Debut,
+          heureFin: event.horaire_Fin,
           lieu: event.lieu_Event,
           categorie: getCategorie(event.ID_typeEvenement), // à définir plus bas
           color: getColor(event.ID_typeEvenement),
@@ -480,7 +482,9 @@ const EvenementsScreen = () => {
                           </View>
                           <View style={styles.eventDetailItem}>
                             <Ionicons name="time-outline" size={14} color="#64748B" />
-                            <Text style={styles.eventDetailText}>{item.heure}</Text>
+                            <Text style={styles.eventDetailText}>
+                              {item.heureDebut} - {item.heureFin}
+                            </Text>
                           </View>
                           <View style={styles.eventDetailItem}>
                             <Ionicons name="location-outline" size={14} color="#64748B" />
@@ -535,7 +539,7 @@ const EvenementsScreen = () => {
                     <View style={styles.modalDetailRow}>
                       <View style={styles.modalDetailItem}>
                         <Ionicons name="time-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
-                        <Text style={styles.modalDetailText}>{selectedEvent.heure}</Text>
+                        <Text style={styles.modalDetailText}>{selectedEvent.heureDebut}</Text>
                       </View>
 
                       <View style={styles.modalDetailItem}>

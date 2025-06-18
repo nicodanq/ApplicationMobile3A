@@ -50,12 +50,13 @@ LocaleConfig.locales["fr"] = {
 
 LocaleConfig.defaultLocale = "fr"
 
-// Types
+// Types corrigés
 type Evenement = {
   id: string
   date: string
   titre: string
-  heure: string
+  heureDebut: string // Changé de 'heure' vers 'heureDebut'
+  heureFin: string // Ajouté 'heureFin'
   lieu: string
   description: string
   categorie?: string
@@ -68,79 +69,10 @@ type EventFormData = {
   categorie: string
   date: string
   lieu: string
-  heure: string
+  heureDebut: string
+  heureFin: string
   description: string
 }
-
-// Données d'événements
-// const evenementsData: Evenement[] = [
-//   {
-//     id: "1",
-//     date: "2025-06-01",
-//     titre: "Hackathon EPF",
-//     heure: "10h - 17h",
-//     lieu: "Cachan",
-//     description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
-//     categorie: "tech",
-//     color: "#3B82F6",
-//     gradientColors: ["#EBF4FF", "#DBEAFE"],
-//   },
-//   {
-//     id: "2",
-//     date: "2025-06-01",
-//     titre: "Forum Entreprises",
-//     heure: "9h - 16h",
-//     lieu: "Sceaux",
-//     description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
-//     categorie: "career",
-//     color: "#10B981",
-//     gradientColors: ["#ECFDF5", "#D1FAE5"],
-//   },
-//   {
-//     id: "3",
-//     date: "2025-06-05",
-//     titre: "Conférence IA",
-//     heure: "14h - 16h",
-//     lieu: "Online",
-//     description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
-//     categorie: "conference",
-//     color: "#EC4899",
-//     gradientColors: ["#FDF2F8", "#FCE7F3"],
-//   },
-//   {
-//     id: "4",
-//     date: "2025-06-11",
-//     titre: "Workshop Design",
-//     heure: "10h - 17h",
-//     lieu: "Cachan",
-//     description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
-//     categorie: "workshop",
-//     color: "#06B6D4",
-//     gradientColors: ["#F0F9FF", "#E0F7FA"],
-//   },
-//   {
-//     id: "5",
-//     date: "2025-06-11",
-//     titre: "Journée Portes Ouvertes",
-//     heure: "9h - 16h",
-//     lieu: "Sceaux",
-//     description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
-//     categorie: "open",
-//     color: "#8B5CF6",
-//     gradientColors: ["#F5F3FF", "#EDE9FE"],
-//   },
-//   {
-//     id: "6",
-//     date: "2025-06-13",
-//     titre: "Séminaire Recherche",
-//     heure: "14h - 16h",
-//     lieu: "Online",
-//     description: "Présentation des derniers travaux de recherche de nos laboratoires.",
-//     categorie: "research",
-//     color: "#F59E0B",
-//     gradientColors: ["#FFFBEB", "#FEF3C7"],
-//   },
-//]
 
 const categoryColors: { [key: string]: { color: string; gradientColors: [string, string] } } = {
   tech: { color: "#3B82F6", gradientColors: ["#EBF4FF", "#DBEAFE"] },
@@ -185,7 +117,8 @@ const AdminEventsScreen = () => {
           titre: event.titre_Event,
           description: event.description_Event,
           date: event.date_Event.split("T")[0],
-          heure: event.horaire_Event,
+          heureDebut: event.horaire_debut,
+          heureFin: event.horaire_fin,
           lieu: event.lieu_Event,
           categorie: getCategorie(event.ID_typeEvenement),
           color: getColor(event.ID_typeEvenement),
@@ -321,7 +254,8 @@ const AdminEventsScreen = () => {
         titre: event.titre_Event,
         description: event.description_Event,
         date: event.date_Event.split("T")[0],
-        heure: event.horaire_Event,
+        heureDebut: event.horaire_debut,
+        heureFin: event.horaire_fin,
         lieu: event.lieu_Event,
         categorie: getCategorie(event.ID_typeEvenement),
         color: getColor(event.ID_typeEvenement),
@@ -354,7 +288,13 @@ const AdminEventsScreen = () => {
     const categoryStyle = categoryColors[eventData.categorie] || categoryColors.tech
     const newEvent: Evenement = {
       id: Date.now().toString(),
-      ...eventData,
+      titre: eventData.titre,
+      categorie: eventData.categorie,
+      date: eventData.date,
+      lieu: eventData.lieu,
+      heureDebut: eventData.heureDebut,
+      heureFin: eventData.heureFin,
+      description: eventData.description,
       color: categoryStyle.color,
       gradientColors: categoryStyle.gradientColors,
     }
@@ -376,7 +316,13 @@ const AdminEventsScreen = () => {
         event.id === eventId
           ? {
               ...event,
-              ...eventData,
+              titre: eventData.titre,
+              categorie: eventData.categorie,
+              date: eventData.date,
+              lieu: eventData.lieu,
+              heureDebut: eventData.heureDebut,
+              heureFin: eventData.heureFin,
+              description: eventData.description,
               color: categoryStyle.color,
               gradientColors: categoryStyle.gradientColors,
             }
@@ -605,7 +551,9 @@ const AdminEventsScreen = () => {
                         </View>
                         <View style={styles.eventDetailItem}>
                           <Ionicons name="time-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>{event.heure}</Text>
+                          <Text style={styles.eventDetailText}>
+                            {event.heureDebut} - {event.heureFin}
+                          </Text>
                         </View>
                         <View style={styles.eventDetailItem}>
                           <Ionicons name="location-outline" size={14} color="#64748B" />
@@ -652,7 +600,9 @@ const AdminEventsScreen = () => {
                 <View style={styles.modalDetailRow}>
                   <View style={styles.modalDetailItem}>
                     <Ionicons name="time-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
-                    <Text style={styles.modalDetailText}>{selectedEvent.heure}</Text>
+                    <Text style={styles.eventDetailText}>
+                      {selectedEvent.heureDebut} - {selectedEvent.heureFin}
+                    </Text>
                   </View>
 
                   <View style={styles.modalDetailItem}>

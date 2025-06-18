@@ -13,13 +13,14 @@ import FooterLogo from "@/components/FooterLogo"
 
 import api from "@/api/axiosClient"
 
-// Types
+// Types corrigés
 type EventFormData = {
   titre: string
   categorie: string
   date: string
   lieu: string
-  heure: string
+  heureDebut: string
+  heureFin: string
   description: string
 }
 
@@ -27,7 +28,8 @@ type Evenement = {
   id: string
   date: string
   titre: string
-  heure: string
+  heureDebut: string
+  heureFin: string
   lieu: string
   description: string
   categorie?: string
@@ -47,7 +49,7 @@ const categories = [
 interface EditEventPageProps {
   event: Evenement
   onBack: () => void
-  onSave: (eventId: string, eventData: EventFormData) => void
+  onSave: (eventId: string, eventData: EventFormData) => Promise<void>
 }
 
 const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
@@ -56,12 +58,14 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
     categorie: "",
     date: "",
     lieu: "",
-    heure: "",
+    heureDebut: "",
+    heureFin: "",
     description: "",
   })
 
   const [errors, setErrors] = useState<Partial<EventFormData>>({})
   const [hasChanges, setHasChanges] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // Pré-remplir le formulaire avec les données de l'événement
   useEffect(() => {
@@ -71,7 +75,8 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
         categorie: event.categorie || "",
         date: event.date,
         lieu: event.lieu,
-        heure: event.heure,
+        heureDebut: event.heureDebut,
+        heureFin: event.heureFin,
         description: event.description,
       })
     }
@@ -110,22 +115,80 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
     if (!formData.lieu.trim()) {
       newErrors.lieu = "Le lieu est requis"
     }
-    if (!formData.heure.trim()) {
-      newErrors.heure = "L'horaire est requis"
+    if (!formData.heureDebut.trim()) {
+      newErrors.heureDebut = "L'heure de début est requise"
+    }
+    if (!formData.heureFin.trim()) {
+      newErrors.heureFin = "L'heure de fin est requise"
     }
     if (!formData.description.trim()) {
       newErrors.description = "La description est requise"
+    }
+
+    // Validation des heures
+    if (formData.heureDebut && formData.heureFin) {
+      const [startHour, startMin] = formData.heureDebut.split(":").map(Number)
+      const [endHour, endMin] = formData.heureFin.split(":").map(Number)
+
+      if (!isNaN(startHour) && !isNaN(endHour)) {
+        const startTime = startHour * 60 + (startMin || 0)
+        const endTime = endHour * 60 + (endMin || 0)
+
+        if (startTime >= endTime) {
+          newErrors.heureFin = "L'heure de fin doit être après l'heure de début"
+        }
+      }
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSave = () => {
-    if (validateForm()) {
-      onSave(event.id, formData)
+  const getTypeId = (categorie: string): number => {
+  switch (categorie) {
+    case "tech": return 1
+    case "career": return 2
+    case "conference": return 3
+    case "workshop": return 4
+    case "open": return 5
+    case "research": return 6
+    default: return 1
+  }
+}
+
+const handleSave = async () => {
+  if (validateForm()) {
+    setIsLoading(true)
+    const updatedData = {
+      titre: formData.titre,
+      description: formData.description,
+      date: formData.date,
+      horaire_debut: formData.heureDebut,
+      horaire_fin: formData.heureFin,
+      lieu: formData.lieu,
+      ID_typeEvenement: getTypeId(formData.categorie),
+    }
+
+    console.log("🔎 formData.categorie =", formData.categorie)
+    console.log("🧠 getTypeId =", getTypeId(formData.categorie))
+    console.log("🛠 Données envoyées :", updatedData)
+
+    try {
+      await api.put(`/evenement/${event.id}`, updatedData)
+
+      // 🟢 Appelle le parent pour qu’il recharge les événements
+      await onSave(event.id, formData)
+
+      onBack() // 👈 Ferme la page
+    } catch (error) {
+      console.error("Erreur lors de la modification :", error)
+    } finally {
+      setIsLoading(false)
     }
   }
+}
+
+
 
   const updateFormData = (field: keyof EventFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -137,6 +200,8 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
   }
 
   const selectedCategory = categories.find((cat) => cat.id === formData.categorie)
+
+  
 
   return (
     <View style={styles.container}>
@@ -251,20 +316,37 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
               {errors.lieu && <Text style={styles.errorText}>{errors.lieu}</Text>}
             </View>
 
-            {/* Horaire */}
-            <View style={styles.fieldContainer}>
-              <View style={styles.fieldHeader}>
-                <Ionicons name="time-outline" size={20} color="#64748B" />
-                <Text style={styles.fieldLabel}>Horaire :</Text>
+            {/* Horaires - Début et Fin séparés */}
+            <View style={styles.timeContainer}>
+              <View style={styles.timeField}>
+                <View style={styles.fieldHeader}>
+                  <Ionicons name="time-outline" size={20} color="#64748B" />
+                  <Text style={styles.fieldLabel}>Heure de début :</Text>
+                </View>
+                <TextInput
+                  style={[styles.textInput, errors.heureDebut && styles.inputError]}
+                  value={formData.heureDebut}
+                  onChangeText={(value) => updateFormData("heureDebut", value)}
+                  placeholder="HH:MM"
+                  placeholderTextColor="#94A3B8"
+                />
+                {errors.heureDebut && <Text style={styles.errorText}>{errors.heureDebut}</Text>}
               </View>
-              <TextInput
-                style={[styles.textInput, errors.heure && styles.inputError]}
-                value={formData.heure}
-                onChangeText={(value) => updateFormData("heure", value)}
-                placeholder="Ex: 10h - 17h"
-                placeholderTextColor="#94A3B8"
-              />
-              {errors.heure && <Text style={styles.errorText}>{errors.heure}</Text>}
+
+              <View style={styles.timeField}>
+                <View style={styles.fieldHeader}>
+                  <Ionicons name="time-outline" size={20} color="#64748B" />
+                  <Text style={styles.fieldLabel}>Heure de fin :</Text>
+                </View>
+                <TextInput
+                  style={[styles.textInput, errors.heureFin && styles.inputError]}
+                  value={formData.heureFin}
+                  onChangeText={(value) => updateFormData("heureFin", value)}
+                  placeholder="HH:MM"
+                  placeholderTextColor="#94A3B8"
+                />
+                {errors.heureFin && <Text style={styles.errorText}>{errors.heureFin}</Text>}
+              </View>
             </View>
 
             {/* Description */}
@@ -311,10 +393,12 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
                         <Text style={styles.previewMetaText}>{formData.date}</Text>
                       </View>
                     )}
-                    {formData.heure && (
+                    {(formData.heureDebut || formData.heureFin) && (
                       <View style={styles.previewMetaItem}>
                         <Ionicons name="time-outline" size={12} color="#64748B" />
-                        <Text style={styles.previewMetaText}>{formData.heure}</Text>
+                        <Text style={styles.previewMetaText}>
+                          {formData.heureDebut} - {formData.heureFin}
+                        </Text>
                       </View>
                     )}
                     {formData.lieu && (
@@ -331,7 +415,13 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
         )}
 
         <View style={styles.buttonContainer}>
-          <Button variant="outline" onPress={onBack} style={styles.cancelButton} textStyle={styles.cancelButtonText}>
+          <Button
+            variant="outline"
+            onPress={onBack}
+            style={styles.cancelButton}
+            textStyle={styles.cancelButtonText}
+            disabled={isLoading}
+          >
             Annuler
           </Button>
           <Button
@@ -339,11 +429,11 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
             style={[
               styles.saveButton,
               { backgroundColor: selectedCategory?.color || "#3B82F6" },
-              !hasChanges && styles.saveButtonDisabled,
+              (!hasChanges || isLoading) && styles.saveButtonDisabled,
             ]}
-            disabled={!hasChanges}
+            disabled={!hasChanges || isLoading}
           >
-            {hasChanges ? "Sauvegarder les modifications" : "Aucune modification"}
+            {isLoading ? "Sauvegarde..." : hasChanges ? "Sauvegarder les modifications" : "Aucune modification"}
           </Button>
         </View>
 
@@ -490,6 +580,14 @@ const styles = StyleSheet.create({
   },
   categoryTextSelected: {
     color: "#FFFFFF",
+  },
+  timeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 24,
+  },
+  timeField: {
+    flex: 0.48,
   },
   previewCard: {
     marginBottom: 20,

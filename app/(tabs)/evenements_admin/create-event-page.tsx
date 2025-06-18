@@ -9,15 +9,19 @@ import { Card, CardContent } from "../../../components/card"
 import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
 
+// Importez votre axiosClient configuré
+import api from "@/api/axiosClient"
+
 // Types
 type EventFormData = {
-  titre: string
-  categorie: string
-  date: string
-  lieu: string
-  heure: string
-  description: string
-}
+  titre: string;
+  categorie: string;
+  date: string;
+  lieu: string;
+  heureDebut: string;
+  heureFin: string;
+  description: string;
+};
 
 // Mapping des catégories vers les IDs de votre base de données
 const categories = [
@@ -34,33 +38,26 @@ interface CreateEventPageProps {
   onSave?: (eventData: EventFormData) => void
 }
 
-const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
-  const [formData, setFormData] = useState<EventFormData>({
-    titre: "",
-    categorie: "",
-    date: "",
-    lieu: "",
-    heure: "",
-    description: "",
-  })
+const CreateEventPage: React.FC<CreateEventPageProps> = ({ onBack, onSave }) => {
+
+const [formData, setFormData] = useState<EventFormData>({
+  titre: "",
+  categorie: "",
+  date: "",
+  lieu: "",
+  heureDebut: "",
+  heureFin: "",
+  description: "",
+});
+
+  function parseHeure(str: string): string {
+  const [heures, minutes = "00"] = str.split("h");
+  return `${heures.padStart(2, "0")}:${minutes.padStart(2, "0")}:00`;
+}
+
 
   const [errors, setErrors] = useState<Partial<EventFormData>>({})
   const [isLoading, setIsLoading] = useState(false)
-
-  // Fonction pour obtenir l'URL de l'API Firebase Functions
-  const getApiUrl = () => {
-    // Pour Firebase Functions Emulator
-    // Remplacez 192.168.1.XXX par votre vraie adresse IP locale
-    const LOCAL_IP = "192.168.147.224" // REMPLACEZ par votre vraie IP
-
-    if (__DEV__) {
-      // En mode développement avec Firebase Functions Emulator
-      return `http://${LOCAL_IP}:5001/projet3a-app/us-central1/api`
-    } else {
-      // En production avec Firebase Functions déployées
-      return "https://us-central1-projet3a-app.cloudfunctions.net/api"
-    }
-  }
 
   // Fonction pour valider une date au format YYYY-MM-DD
   const isValidDate = (dateString: string): boolean => {
@@ -155,16 +152,22 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
       newErrors.lieu = "Le lieu est requis"
     }
 
-    if (!formData.heure.trim()) {
-      newErrors.heure = "L'horaire est requis"
-    } else if (!isValidTime(formData.heure)) {
-      newErrors.heure = "Format d'horaire invalide. Utilisez par exemple: 10h, 10h30 ou 10h - 12h"
+    if (!formData.heureDebut.trim()) {
+      newErrors.heureDebut = "L'horaire de début est requis";
+    } else if (!isValidTime(formData.heureDebut)) {
+      newErrors.heureDebut = "Format invalide. Ex: 10h ou 10h30";
+    }
+
+    if (!formData.heureFin.trim()) {
+      newErrors.heureFin = "L'horaire de fin est requis";
+    } else if (!isValidTime(formData.heureFin)) {
+      newErrors.heureFin = "Format invalide. Ex: 17h ou 17h30";
     }
 
     if (!formData.description.trim()) {
       newErrors.description = "La description est requise"
-    } else if (formData.description.length < 10) {
-      newErrors.description = "La description doit contenir au moins 10 caractères"
+    } else if (formData.description.length < 1) {
+      newErrors.description = "La description doit contenir au moins 1 caractères"
     }
 
     setErrors(newErrors)
@@ -176,125 +179,57 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
       try {
         setIsLoading(true)
 
-        const API_URL = getApiUrl()
-        const ENDPOINT = `${API_URL}/events/create` // L'endpoint complet sera : http://IP:5001/projet3a-app/us-central1/api/events/create
-
         console.log("🚀 Début de la création d'événement...")
-        console.log("🌐 URL complète:", ENDPOINT)
-        console.log("📝 Données envoyées:", {
+
+        // Préparer les données selon le format attendu par votre API
+        const eventData = {
           titre: formData.titre,
           description: formData.description,
           date: formData.date,
-          horaire: formData.heure,
+          horaire_debut: parseHeure(formData.heureDebut),
+          horaire_fin: parseHeure(formData.heureFin),
           lieu: formData.lieu,
-          typeEvenementId: Number.parseInt(formData.categorie),
-        })
-
-        // Test de connectivité d'abord
-        console.log("🔍 Test de connectivité...")
-
-        const response = await fetch(ENDPOINT, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            titre: formData.titre,
-            description: formData.description,
-            date: formData.date,
-            horaire: formData.heure,
-            lieu: formData.lieu,
-            typeEvenementId: Number.parseInt(formData.categorie),
-          }),
-          // Timeout pour éviter d'attendre trop longtemps
-          signal: AbortSignal.timeout(10000), // 10 secondes
-        })
-
-        console.log("📡 Statut de la réponse:", response.status)
-        console.log("📡 Headers de la réponse:", response.headers)
-
-        let result
-        try {
-          result = await response.json()
-          console.log("📄 Réponse du serveur:", result)
-        } catch (jsonError) {
-          console.error("❌ Erreur lors du parsing JSON:", jsonError)
-          throw new Error("Réponse du serveur invalide (pas de JSON)")
+          ID_typeEvenement: Number.parseInt(formData.categorie),
         }
 
-        if (response.ok) {
-          console.log("✅ Événement créé avec succès!")
-          Alert.alert("Succès", "Événement créé avec succès !", [
-            {
-              text: "OK",
-              onPress: () => {
-                setFormData({
-                  titre: "",
-                  categorie: "",
-                  date: "",
-                  lieu: "",
-                  heure: "",
-                  description: "",
-                })
-                onBack()
-              },
-            },
-          ])
+
+        console.log("📝 Données envoyées:", eventData)
+
+        // Utilisation de votre axiosClient configuré
+        // L'URL sera : {urlAPI}/events/create (selon votre router)
+        const response = await api.post("/evenement/create", eventData)
+
+        console.log("📄 Réponse du serveur:", response.data)
+
+        // Vérification du succès selon votre format de réponse
+        // Votre API retourne : { message: "Événement créé", eventId: insertId }
+        if (response.data && response.data.eventId) {
+          console.log("✅ Événement créé avec succès! ID:", response.data.eventId)
+
+          Alert.alert("Succès", "L'événement a été créé avec succès 🎉", [
+        {
+          text: "OK",
+          onPress: () => {
+            // Réinitialiser le formulaire
+            setFormData({
+              titre: "",
+              categorie: "",
+              date: "",
+              lieu: "",
+              heureDebut: "",
+              heureFin: "",
+              description: "",
+            });
+            // Retour à la page précédente
+            onBack();
+          },
+        },
+      ]);
+
         } else {
-          let errorMessage = "Erreur inconnue"
-
-          if (result && result.message) {
-            const errorMsg = result.message.toLowerCase()
-
-            if (
-              errorMsg.includes("date") ||
-              errorMsg.includes("jour") ||
-              errorMsg.includes("mois") ||
-              errorMsg.includes("année")
-            ) {
-              if (errorMsg.includes("format")) {
-                errorMessage = "Format de date incorrect. Utilisez YYYY-MM-DD"
-              } else if (errorMsg.includes("passé") || errorMsg.includes("future")) {
-                errorMessage = "La date doit être dans le futur"
-              } else if (errorMsg.includes("invalid")) {
-                errorMessage = "Date invalide. Vérifiez que cette date existe réellement"
-              } else {
-                errorMessage = `Problème avec la date: ${result.message}`
-              }
-            } else if (errorMsg.includes("horaire") || errorMsg.includes("heure")) {
-              errorMessage = `Problème avec l'horaire: ${result.message}`
-            } else {
-              switch (response.status) {
-                case 400:
-                  errorMessage = `Données invalides: ${result.message}`
-                  break
-                case 401:
-                  errorMessage = "Non autorisé - Vérifiez vos permissions"
-                  break
-                case 403:
-                  errorMessage = "Accès interdit - Vous n'avez pas les droits"
-                  break
-                case 404:
-                  errorMessage = "Endpoint non trouvé - Vérifiez l'URL de votre API"
-                  break
-                case 500:
-                  errorMessage = `Erreur serveur: ${result.message}`
-                  break
-                case 502:
-                  errorMessage = "Serveur indisponible (Bad Gateway)"
-                  break
-                case 503:
-                  errorMessage = "Service temporairement indisponible"
-                  break
-                default:
-                  errorMessage = `Erreur ${response.status}: ${result.message}`
-              }
-            }
-          }
-
-          console.error(`❌ Erreur ${response.status}:`, errorMessage)
-          Alert.alert("Erreur de création", errorMessage)
+          // Si pas d'eventId, il y a eu un problème
+          const errorMessage = response.data?.message || "Erreur lors de la création de l'événement"
+          Alert.alert("Erreur", errorMessage)
         }
       } catch (error: any) {
         console.error("💥 Erreur complète:", error)
@@ -302,34 +237,66 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
         let userMessage = "Erreur inconnue"
         let debugInfo = ""
 
-        if (error.name === "AbortError") {
-          userMessage = "Timeout: Le serveur met trop de temps à répondre"
-          debugInfo = "Vérifiez que votre serveur Express est démarré et accessible"
-        } else if (error.name === "TypeError" && error.message.includes("Network request failed")) {
+        // Gestion des erreurs Axios
+        if (error.response) {
+          // Le serveur a répondu avec un code d'erreur
+          const status = error.response.status
+          const data = error.response.data
+
+          console.log("❌ Erreur HTTP:", status, data)
+
+          // Messages d'erreur spécifiques selon le statut et votre API
+          switch (status) {
+            case 400:
+              // Votre API retourne "Tous les champs sont requis"
+              if (data && data.message) {
+                const errorMsg = data.message.toLowerCase()
+                if (errorMsg.includes("champs sont requis")) {
+                  userMessage = "Tous les champs sont requis. Vérifiez votre formulaire."
+                } else if (errorMsg.includes("date")) {
+                  userMessage = `Problème avec la date: ${data.message}`
+                } else if (errorMsg.includes("horaire") || errorMsg.includes("heure")) {
+                  userMessage = `Problème avec l'horaire: ${data.message}`
+                } else {
+                  userMessage = `Données invalides: ${data.message}`
+                }
+              } else {
+                userMessage = "Données invalides"
+              }
+              break
+            case 401:
+              userMessage = "Non autorisé - Vérifiez votre connexion"
+              break
+            case 403:
+              userMessage = "Accès interdit"
+              break
+            case 404:
+              userMessage = "Endpoint non trouvé - Vérifiez la configuration de votre API"
+              break
+            case 500:
+              // Votre API retourne "Erreur serveur" pour les erreurs MySQL
+              userMessage = `Erreur serveur: ${data?.message || "Problème avec la base de données"}`
+              break
+            default:
+              userMessage = `Erreur ${status}: ${data?.message || "Erreur inconnue"}`
+          }
+
+          debugInfo = `Status: ${status}\nMessage: ${data?.message || "Aucun message"}`
+        } else if (error.request) {
+          // La requête a été faite mais pas de réponse
           userMessage = "Impossible de contacter le serveur"
-          debugInfo = `URL utilisée: ${getApiUrl()}\n\nVérifiez:\n• Que votre serveur Express est démarré\n• Que l'adresse IP est correcte\n• Que vous êtes sur le même réseau`
-        } else if (error.message.includes("fetch")) {
-          userMessage = "Erreur de connexion réseau"
-          debugInfo = "Vérifiez votre connexion internet et l'URL du serveur"
-        } else if (error.code === "ECONNREFUSED") {
-          userMessage = "Connexion refusée par le serveur"
-          debugInfo = "Le serveur n'est probablement pas démarré sur le port 3000"
-        } else if (error.code === "ENOTFOUND") {
-          userMessage = "Serveur introuvable"
-          debugInfo = "Vérifiez l'adresse IP de votre serveur"
+          debugInfo = "Vérifiez que votre serveur est démarré et que l'URL est correcte dans votre config"
         } else {
-          userMessage = `Erreur technique: ${error.message}`
+          // Erreur dans la configuration de la requête
+          userMessage = `Erreur de configuration: ${error.message}`
           debugInfo = `Type: ${error.name}`
         }
 
-        Alert.alert("Erreur de connexion", userMessage, [
+        Alert.alert("Erreur de création", userMessage, [
           {
             text: "Voir les détails",
             onPress: () => {
-              Alert.alert(
-                "Informations de debug",
-                `${debugInfo}\n\nURL: ${getApiUrl()}/events/create\n\nErreur: ${error.message}`,
-              )
+              Alert.alert("Informations de debug", debugInfo)
             },
           },
           { text: "OK" },
@@ -371,16 +338,6 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* Affichage de l'URL pour debug */}
-        {process.env.NODE_ENV === "development" && (
-          <Card style={[styles.formCard, { backgroundColor: "#FEF3C7" }]}>
-            <CardContent style={styles.formContent}>
-              <Text style={styles.debugText}>🔧 Mode Debug</Text>
-              <Text style={styles.debugText}>URL API: {getApiUrl()}/events/create</Text>
-            </CardContent>
-          </Card>
-        )}
-
         <Card style={styles.formCard}>
           <CardContent style={styles.formContent}>
             {/* Titre */}
@@ -476,19 +433,35 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
             <View style={styles.fieldContainer}>
               <View style={styles.fieldHeader}>
                 <Ionicons name="time-outline" size={20} color="#64748B" />
-                <Text style={styles.fieldLabel}>Horaire :</Text>
+                <Text style={styles.fieldLabel}>Horaire de début :</Text>
               </View>
               <TextInput
-                style={[styles.textInput, errors.heure && styles.inputError]}
-                value={formData.heure}
-                onChangeText={(value) => updateFormData("heure", value)}
-                placeholder="Ex: 10h - 17h"
+                style={[styles.textInput, errors.heureDebut && styles.inputError]}
+                value={formData.heureDebut}
+                onChangeText={(value) => updateFormData("heureDebut", value)}
+                placeholder="Ex: 10h ou 10h30"
                 placeholderTextColor="#94A3B8"
                 editable={!isLoading}
               />
-              {errors.heure && <Text style={styles.errorText}>{errors.heure}</Text>}
-              <Text style={styles.helperText}>Format: 10h, 10h30 ou 10h - 17h</Text>
+              {errors.heureDebut && <Text style={styles.errorText}>{errors.heureDebut}</Text>}
             </View>
+
+            <View style={styles.fieldContainer}>
+              <View style={styles.fieldHeader}>
+                <Ionicons name="time-outline" size={20} color="#64748B" />
+                <Text style={styles.fieldLabel}>Horaire de fin :</Text>
+              </View>
+              <TextInput
+                style={[styles.textInput, errors.heureFin && styles.inputError]}
+                value={formData.heureFin}
+                onChangeText={(value) => updateFormData("heureFin", value)}
+                placeholder="Ex: 17h ou 17h30"
+                placeholderTextColor="#94A3B8"
+                editable={!isLoading}
+              />
+              {errors.heureFin && <Text style={styles.errorText}>{errors.heureFin}</Text>}
+            </View>
+
 
             {/* Description */}
             <View style={styles.fieldContainer}>
@@ -535,12 +508,15 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
                         <Text style={styles.previewMetaText}>{formData.date}</Text>
                       </View>
                     )}
-                    {formData.heure && (
+                    {formData.heureDebut && formData.heureFin && (
                       <View style={styles.previewMetaItem}>
                         <Ionicons name="time-outline" size={12} color="#64748B" />
-                        <Text style={styles.previewMetaText}>{formData.heure}</Text>
+                        <Text style={styles.previewMetaText}>
+                          {formData.heureDebut} - {formData.heureFin}
+                        </Text>
                       </View>
                     )}
+
                     {formData.lieu && (
                       <View style={styles.previewMetaItem}>
                         <Ionicons name="location-outline" size={12} color="#64748B" />
@@ -583,7 +559,8 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
   )
 }
 
-const styles = StyleSheet.create({
+
+  const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
@@ -621,11 +598,6 @@ const styles = StyleSheet.create({
   },
   formContent: {
     padding: 20,
-  },
-  debugText: {
-    fontSize: 12,
-    color: "#92400E",
-    marginBottom: 4,
   },
   fieldContainer: {
     marginBottom: 24,
