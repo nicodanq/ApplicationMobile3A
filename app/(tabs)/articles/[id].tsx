@@ -1,6 +1,7 @@
 "use client"
 
 import api from "@/api/axiosClient"
+import FooterLogo from "@/components/FooterLogo"
 import { useSession } from "@/contexts/AuthContext"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useEffect, useState } from "react"
@@ -161,6 +162,7 @@ const ArticleDetailScreen = () => {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Text style={styles.backArrow}>←</Text>
+
         </TouchableOpacity>
       </View>
 
@@ -251,6 +253,7 @@ const ArticleDetailScreen = () => {
                     </Text>
                   </TouchableOpacity>
                 ))}
+                 <FooterLogo />
               </ScrollView>
             </View>
           )}

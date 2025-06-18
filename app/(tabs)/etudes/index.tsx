@@ -1,17 +1,10 @@
 "use client"
 
-<<<<<<< liaisonbdd3
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
-=======
-import FooterLogo from "@/components/FooterLogo"
-import HeaderPage from "@/components/HeaderPage"
-import { Ionicons } from "@expo/vector-icons"
-
->>>>>>> main
 import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import {

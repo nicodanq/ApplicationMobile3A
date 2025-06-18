@@ -1,9 +1,11 @@
 "use client"
 
 import { Ionicons } from "@expo/vector-icons"
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import { useState } from "react"
 import {
   Alert,
+  Image,
   SafeAreaView,
   ScrollView,
   StatusBar,
@@ -11,9 +13,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from "react-native"
-import { useState } from "react"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
 import FooterLogo from "@/components/FooterLogo"
