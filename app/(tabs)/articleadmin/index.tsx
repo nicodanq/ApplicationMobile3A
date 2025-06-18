@@ -1,8 +1,8 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
+import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useState } from "react"
 import {
@@ -32,7 +32,7 @@ const AdminArticlesScreen = () => {
   const [isAddCategoryModalVisible, setIsAddCategoryModalVisible] = useState(false)
   const [selectedArticle, setSelectedArticle] = useState<any>(null)
   const [selectedCategory, setSelectedCategory] = useState<any>(null)
-  
+
   const [newArticle, setNewArticle] = useState({
     titre_article: "",
     description_article: "",
@@ -53,11 +53,12 @@ const AdminArticlesScreen = () => {
         {
           id: "1",
           titre_article: "Développement Web",
-          description_article: "Formation complète en développement web moderne avec React, Node.js et bases de données",
+          description_article:
+            "Formation complète en développement web moderne avec React, Node.js et bases de données",
           datePublication_article: "2024-01-15",
           img_article: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
           auteur_article: "Jean Dupont",
-          readTime: "8 min"
+          readTime: "8 min",
         },
         {
           id: "2",
@@ -66,7 +67,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-12",
           img_article: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=300&h=200&fit=crop",
           auteur_article: "Marie Martin",
-          readTime: "12 min"
+          readTime: "12 min",
         },
       ],
     },
@@ -81,7 +82,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-10",
           img_article: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=300&h=200&fit=crop",
           auteur_article: "Pierre Durand",
-          readTime: "10 min"
+          readTime: "10 min",
         },
       ],
     },
@@ -96,7 +97,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-08",
           img_article: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop",
           auteur_article: "Sophie Bernard",
-          readTime: "11 min"
+          readTime: "11 min",
         },
       ],
     },
@@ -111,7 +112,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-05",
           img_article: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&h=200&fit=crop",
           auteur_article: "Luc Moreau",
-          readTime: "17 min"
+          readTime: "17 min",
         },
       ],
     },
@@ -126,7 +127,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-03",
           img_article: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=300&h=200&fit=crop",
           auteur_article: "Emma Leroy",
-          readTime: "13 min"
+          readTime: "13 min",
         },
       ],
     },
@@ -141,7 +142,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2024-01-01",
           img_article: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&h=200&fit=crop",
           auteur_article: "Thomas Roux",
-          readTime: "14 min"
+          readTime: "14 min",
         },
       ],
     },
@@ -156,7 +157,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2023-12-28",
           img_article: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=300&h=200&fit=crop",
           auteur_article: "Julie Blanc",
-          readTime: "13 min"
+          readTime: "13 min",
         },
       ],
     },
@@ -171,7 +172,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2023-12-25",
           img_article: "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=300&h=200&fit=crop",
           auteur_article: "Antoine Petit",
-          readTime: "15 min"
+          readTime: "15 min",
         },
       ],
     },
@@ -186,7 +187,7 @@ const AdminArticlesScreen = () => {
           datePublication_article: "2023-12-20",
           img_article: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=300&h=200&fit=crop",
           auteur_article: "Nicolas Fabre",
-          readTime: "18 min"
+          readTime: "18 min",
         },
       ],
     },
@@ -209,7 +210,7 @@ const AdminArticlesScreen = () => {
         articleImage: article.img_article,
         articleAuthor: article.auteur_article,
         articleDate: article.datePublication_article,
-        articleReadTime: article.readTime
+        articleReadTime: article.readTime,
       },
     })
   }
@@ -220,16 +221,18 @@ const AdminArticlesScreen = () => {
       const categoryIndex = updatedCategories.findIndex((cat) => cat.id === selectedCategory.id)
 
       if (categoryIndex !== -1) {
-        const newId = String(Math.max(...updatedCategories.flatMap(cat => cat.articles.map(a => Number(a.id)))) + 1)
+        const newId = String(Math.max(...updatedCategories.flatMap((cat) => cat.articles.map((a) => Number(a.id)))) + 1)
 
         updatedCategories[categoryIndex].articles.push({
           id: newId,
           titre_article: newArticle.titre_article,
           description_article: newArticle.description_article,
-          datePublication_article: newArticle.datePublication_article || new Date().toISOString().split('T')[0],
-          img_article: newArticle.img_article || "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
+          datePublication_article: newArticle.datePublication_article || new Date().toISOString().split("T")[0],
+          img_article:
+            newArticle.img_article ||
+            "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
           auteur_article: newArticle.auteur_article,
-          readTime: "10 min"
+          readTime: "10 min",
         })
 
         setCategoriesData(updatedCategories)
@@ -300,12 +303,15 @@ const AdminArticlesScreen = () => {
   const handleAddCategory = () => {
     if (newCategory.title.trim()) {
       const newId = `category-${Date.now()}`
-      const updatedCategories = [...categoriesData, {
-        id: newId,
-        title: newCategory.title,
-        articles: []
-      }]
-      
+      const updatedCategories = [
+        ...categoriesData,
+        {
+          id: newId,
+          title: newCategory.title,
+          articles: [],
+        },
+      ]
+
       setCategoriesData(updatedCategories)
       setNewCategory({ title: "" })
       setIsAddCategoryModalVisible(false)
@@ -323,8 +329,12 @@ const AdminArticlesScreen = () => {
     >
       <Image source={{ uri: article.img_article }} style={styles.articleImage} />
       <View style={styles.articleContent}>
-        <Text style={styles.articleTitle} numberOfLines={2}>{article.titre_article}</Text>
-        <Text style={styles.articleDescription} numberOfLines={3}>{article.description_article}</Text>
+        <Text style={styles.articleTitle} numberOfLines={2}>
+          {article.titre_article}
+        </Text>
+        <Text style={styles.articleDescription} numberOfLines={3}>
+          {article.description_article}
+        </Text>
         <View style={styles.articleFooter}>
           <View style={styles.readTimeInfo}>
             <Ionicons name="time-outline" size={16} color="#64748B" />
@@ -339,7 +349,7 @@ const AdminArticlesScreen = () => {
         <TouchableOpacity
           style={styles.editButton}
           onPress={(e) => {
-            e.stopPropagation();
+            e.stopPropagation()
             setSelectedArticle({ ...article })
             setSelectedCategory(category)
             setIsEditArticleModalVisible(true)
@@ -347,10 +357,10 @@ const AdminArticlesScreen = () => {
         >
           <Ionicons name="create-outline" size={16} color="#3B82F6" />
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.deleteButton} 
+        <TouchableOpacity
+          style={styles.deleteButton}
           onPress={(e) => {
-            e.stopPropagation();
+            e.stopPropagation()
             handleDeleteArticle(category.id, article.id)
           }}
         >
@@ -361,7 +371,7 @@ const AdminArticlesScreen = () => {
   )
 
   const renderArticlesList = (category: any, delay: number) => (
-    <Animated.View entering={FadeInDown.delay(delay)} style={styles.section}>
+    <Animated.View key={`category-${category.id}`} entering={FadeInDown.delay(delay)} style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{category.title}</Text>
         <View style={styles.sectionActions}>
@@ -380,7 +390,7 @@ const AdminArticlesScreen = () => {
       <FlatList
         data={category.articles}
         renderItem={({ item }) => <ArticleCard article={item} category={category} />}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => `article-${item.id}`}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.listContainer}
@@ -395,18 +405,14 @@ const AdminArticlesScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <HeaderPage title = "Articles"/>
-        <TouchableOpacity
-          style={styles.addCategoryButton}
-          onPress={() => setIsAddCategoryModalVisible(true)}
-        >
+        <HeaderPage title="Articles" />
+        <TouchableOpacity style={styles.addCategoryButton} onPress={() => setIsAddCategoryModalVisible(true)}>
           <Ionicons name="add" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          
           {/* Statistiques */}
           <Animated.View entering={FadeInUp.delay(100)} style={styles.statsContainer}>
             <View style={styles.statItem}>
@@ -426,10 +432,7 @@ const AdminArticlesScreen = () => {
           </Animated.View>
 
           {/* Sections des articles */}
-          {categoriesData.map((category, index) => 
-            renderArticlesList(category, 200 + index * 100)
-          )}
-
+          {categoriesData.map((category, index) => renderArticlesList(category, 200 + index * 100))}
         </View>
       </ScrollView>
 
@@ -594,21 +597,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   header: {
-    flexDirection: "row",
+    position: "relative",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
+    justifyContent: "center",
     paddingVertical: 16,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 0.5,
     borderBottomColor: "#E5E5E5",
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
-  },
   addCategoryButton: {
+    position: "absolute",
+    right: 20,
+    top: "50%",
+    marginTop: -20, // La moitié de la hauteur du bouton pour le centrer verticalement
     width: 40,
     height: 40,
     borderRadius: 20,

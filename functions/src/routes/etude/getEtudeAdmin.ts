@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
-import { pool } from "../../utils/db";
+import type { Request, Response } from "express"
+import { pool } from "../../utils/db"
 
-export async function getAllEtudes(_req: Request, res: Response) {
+export async function getAllEtudesAdmin(_req: Request, res: Response): Promise<Response> {
   try {
     const [rows] = await pool.query(`
       SELECT 
@@ -26,13 +26,14 @@ export async function getAllEtudes(_req: Request, res: Response) {
         END AS categorie
       FROM Etude e
       JOIN PossederEtude pe ON e.Id_etude = pe.Id_etude
-      WHERE e.ID_statutE = 3
       ORDER BY e.dateCreation_etude DESC
-    `);
+    `)
 
-    return res.status(200).json(rows);
+    res.statusCode = 200
+    return res.json(rows)
   } catch (err) {
-    console.error("Erreur MySQL :", err);
-    return res.status(500).json({ message: "Erreur serveur" });
+    console.error("Erreur MySQL :", err)
+    res.statusCode = 500
+    return res.json({ message: "Erreur serveur" })
   }
 }

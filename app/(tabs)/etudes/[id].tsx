@@ -1,9 +1,14 @@
 "use client"
 
+import api from "@/api/axiosClient"
+import FooterLogo from "@/components/FooterLogo"
+import { useSession } from "@/contexts/AuthContext"
 import { FontAwesome5, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
-import { useState } from "react"
+import { useLocalSearchParams, useRouter } from "expo-router"
+import { useEffect, useState } from "react"
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Platform,
@@ -12,112 +17,211 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
 
-import FooterLogo from "@/components/FooterLogo"
-import { useLocalSearchParams, useRouter } from "expo-router"
-
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
 
-// Type pour les informations additionnelles
-type AdditionalInfo = {
-  period: string;
-  funding: string;
-  participants: string;
-  publicationDate: string;
-  description: string;
-  team: Array<{
-    id: number;
-    name: string;
-    role: string;
-  }>;
+type Etude = {
+  id: string
+  title: string
+  description: string
+  dateDebut: string
+  dateFin: string
+  prix: number
+  image: string
+  dateCreation: string
+  nbrIntervenant: number
+  statut: number
+  category: string
 }
 
-// Données fictives pour compléter les informations manquantes
-const additionalInfo: Record<string, AdditionalInfo> = {
-  "1": {
-    period: "15 Sept - 15 Mars 2024",
-    funding: "18 000 €",
-    participants: "3 développeurs",
-    publicationDate: "5 juin 2023",
-    description: "Cette formation complète en développement web moderne couvre les technologies front-end et back-end les plus demandées sur le marché. Vous apprendrez React, Node.js et les bases de données SQL et NoSQL pour devenir un développeur full-stack compétent.",
-    team: [
-      { id: 1, name: "Marie Dupont", role: "Lead Developer" },
-      { id: 2, name: "Thomas Martin", role: "UX Designer" },
-      { id: 3, name: "Julie Lefebvre", role: "Backend Developer" }
-    ]
-  },
-  "2": {
-    period: "1 Oct - 1 Juin 2024",
-    funding: "25 000 €",
-    participants: "4 chercheurs",
-    publicationDate: "12 mai 2023",
-    description: "Cette formation avancée en intelligence artificielle vous permettra de maîtriser les techniques d'apprentissage automatique et de deep learning. Vous travaillerez sur des projets concrets utilisant TensorFlow et PyTorch pour développer des solutions IA innovantes.",
-    team: [
-      { id: 4, name: "Dr. Sophie Bernard", role: "Directrice de recherche" },
-      { id: 5, name: "Alexandre Petit", role: "Data Scientist" },
-      { id: 6, name: "Emma Dubois", role: "Chercheuse" },
-      { id: 7, name: "Lucas Moreau", role: "Chercheur" }
-    ]
-  },
-  "3": {
-    period: "15 Nov - 15 Avril 2024",
-    funding: "15 000 €",
-    participants: "3 experts",
-    publicationDate: "20 juillet 2023",
-    description: "Cette formation en cybersécurité vous apprendra à identifier et contrer les menaces informatiques modernes. Vous développerez des compétences en ethical hacking, analyse de vulnérabilités et mise en place de systèmes de protection robustes.",
-    team: [
-      { id: 8, name: "Nicolas Robert", role: "Expert en sécurité" },
-      { id: 9, name: "Camille Leroy", role: "Analyste" },
-      { id: 10, name: "Maxime Girard", role: "Pentester" }
-    ]
-  }
-}
-
-// Valeurs par défaut
-const defaultInfo: AdditionalInfo = {
-  period: "Non spécifié",
-  funding: "Non spécifié",
-  participants: "Non spécifié",
-  publicationDate: "Non spécifié",
-  description: "Aucune description disponible",
-  team: []
+type TeamMember = {
+  id: number
+  name: string
+  role: string
 }
 
 export default function EtudeDetailScreen() {
   const [bookmarked, setBookmarked] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [etude, setEtude] = useState<Etude | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
   const params = useLocalSearchParams()
   const router = useRouter()
-  
-  // Récupération des paramètres
-  const { 
-    id, 
-    studyTitle, 
-    studyDescription, 
-    studyDuration, 
-    studyLevel, 
-    studyImage,
-    categoryTitle,
-    categoryColor,
-    categoryBackground
-  } = params
+  const { user, token, isLoading } = useSession()
 
-  // Récupération des informations additionnelles avec type safety
-  const studyId = Array.isArray(id) ? id[0] : id || ""
-  const info = additionalInfo[studyId] || {
-    ...defaultInfo,
-    description: Array.isArray(studyDescription) ? studyDescription[0] : studyDescription || defaultInfo.description
+  const { id } = params
+
+  // Fonction pour obtenir une couleur basée sur la catégorie
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: { bg: string; text: string } } = {
+      "IT & Digital": { bg: "#E3F2FD", text: "#2196F3" },
+      "Ingénierie des Systèmes": { bg: "#E8F5E8", text: "#4CAF50" },
+      Conseil: { bg: "#FCE4EC", text: "#E91E63" },
+      RSE: { bg: "#FFF3E0", text: "#FF9800" },
+      "Digital & Culture": { bg: "#F3E5F5", text: "#9C27B0" },
+      "Traduction Technique": { bg: "#E0F2F1", text: "#00BCD4" },
+      Autre: { bg: "#F5F5F5", text: "#757575" },
+    }
+    return colors[category] || colors["Autre"]
   }
 
-  const handlePostuler = () => {
-    Alert.alert(
-      "Candidature envoyée",
-      `Votre candidature pour "${Array.isArray(studyTitle) ? studyTitle[0] : studyTitle}" a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.`,
-      [{ text: "OK", onPress: () => console.log("OK Pressed") }]
+  // Fonction pour calculer la durée en mois
+  const calculateDuration = (dateDebut: string, dateFin: string) => {
+    const debut = new Date(dateDebut)
+    const fin = new Date(dateFin)
+    const diffTime = Math.abs(fin.getTime() - debut.getTime())
+    const diffMonths = Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 30))
+    return `${diffMonths} mois`
+  }
+
+  // Fonction pour déterminer le niveau basé sur le nombre d'intervenants
+  const getLevel = (nbrIntervenant: number) => {
+    if (nbrIntervenant === 1) return "Débutant"
+    if (nbrIntervenant === 2) return "Intermédiaire"
+    return "Avancé"
+  }
+
+  // Fonction pour formater la date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
+  }
+
+  // Équipe fictive basée sur la catégorie
+  const getTeamMembers = (category: string): TeamMember[] => {
+    const teams: { [key: string]: TeamMember[] } = {
+      "IT & Digital": [
+        { id: 1, name: "Marie Dupont", role: "Lead Developer" },
+        { id: 2, name: "Thomas Martin", role: "UX Designer" },
+        { id: 3, name: "Julie Lefebvre", role: "Backend Developer" },
+      ],
+      "Ingénierie des Systèmes": [
+        { id: 4, name: "Dr. Sophie Bernard", role: "Directrice de recherche" },
+        { id: 5, name: "Alexandre Petit", role: "Ingénieur systèmes" },
+        { id: 6, name: "Emma Dubois", role: "Chercheuse" },
+      ],
+      Conseil: [
+        { id: 7, name: "Nicolas Robert", role: "Consultant senior" },
+        { id: 8, name: "Camille Leroy", role: "Analyste" },
+      ],
+      RSE: [
+        { id: 9, name: "Maxime Girard", role: "Expert RSE" },
+        { id: 10, name: "Laura Moreau", role: "Consultante environnement" },
+      ],
+      "Digital & Culture": [
+        { id: 11, name: "Antoine Dubois", role: "Designer créatif" },
+        { id: 12, name: "Céline Martin", role: "Chef de projet digital" },
+      ],
+      "Traduction Technique": [
+        { id: 13, name: "Pierre Lefevre", role: "Traducteur technique" },
+        { id: 14, name: "Sophie Rousseau", role: "Linguiste" },
+      ],
+    }
+    return (
+      teams[category] || [
+        { id: 1, name: "Dr. Nom Prénom", role: "Directeur de formation" },
+        { id: 2, name: "Dr. Nom Prénom", role: "Formateur" },
+      ]
     )
   }
+
+  useEffect(() => {
+    const fetchEtudeDetails = async () => {
+      if (!id) return
+
+      try {
+        setLoading(true)
+        setError(null)
+
+        // Récupérer toutes les études
+        const response = await api.get("/etude/")
+        const rawEtudes = response.data
+
+        // Transformer les données
+        const formattedEtudes: Etude[] = rawEtudes.map((etude: any) => ({
+          id: etude.Id_etude?.toString() || `etude-${Math.random()}`,
+          title: etude.titre_etude ?? "Titre manquant",
+          description: etude.description_etude ?? "Pas de description",
+          dateDebut: etude.dateDebut_etude ?? "",
+          dateFin: etude.dateFin_etude ?? "",
+          prix: etude.prix_etude ?? 0,
+          image: etude.img_etude
+            ? etude.img_etude.startsWith("http")
+              ? etude.img_etude
+              : `https://votre-domaine.com/images/${etude.img_etude}`
+            : "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=800&h=400&fit=crop",
+          dateCreation: etude.dateCreation_etude ?? "",
+          nbrIntervenant: etude.nbrIntervenant ?? 1,
+          statut: etude.ID_statutE ?? 3,
+          category: etude.categorie ?? "Autre",
+        }))
+
+        // Trouver l'étude spécifique
+        const currentEtude = formattedEtudes.find((etude) => etude.id === id)
+
+        if (currentEtude) {
+          setEtude(currentEtude)
+        } else {
+          setError("Étude non trouvée")
+        }
+      } catch (err) {
+        console.error("Erreur récupération étude:", err)
+        setError("Erreur lors du chargement de l'étude")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEtudeDetails()
+  }, [id])
+
+  const handlePostuler = () => {
+    if (!etude) return
+
+    Alert.alert(
+      "Candidature envoyée",
+      `Votre candidature pour "${etude.title}" a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.`,
+      [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+    )
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2196F3" />
+          <Text style={styles.loadingText}>Chargement de l'étude...</Text>
+        </View>
+      </View>
+    )
+  }
+
+  if (error || !etude) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error || "Étude non trouvée"}</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    )
+  }
+
+  const categoryColors = getCategoryColor(etude.category)
+  const teamMembers = getTeamMembers(etude.category)
+  const duration = calculateDuration(etude.dateDebut, etude.dateFin)
 
   return (
     <View style={styles.container}>
@@ -125,12 +229,7 @@ export default function EtudeDetailScreen() {
 
       {/* Header image */}
       <View style={styles.headerContainer}>
-        <Image
-          source={{
-            uri: Array.isArray(studyImage) ? studyImage[0] : studyImage || "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=1374&q=80",
-          }}
-          style={styles.headerImage}
-        />
+        <Image source={{ uri: etude.image }} style={styles.headerImage} />
         <LinearGradient colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.7)"]} style={styles.headerGradient} />
 
         {/* Back button */}
@@ -150,80 +249,62 @@ export default function EtudeDetailScreen() {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.contentContainer}>
-          <Animated.View 
-            entering={FadeInDown.delay(100).springify()} 
-            style={[
-              styles.categoryBadge, 
-              { 
-                backgroundColor: Array.isArray(categoryBackground) 
-                  ? categoryBackground[0] 
-                  : categoryBackground || "rgba(59, 130, 246, 0.1)" 
-              }
-            ]}
+          <Animated.View
+            entering={FadeInDown.delay(100).springify()}
+            style={[styles.categoryBadge, { backgroundColor: categoryColors.bg }]}
           >
-            <Text 
-              style={[
-                styles.categoryText, 
-                { 
-                  color: Array.isArray(categoryColor) 
-                    ? categoryColor[0] 
-                    : categoryColor || "#3B82F6" 
-                }
-              ]}
-            >
-              {Array.isArray(categoryTitle) ? categoryTitle[0] : categoryTitle || "Catégorie"}
-            </Text>
+            <Text style={[styles.categoryText, { color: categoryColors.text }]}>{etude.category}</Text>
           </Animated.View>
 
           <Animated.Text entering={FadeInDown.delay(200).springify()} style={styles.title}>
-            {Array.isArray(studyTitle) ? studyTitle[0] : studyTitle || "Titre de l'étude"}
+            {etude.title}
           </Animated.Text>
 
           <Animated.View entering={FadeInDown.delay(300).springify()} style={styles.infoCardsContainer}>
             <View style={styles.infoCard}>
-              <MaterialCommunityIcons name="calendar-range" size={20} color="#3B82F6" />
-              <View>
-                <Text style={styles.infoLabel}>Durée</Text>
-                <Text style={styles.infoValue}>
-                  {Array.isArray(studyDuration) ? studyDuration[0] : studyDuration || info.period}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.infoCard}>
-              <MaterialCommunityIcons name="school-outline" size={20} color="#3B82F6" />
-              <View>
-                <Text style={styles.infoLabel}>Niveau</Text>
-                <Text style={styles.infoValue}>
-                  {Array.isArray(studyLevel) ? studyLevel[0] : studyLevel || "Intermédiaire"}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.infoCard}>
               <FontAwesome5 name="users" size={18} color="#3B82F6" />
               <View>
                 <Text style={styles.infoLabel}>Participants</Text>
-                <Text style={styles.infoValue}>{info.participants}</Text>
+                <Text style={styles.infoValue}>{etude.nbrIntervenant} intervenant(s)</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoCard}>
+              <MaterialCommunityIcons name="calendar-range" size={20} color="#3B82F6" />
+              <View>
+                <Text style={styles.infoLabel}>Dates</Text>
+                <Text style={styles.infoValue}>
+                  {formatDate(etude.dateDebut)} - {formatDate(etude.dateFin)}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.infoCard}>
+              <MaterialCommunityIcons name="clock-outline" size={20} color="#3B82F6" />
+              <View>
+                <Text style={styles.infoLabel}>Durée</Text>
+                <Text style={styles.infoValue}>{duration}</Text>
+              </View>
+            </View>
+
+            <View style={styles.infoCard}>
+              <MaterialCommunityIcons name="currency-eur" size={20} color="#3B82F6" />
+              <View>
+                <Text style={styles.infoLabel}>Budget</Text>
+                <Text style={styles.infoValue}>{etude.prix.toLocaleString()} €</Text>
               </View>
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).springify()} style={styles.section}>
             <Text style={styles.sectionTitle}>À propos de cette formation</Text>
-            <Text style={styles.description}>
-              {info.description}
-            </Text>
+            <Text style={styles.description}>{etude.description}</Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).springify()} style={styles.section}>
             <Text style={styles.sectionTitle}>Équipe pédagogique</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.teamScroll}>
-              {(info.team.length > 0 ? info.team : [
-                { id: 1, name: "Dr. Nom Prénom", role: "Directeur de formation" },
-                { id: 2, name: "Dr. Nom Prénom", role: "Formateur" },
-                { id: 3, name: "Dr. Nom Prénom", role: "Formateur" }
-              ]).map((member, index) => (
+              {teamMembers.map((member, index) => (
                 <View key={member.id} style={styles.teamMember}>
                   <Image
                     source={{
@@ -240,7 +321,7 @@ export default function EtudeDetailScreen() {
 
           <Animated.View entering={FadeInDown.delay(700).springify()} style={styles.publicationInfo}>
             <Text style={styles.publicationLabel}>Formation publiée le:</Text>
-            <Text style={styles.publicationDate}>{info.publicationDate}</Text>
+            <Text style={styles.publicationDate}>{formatDate(etude.dateCreation)}</Text>
           </Animated.View>
 
           <AnimatedTouchable
@@ -250,10 +331,7 @@ export default function EtudeDetailScreen() {
             activeOpacity={0.8}
           >
             <LinearGradient
-              colors={[
-                Array.isArray(categoryColor) ? categoryColor[0] : categoryColor || "#3B82F6", 
-                Array.isArray(categoryColor) ? categoryColor[0] : categoryColor || "#2563EB"
-              ]}
+              colors={[categoryColors.text, categoryColors.text]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.applyButtonGradient}
@@ -273,6 +351,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#64748B",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  backButtonText: {
+    color: "#2196F3",
+    fontSize: 16,
+    fontWeight: "600",
   },
   headerContainer: {
     height: 240,
@@ -351,7 +456,7 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#F8FAFC",
     borderRadius: 12,
     padding: 16,
@@ -366,6 +471,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#334155",
+    flex: 1,
+    flexWrap: "wrap",
   },
   section: {
     marginBottom: 28,
@@ -381,6 +488,12 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: "#475569",
     marginBottom: 12,
+  },
+  periodText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: "#475569",
+    fontWeight: "600",
   },
   teamScroll: {
     marginLeft: -8,

@@ -1,13 +1,14 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
+import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
-"use client"
-
+import { useSession } from "@/contexts/AuthContext"
+import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
+  ActivityIndicator,
   Dimensions,
   FlatList,
   Image,
@@ -23,183 +24,119 @@ import {
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = width * 0.8
 
-// Types d'études avec leurs données
-const studyCategories = [
-  {
-    id: 'it-digital',
-    title: 'IT & Digital',
-    color: '#2196F3',
-    backgroundColor: '#E3F2FD',
-    icon: '💻',
-    studies: [
-      {
-        id: '1',
-        title: 'Développement Web Full-Stack',
-        description: 'Formation complète en développement web moderne avec React, Node.js et bases de données',
-        duration: '6 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&h=200&fit=crop',
-      },
-      {
-        id: '2',
-        title: 'Intelligence Artificielle',
-        description: 'Apprentissage automatique, deep learning et applications pratiques de l\'IA',
-        duration: '8 mois',
-        level: 'Avancé',
-        image: 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=400&h=200&fit=crop',
-      },
-      {
-        id: '3',
-        title: 'Cybersécurité',
-        description: 'Sécurité informatique, ethical hacking et protection des systèmes',
-        duration: '5 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-  {
-    id: 'ingenierie-systemes',
-    title: 'Ingénierie des Systèmes',
-    color: '#4CAF50',
-    backgroundColor: '#E8F5E8',
-    icon: '⚙️',
-    studies: [
-      {
-        id: '4',
-        title: 'Systèmes Embarqués',
-        description: 'Conception et programmation de systèmes embarqués pour l\'industrie',
-        duration: '7 mois',
-        level: 'Avancé',
-        image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=200&fit=crop',
-      },
-      {
-        id: '5',
-        title: 'Automatisation Industrielle',
-        description: 'Robotique, automates programmables et systèmes de contrôle',
-        duration: '6 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1565514020179-026b92b84bb6?w=400&h=200&fit=crop',
-      },
-      {
-        id: '6',
-        title: 'IoT et Connectivité',
-        description: 'Internet des objets, capteurs et communication M2M',
-        duration: '4 mois',
-        level: 'Débutant',
-        image: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-  {
-    id: 'conseil',
-    title: 'Conseil',
-    color: '#E91E63',
-    backgroundColor: '#FCE4EC',
-    icon: '💼',
-    studies: [
-      {
-        id: '7',
-        title: 'Stratégie d\'Entreprise',
-        description: 'Analyse stratégique, transformation digitale et accompagnement organisationnel',
-        duration: '5 mois',
-        level: 'Avancé',
-        image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop',
-      },
-      {
-        id: '8',
-        title: 'Management de Projet',
-        description: 'Gestion de projet agile, leadership et coordination d\'équipes',
-        duration: '4 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-  {
-    id: 'rse',
-    title: 'RSE',
-    color: '#FF9800',
-    backgroundColor: '#FFF3E0',
-    icon: '🌱',
-    studies: [
-      {
-        id: '9',
-        title: 'Développement Durable',
-        description: 'Stratégies environnementales et responsabilité sociale des entreprises',
-        duration: '3 mois',
-        level: 'Débutant',
-        image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=200&fit=crop',
-      },
-      {
-        id: '10',
-        title: 'Économie Circulaire',
-        description: 'Modèles économiques durables et gestion des ressources',
-        duration: '4 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-  {
-    id: 'digital-culture',
-    title: 'Digital & Culture',
-    color: '#9C27B0',
-    backgroundColor: '#F3E5F5',
-    icon: '🎨',
-    studies: [
-      {
-        id: '11',
-        title: 'Design UX/UI',
-        description: 'Expérience utilisateur, interface design et prototypage',
-        duration: '5 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=400&h=200&fit=crop',
-      },
-      {
-        id: '12',
-        title: 'Marketing Digital',
-        description: 'Stratégies digitales, réseaux sociaux et communication numérique',
-        duration: '4 mois',
-        level: 'Débutant',
-        image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-  {
-    id: 'traduction-technique',
-    title: 'Traduction Technique',
-    color: '#00BCD4',
-    backgroundColor: '#E0F2F1',
-    icon: '🌐',
-    studies: [
-      {
-        id: '13',
-        title: 'Traduction Scientifique',
-        description: 'Spécialisation en traduction de documents techniques et scientifiques',
-        duration: '6 mois',
-        level: 'Avancé',
-        image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop',
-      },
-      {
-        id: '14',
-        title: 'Localisation Logicielle',
-        description: 'Adaptation culturelle et linguistique de logiciels et applications',
-        duration: '4 mois',
-        level: 'Intermédiaire',
-        image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=200&fit=crop',
-      },
-    ],
-  },
-]
+type Study = {
+  id: string
+  title: string
+  description: string
+  duration: string
+  level: string
+  image: string
+  category: string
+}
+
+type StudyCategory = {
+  id: string
+  title: string
+  color: string
+  backgroundColor: string
+  icon: string
+  studies: Study[]
+}
 
 const EtudesScreen = () => {
   const router = useRouter()
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const { user, token, isLoading } = useSession()
 
-  const handleStudyPress = (study: any, category: any) => {
+  const [loading, setLoading] = useState(true)
+  const [studyCategories, setStudyCategories] = useState<StudyCategory[]>([])
+  const [error, setError] = useState<string | null>(null)
+
+  // Configuration des couleurs par catégorie
+  const getCategoryConfig = (categoryName: string) => {
+    const configs: { [key: string]: { color: string; backgroundColor: string; icon: string } } = {
+      "IT & Digital": { color: "#2196F3", backgroundColor: "#E3F2FD", icon: "💻" },
+      "Ingénierie des Systèmes": { color: "#4CAF50", backgroundColor: "#E8F5E8", icon: "⚙️" },
+      Conseil: { color: "#E91E63", backgroundColor: "#FCE4EC", icon: "💼" },
+      RSE: { color: "#FF9800", backgroundColor: "#FFF3E0", icon: "🌱" },
+      "Digital & Culture": { color: "#9C27B0", backgroundColor: "#F3E5F5", icon: "🎨" },
+      "Traduction Technique": { color: "#00BCD4", backgroundColor: "#E0F2F1", icon: "🌐" },
+      Autre: { color: "#757575", backgroundColor: "#F5F5F5", icon: "📚" },
+    }
+    return configs[categoryName] || configs["Autre"]
+  }
+
+  useEffect(() => {
+    const fetchEtudes = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+
+        const response = await api.get("/etude/")
+        const rawEtudes = response.data
+
+        // Transformer les données
+        const formattedEtudes: Study[] = rawEtudes.map((etude: any) => ({
+          id: etude.Id_etude?.toString() || `etude-${Math.random()}`,
+          title: etude.titre_etude ?? "Titre manquant",
+          description: etude.description_etude ?? "Pas de description",
+          duration:
+            etude.dateFin_etude && etude.dateDebut_etude
+              ? `${Math.ceil((new Date(etude.dateFin_etude).getTime() - new Date(etude.dateDebut_etude).getTime()) / (1000 * 60 * 60 * 24 * 30))} mois`
+              : "Non spécifiée",
+          level: etude.nbrIntervenant
+            ? etude.nbrIntervenant === 1
+              ? "Débutant"
+              : etude.nbrIntervenant === 2
+                ? "Intermédiaire"
+                : "Avancé"
+            : "Débutant",
+          image: etude.img_etude
+            ? etude.img_etude.startsWith("http")
+              ? etude.img_etude
+              : `https://votre-domaine.com/images/${etude.img_etude}`
+            : "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=400&h=200&fit=crop",
+          category: etude.categorie ?? "Autre",
+        }))
+
+        // Grouper par catégorie
+        const grouped: Record<string, Study[]> = formattedEtudes.reduce(
+          (acc, study) => {
+            if (!acc[study.category]) acc[study.category] = []
+            acc[study.category].push(study)
+            return acc
+          },
+          {} as Record<string, Study[]>,
+        )
+
+        // Créer les catégories avec configuration
+        const categoriesArray: StudyCategory[] = Object.entries(grouped).map(([categoryName, studies]) => {
+          const config = getCategoryConfig(categoryName)
+          return {
+            id: categoryName.toLowerCase().replace(/\s+/g, "-"),
+            title: categoryName,
+            color: config.color,
+            backgroundColor: config.backgroundColor,
+            icon: config.icon,
+            studies,
+          }
+        })
+
+        setStudyCategories(categoriesArray)
+      } catch (err) {
+        console.error("Erreur récupération études:", err)
+        setError("Erreur lors du chargement des études")
+        setStudyCategories([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEtudes()
+  }, [])
+
+  const handleStudyPress = (study: Study, category: StudyCategory) => {
     router.push({
-      pathname: '/etudes/[id]',
+      pathname: "/etudes/[id]",
       params: {
         id: study.id,
         studyTitle: study.title,
@@ -214,7 +151,7 @@ const EtudesScreen = () => {
     } as any)
   }
 
-  const renderStudyCard = ({ item: study, index }: { item: any; index: number }, category: any) => (
+  const renderStudyCard = ({ item: study, index }: { item: Study; index: number }, category: StudyCategory) => (
     <TouchableOpacity
       style={[styles.studyCard, { marginLeft: index === 0 ? 20 : 10 }]}
       onPress={() => handleStudyPress(study, category)}
@@ -229,8 +166,12 @@ const EtudesScreen = () => {
       </View>
 
       <View style={styles.studyContent}>
-        <Text style={styles.studyTitle} numberOfLines={2}>{study.title}</Text>
-        <Text style={styles.studyDescription} numberOfLines={3}>{study.description}</Text>
+        <Text style={styles.studyTitle} numberOfLines={2}>
+          {study.title}
+        </Text>
+        <Text style={styles.studyDescription} numberOfLines={3}>
+          {study.description}
+        </Text>
 
         <View style={styles.studyMeta}>
           <View style={styles.durationContainer}>
@@ -245,7 +186,7 @@ const EtudesScreen = () => {
     </TouchableOpacity>
   )
 
-  const renderCategorySection = (category: any) => (
+  const renderCategorySection = (category: StudyCategory) => (
     <View key={category.id} style={styles.categorySection}>
       <View style={styles.categoryHeader}>
         <View style={styles.categoryTitleContainer}>
@@ -254,7 +195,10 @@ const EtudesScreen = () => {
           </View>
           <View>
             <Text style={[styles.categoryTitle, { color: category.color }]}>{category.title}</Text>
-            <Text style={styles.categorySubtitle}>{category.studies.length} formation{category.studies.length > 1 ? 's' : ''} disponible{category.studies.length > 1 ? 's' : ''}</Text>
+            <Text style={styles.categorySubtitle}>
+              {category.studies.length} formation{category.studies.length > 1 ? "s" : ""} disponible
+              {category.studies.length > 1 ? "s" : ""}
+            </Text>
           </View>
         </View>
         <TouchableOpacity style={styles.seeAllButton}>
@@ -266,13 +210,45 @@ const EtudesScreen = () => {
       <FlatList
         data={category.studies}
         renderItem={(props: any) => renderStudyCard(props, category)}
-        keyExtractor={(item: any) => item.id}
+        keyExtractor={(item: Study) => item.id}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.studiesCarousel}
       />
     </View>
   )
+
+  // Calculs des statistiques
+  const totalStudies = studyCategories.reduce((acc, cat) => acc + cat.studies.length, 0)
+  const totalCategories = studyCategories.length
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <HeaderPage title="Études" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2196F3" />
+          <Text style={styles.loadingText}>Chargement des études...</Text>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <HeaderPage title="Études" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()}>
+            <Text style={styles.retryButtonText}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -281,16 +257,15 @@ const EtudesScreen = () => {
       {/* Header personnalisé */}
       <HeaderPage title="Études" />
 
-
       {/* Stats */}
       <View style={styles.statsContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{studyCategories.reduce((acc, cat) => acc + cat.studies.length, 0)}</Text>
+          <Text style={styles.statNumber}>{totalStudies}</Text>
           <Text style={styles.statLabel}>Études</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={styles.statNumber}>{studyCategories.length}</Text>
+          <Text style={styles.statNumber}>{totalCategories}</Text>
           <Text style={styles.statLabel}>Domaines</Text>
         </View>
         <View style={styles.statDivider} />
@@ -302,7 +277,13 @@ const EtudesScreen = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          {studyCategories.map(renderCategorySection)}
+          {studyCategories.length > 0 ? (
+            studyCategories.map(renderCategorySection)
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Aucune étude disponible pour le moment</Text>
+            </View>
+          )}
         </View>
         {/* Footer personnalisé */}
         <FooterLogo />
@@ -315,6 +296,50 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#64748B",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: "#2196F3",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#64748B",
+    textAlign: "center",
   },
   statsContainer: {
     flexDirection: "row",
@@ -353,7 +378,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: 20,
-    paddingBottom: 20, // Réduit pour laisser place au FooterPage
+    paddingBottom: 20,
   },
   categorySection: {
     marginBottom: 30,

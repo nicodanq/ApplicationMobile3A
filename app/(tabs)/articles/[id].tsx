@@ -1,7 +1,9 @@
 "use client"
 
-
+import api from "@/api/axiosClient"
+import { useSession } from "@/contexts/AuthContext"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import { useEffect, useState } from "react"
 import {
   Dimensions,
   Image,
@@ -12,102 +14,144 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native"
 
 const { width } = Dimensions.get("window")
 
+type Article = {
+  id: string
+  title: string
+  description: string
+  category: string
+  image: string
+  readTime: number
+  author: string
+  publishDate: string
+  userId: string
+}
+
 const ArticleDetailScreen = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const { user, token, isLoading } = useSession()
 
+  const [loading, setLoading] = useState(true)
+  const [article, setArticle] = useState<Article | null>(null)
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([])
+  const [error, setError] = useState<string | null>(null)
 
-  const { articleTitle, articleDescription, articleTitleColor, articleBackgroundColor, id } = params
+  const { id } = params
 
+  useEffect(() => {
+    const fetchArticleDetails = async () => {
+      if (!id) return
 
-  // Images améliorées pour chaque type d'article
-  const getArticleImage = (title: string) => {
-    const images: { [key: string]: string } = {
-      "Développement Web": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop",
-      "Base de Données": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop",
-      DevOps: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&h=400&fit=crop",
-      "Machine Learning": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=400&fit=crop",
-      "Data Science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
-      "Deep Learning": "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=800&h=400&fit=crop",
-      "Sécurité Réseau": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=400&fit=crop",
-      Cryptographie: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&h=400&fit=crop",
-      "Ethical Hacking": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop",
-      "React Native": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
-      "UX Design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
-      "Progressive Web Apps": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop",
-    }
+      try {
+        setLoading(true)
+        setError(null)
 
-    return (
-      images[title as string] || "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=800&h=400&fit=crop"
-    )
-  }
+        // Récupérer tous les articles
+        const response = await api.get("/article/")
+        const rawArticles = response.data
 
-  const getArticleContent = (title: string) => {
-    const articles: { [key: string]: any } = {
-      "Développement Web": {
-        category: "Technologies et Outils",
-        fullTitle: "Les dernières tendances du développement web moderne",
-        fullDescription: `Le développement web évolue constamment avec l'émergence de nouvelles technologies et frameworks. Cet article explore les tendances actuelles comme les Progressive Web Apps, le JAMstack, et les architectures serverless. Nous analysons également l'impact de l'intelligence artificielle sur le développement web et comment les développeurs peuvent s'adapter à ces changements rapides pour créer des applications plus performantes et accessibles.`,
-        author: "Alexandre Dubois",
-        readTime: "8 min",
-        publishDate: "15 janvier 2024",
-        tags: ["JavaScript", "React", "Performance"],
-      },
-      "Base de Données": {
-        category: "Technologies et Outils",
-        fullTitle: "Optimisation des bases de données pour les applications modernes",
-        fullDescription: `L'optimisation des bases de données est cruciale pour les performances des applications modernes. Cet article détaille les meilleures pratiques pour structurer, indexer et optimiser vos bases de données. Nous couvrons les différences entre SQL et NoSQL, les stratégies de mise en cache, et les techniques de partitionnement pour gérer de gros volumes de données efficacement.`,
-        author: "Marie Lefevre",
-        readTime: "12 min",
-        publishDate: "12 janvier 2024",
-        tags: ["SQL", "NoSQL", "Performance"],
-      },
-      "Machine Learning": {
-        category: "Intelligence Artificielle & Data",
-        fullTitle: "Introduction pratique au Machine Learning",
-        fullDescription: `Le Machine Learning transforme la façon dont nous analysons les données et prenons des décisions. Cet article propose une approche pratique pour comprendre les algorithmes fondamentaux, de la régression linéaire aux réseaux de neurones. Nous explorons également les outils populaires comme TensorFlow et scikit-learn, avec des exemples concrets d'implémentation.`,
-        author: "Dr. Sophie Martin",
-        readTime: "15 min",
-        publishDate: "10 janvier 2024",
-        tags: ["Python", "TensorFlow", "Algorithmes"],
-      },
-      "Sécurité Réseau": {
-        category: "Cybersécurité",
-        fullTitle: "Sécuriser son infrastructure réseau en 2024",
-        fullDescription: `La sécurité réseau est plus critique que jamais avec l'augmentation des cyberattaques. Cet article présente les meilleures pratiques pour sécuriser votre infrastructure, incluant la segmentation réseau, les firewalls nouvelle génération, et la détection d'intrusions. Nous abordons également les défis spécifiques du télétravail et du cloud computing.`,
-        author: "Thomas Rousseau",
-        readTime: "10 min",
-        publishDate: "8 janvier 2024",
-        tags: ["Sécurité", "Réseau", "Firewall"],
-      },
-    }
+        // Transformer les données
+        const formattedArticles: Article[] = rawArticles.map((article: any) => ({
+          id: article.Id_article?.toString() || `${article.titre_article}-${Math.random()}`,
+          title: article.titre_article ?? "Titre manquant",
+          description: article.description_article ?? "Pas de description",
+          image:
+            article.img_article ?? "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=800&h=400&fit=crop",
+          readTime: article.readTime ?? 5,
+          category: article.categorie ?? "Autre",
+          author: article.auteur_article ?? "Auteur EPF",
+          publishDate: article.datePublication_article
+            ? new Date(article.datePublication_article).toLocaleDateString("fr-FR", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : "Date inconnue",
+          userId: article.ID_user?.toString() ?? "",
+        }))
 
-    return (
-      articles[title] || {
-        category: title || "Catégorie",
-        fullTitle: title || "Titre de l'article",
-        fullDescription:
-          articleDescription ||
-          "Découvrez les dernières innovations et tendances dans ce domaine passionnant. Cet article explore en profondeur les concepts clés et fournit des insights pratiques pour les professionnels et les étudiants.",
-        author: "Expert EPF",
-        readTime: "5 min",
-        publishDate: "Aujourd'hui",
-        tags: ["Innovation", "Technologie"],
+        // Trouver l'article spécifique
+        const currentArticle = formattedArticles.find((art) => art.id === id)
+
+        if (currentArticle) {
+          setArticle(currentArticle)
+
+          // Trouver les articles similaires (même catégorie, excluant l'article actuel)
+          const related = formattedArticles
+            .filter((art) => art.category === currentArticle.category && art.id !== currentArticle.id)
+            .slice(0, 5) // Limiter à 5 articles similaires
+
+          setRelatedArticles(related)
+        } else {
+          setError("Article non trouvé")
+        }
+      } catch (err) {
+        console.error("Erreur récupération article:", err)
+        setError("Erreur lors du chargement de l'article")
+      } finally {
+        setLoading(false)
       }
+    }
+
+    fetchArticleDetails()
+  }, [id])
+
+  const handleRelatedArticlePress = (relatedArticle: Article) => {
+    router.push({
+      pathname: "/(tabs)/articles/[id]",
+      params: {
+        id: relatedArticle.id,
+        articleTitle: relatedArticle.title,
+        articleDescription: relatedArticle.description,
+      },
+    })
+  }
+
+  // Fonction pour obtenir une couleur basée sur la catégorie
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: { bg: string; text: string } } = {
+      "Technologies et Outils": { bg: "#E3F2FD", text: "#2196F3" },
+      "Intelligence Artificielle & Data": { bg: "#F3E5F5", text: "#9C27B0" },
+      Cybersécurité: { bg: "#FFEBEE", text: "#F44336" },
+      "Développement Mobile": { bg: "#E8F5E8", text: "#4CAF50" },
+      "UX/UI Design": { bg: "#FFF3E0", text: "#FF9800" },
+      Autre: { bg: "#F5F5F5", text: "#757575" },
+    }
+    return colors[category] || colors["Autre"]
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2196F3" />
+          <Text style={styles.loadingText}>Chargement de l'article...</Text>
+        </View>
+      </SafeAreaView>
     )
   }
 
-  const titleString = Array.isArray(articleTitle) ? articleTitle[0] : articleTitle || ""
-  const articleContent = getArticleContent(titleString)
-  const categoryColor = Array.isArray(articleTitleColor) ? articleTitleColor[0] : articleTitleColor || "#2196F3"
-  const bgColor = Array.isArray(articleBackgroundColor)
-    ? articleBackgroundColor[0]
-    : articleBackgroundColor || "#E3F2FD"
-  const articleImage = getArticleImage(titleString)
+  if (error || !article) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error || "Article non trouvé"}</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  const categoryColors = getCategoryColor(article.category)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -119,53 +163,55 @@ const ArticleDetailScreen = () => {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
       </View>
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
           {/* Main Card */}
           <View style={styles.mainCard}>
             {/* Image */}
             <View style={styles.imageContainer}>
-              <Image source={{ uri: articleImage }} style={styles.headerImage} />
+              <Image source={{ uri: article.image }} style={styles.headerImage} />
               <View style={styles.imageOverlay} />
 
               {/* Category Badge */}
-              <View style={[styles.categoryBadge, { backgroundColor: bgColor }]}>
-                <Text style={[styles.categoryText, { color: categoryColor }]}>{articleContent.category}</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: categoryColors.bg }]}>
+                <Text style={[styles.categoryText, { color: categoryColors.text }]}>{article.category}</Text>
               </View>
 
               {/* Reading time badge */}
               <View style={styles.readTimeBadge}>
-                <Text style={styles.readTimeText}>📖 {articleContent.readTime}</Text>
+                <Text style={styles.readTimeText}>📖 {article.readTime} min</Text>
               </View>
             </View>
 
             {/* Title and Description */}
             <View style={styles.contentSection}>
-              <Text style={styles.articleTitle}>{articleContent.fullTitle}</Text>
+              <Text style={styles.articleTitle}>{article.title}</Text>
 
               {/* Meta information */}
               <View style={styles.metaSection}>
                 <View style={styles.authorSection}>
                   <View style={styles.authorAvatar}>
-                    <Text style={styles.avatarText}>{articleContent.author.charAt(0)}</Text>
+                    <Text style={styles.avatarText}>{article.author.charAt(0).toUpperCase()}</Text>
                   </View>
                   <View style={styles.authorInfo}>
-                    <Text style={styles.authorText}>{articleContent.author}</Text>
-                    <Text style={styles.publishDate}>{articleContent.publishDate}</Text>
+                    <Text style={styles.authorText}>{article.author}</Text>
+                    <Text style={styles.publishDate}>{article.publishDate}</Text>
                   </View>
                 </View>
               </View>
 
               {/* Tags */}
               <View style={styles.tagsContainer}>
-                {articleContent.tags.map((tag: string, index: number) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{article.category}</Text>
+                </View>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{article.readTime} min</Text>
+                </View>
               </View>
 
-              <Text style={styles.articleDescription}>{articleContent.fullDescription}</Text>
+              <Text style={styles.articleDescription}>{article.description}</Text>
 
               {/* Action buttons */}
               <View style={styles.actionButtons}>
@@ -186,19 +232,28 @@ const ArticleDetailScreen = () => {
           </View>
 
           {/* Related articles section */}
-          <View style={styles.relatedSection}>
-            <Text style={styles.relatedTitle}>Articles similaires</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <TouchableOpacity style={styles.relatedCard}>
-                <View style={styles.relatedImage} />
-                <Text style={styles.relatedCardTitle}>Article connexe 1</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.relatedCard}>
-                <View style={styles.relatedImage} />
-                <Text style={styles.relatedCardTitle}>Article connexe 2</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
+          {relatedArticles.length > 0 && (
+            <View style={styles.relatedSection}>
+              <Text style={styles.relatedTitle}>Articles similaires</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {relatedArticles.map((relatedArticle) => (
+                  <TouchableOpacity
+                    key={relatedArticle.id}
+                    style={styles.relatedCard}
+                    onPress={() => handleRelatedArticlePress(relatedArticle)}
+                  >
+                    <Image source={{ uri: relatedArticle.image }} style={styles.relatedImage} />
+                    <Text style={styles.relatedCardTitle} numberOfLines={2}>
+                      {relatedArticle.title}
+                    </Text>
+                    <Text style={styles.relatedCardMeta}>
+                      {relatedArticle.readTime} min • {relatedArticle.author}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -209,6 +264,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#64748B",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  backButtonText: {
+    color: "#2196F3",
+    fontSize: 16,
+    fontWeight: "600",
   },
   header: {
     flexDirection: "row",
@@ -236,12 +318,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: "#1E293B",
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1E293B",
-  },
-  
   scrollView: {
     flex: 1,
   },
@@ -427,14 +503,19 @@ const styles = StyleSheet.create({
   relatedImage: {
     width: "100%",
     height: 80,
-    backgroundColor: "#E2E8F0",
     borderRadius: 12,
     marginBottom: 8,
+    resizeMode: "cover",
   },
   relatedCardTitle: {
     fontSize: 14,
     fontWeight: "600",
     color: "#1E293B",
+    marginBottom: 4,
+  },
+  relatedCardMeta: {
+    fontSize: 12,
+    color: "#64748B",
   },
 })
 
