@@ -145,43 +145,49 @@ const LoginScreen: React.FC = () => {
   })
 
   const onSubmit = async (data: FormData) => {
-    setLoading(true);
-    try {
-      const response = await api.post("/auth/", {
-        email: data.email,
-        password: data.password,
-      });
+  setLoading(true);
+  try {
+    const responseLogin = await api.post("/auth/", {
+      email: data.email,
+      password: data.password,
+    });
 
-      const { token, id, email } = response.data;
-      await AsyncStorage.setItem("session", token);
-      signIn({ token, id, email });
-      router.replace("/");
-    } catch (error: any) {
-      let message = "Erreur inconnue";
+    const { token, id, email } = responseLogin.data;
 
-      // ✅ parsing propre de l'erreur
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (typeof data === "string") {
-          message = data;
-        } else if (typeof data.message === "string") {
-          message = data.message;
-        }
+    // Sauvegarde du token dans AsyncStorage
+    await AsyncStorage.setItem("session", token);
+
+    // Connexion front (stockage dans le contexte)
+    signIn({ token, id, email });
+
+    // Redirection vers la page d'accueil
+    router.replace("/");
+  } catch (error: any) {
+    let message = "Erreur inconnue";
+
+    if (error.response?.data) {
+      const data = error.response.data;
+      if (typeof data === "string") {
+        message = data;
+      } else if (typeof data.message === "string") {
+        message = data.message;
       }
-
-      console.error("Erreur de connexion :", message);
-
-      if (message === "Utilisateur non trouvé") {
-        alert("Utilisateur non trouvé. Vérifie ton email/mot de passe.");
-      } else if (message === "Mot de passe incorrect") {
-        alert("Mot de passe incorrect.");
-      } else {
-        alert("Erreur lors de la connexion.");
-      }
-    } finally {
-      setLoading(false);
     }
-  };
+
+    console.error("Erreur de connexion :", message);
+
+    if (message === "Utilisateur non trouvé") {
+      alert("Utilisateur non trouvé. Vérifie ton email/mot de passe.");
+    } else if (message === "Mot de passe incorrect") {
+      alert("Mot de passe incorrect.");
+    } else {
+      alert("Erreur lors de la connexion.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const theme = {
     background: isDark ? "#1a1a2e" : "#ffffff",

@@ -29,22 +29,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="onboarding"
-        options={{
-          title: 'Onboarding',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="login"
-        options={{
-          title: 'Login',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          title: 'Accueil',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="book" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -63,7 +49,7 @@ export default function TabLayout() {
 
         }}
       />
-      <Tabs.Screen
+
         name="articles"
         options={{
           title: 'Articles',
@@ -72,25 +58,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profilIntervenant"
+        name="profil"
         options={{
           title: 'Profil',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
-
         }}
       />
-      <Tabs.Screen
-        name="profiladmin"
-        options={{
-          title: 'Profil',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
-
-        }}
-      />
-
     </Tabs>
-
-
-    
   );
 }

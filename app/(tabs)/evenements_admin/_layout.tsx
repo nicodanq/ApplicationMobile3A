@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 
-export default function ProfilIntervenantLayout() {
+export default function EtudesLayout() {
   return (
     <Stack
       screenOptions={{

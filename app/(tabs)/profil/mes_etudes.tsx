@@ -79,7 +79,7 @@ const MesEtudesScreen = () => {
 
   const handleCategoryPress = (category: 'postulees' | 'enCours' | 'terminees') => {
     router.push({
-      pathname: `/profilIntervenant/etudes-${category}`,
+      pathname: `/profil/etudes-${category}`,
       params: { category }
     } as any)
   }
@@ -202,7 +202,7 @@ const MesEtudesScreen = () => {
               <View style={styles.activityContent}>
                 <Text style={styles.activityTitle}>Formation terminée</Text>
                 <Text style={styles.activityDescription}>
-                  Vous avez terminé "Bases de Données Avancées" avec la note A
+                  Vous avez terminé &quot;Bases de Données Avancées&quot; avec la note A
                 </Text>
                 <Text style={styles.activityDate}>Il y a 3 semaines</Text>
               </View>
@@ -215,7 +215,7 @@ const MesEtudesScreen = () => {
               <View style={styles.activityContent}>
                 <Text style={styles.activityTitle}>Nouvelle candidature</Text>
                 <Text style={styles.activityDescription}>
-                  Candidature envoyée pour "Intelligence Artificielle Avancée"
+                  Candidature envoyée pour &quot;Intelligence Artificielle Avancée&quot;
                 </Text>
                 <Text style={styles.activityDate}>Il y a 1 semaine</Text>
               </View>

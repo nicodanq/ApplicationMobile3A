@@ -1,9 +1,11 @@
 "use client"
 
-import FooterLogo from "@/components/FooterLogo"
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
-import { useState } from "react"
+import api from "@/api/axiosClient";
+import FooterLogo from "@/components/FooterLogo";
+import { useSession } from "@/contexts/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -16,8 +18,8 @@ import {
   Text,
   TouchableOpacity,
   View
-} from "react-native"
-import Animated, { FadeInDown } from "react-native-reanimated"
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 const { width } = Dimensions.get("window")
 const cardWidth = width * 0.75
@@ -51,82 +53,61 @@ const ImageWithPlaceholder = ({ uri, style }: { uri: string; style: any }) => {
 }
 
 const ArticlesEnregistresScreen = () => {
-  const router = useRouter()
+  const router = useRouter();
+  const { user } = useSession();
   const [isLoading, setIsLoading] = useState(false)
+  const [savedArticles, setSavedArticles] = useState<any[]>([])
+  const [isFetching, setIsFetching] = useState(true)
 
-  // Articles enregistrés (données d'exemple)
-  const [savedArticles, setSavedArticles] = useState([
-    {
-      id: "1",
-      title: "Développement Web",
-      description: "Formation complète en développement web moderne avec React, Node.js et bases de données",
-      category: "WEB DEVELOPMENT",
-      image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
-      readTime: "8 min",
-      savedDate: "15 Jan 2024",
-    },
-    {
-      id: "2",
-      title: "Base de Données",
-      description: "Maîtrisez les concepts avancés des bases de données relationnelles et NoSQL",
-      category: "DATABASE",
-      image: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=300&h=200&fit=crop",
-      readTime: "12 min",
-      savedDate: "12 Jan 2024",
-    },
-    {
-      id: "3",
-      title: "DevOps",
-      description: "Automatisation et déploiement continu avec Docker, Kubernetes et CI/CD",
-      category: "DEVOPS",
-      image: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=300&h=200&fit=crop",
-      readTime: "15 min",
-      savedDate: "10 Jan 2024",
-    },
-  ])
+  useEffect(() => {
+    const fetchUserArticles = async () => {
+      if (!user?.id) return;
 
-  // Fonction améliorée pour supprimer un article avec confirmation
-  const handleRemoveArticle = (articleId: string, articleTitle: string) => {
+      try {
+        setIsFetching(true)
+        const response = await api.get(`/user/articles/${user.id}`);
+        setSavedArticles(response.data); // Les données viennent directement de la BDD
+      } catch (error) {
+        console.error("Erreur de récupération des articles favoris :", error);
+        setSavedArticles([]); // Si erreur, on met un tableau vide
+      } finally {
+        setIsFetching(false)
+      }
+    }
+
+    fetchUserArticles();
+  }, [user?.id]);
+
+  const handleRemoveArticle = (articleId: number, articleTitle: string) => {
     Alert.alert(
       "Supprimer l'article",
       `Êtes-vous sûr de vouloir supprimer "${articleTitle}" de vos articles enregistrés ?`,
       [
-        { 
-          text: "Annuler", 
-          style: "cancel" 
-        },
-        { 
-          text: "Supprimer", 
-          style: "destructive",
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer", style: "destructive",
           onPress: () => {
-            setSavedArticles((prev) => prev.filter((article) => article.id !== articleId))
+            setSavedArticles(prev => prev.filter(article => article.Id_article !== articleId));
           }
         }
       ]
-    )
-  }
+    );
+  };
 
-  // Fonction améliorée pour naviguer vers les détails avec gestion d'erreur
   const handleArticlePress = async (article: any) => {
     try {
       setIsLoading(true)
-      
-      // Navigation avec gestion d'erreur
       await router.push({
         pathname: '/(tabs)/articles/[id]',
         params: {
-          id: article.id,
-          articleTitle: article.title,
-          articleDescription: article.description,
+          id: article.Id_article,
+          articleTitle: article.titre_article,
+          articleDescription: article.description_article,
         },
       })
     } catch (error) {
       console.error('Erreur de navigation:', error)
-      Alert.alert(
-        "Erreur", 
-        "Impossible d'ouvrir l'article. Veuillez réessayer.",
-        [{ text: "OK" }]
-      )
+      Alert.alert("Erreur", "Impossible d'ouvrir l'article. Veuillez réessayer.")
     } finally {
       setIsLoading(false)
     }
@@ -139,20 +120,20 @@ const ArticlesEnregistresScreen = () => {
       activeOpacity={0.7}
       disabled={isLoading}
     >
-      <Image source={{ uri: article.image }} style={styles.articleImage} />
+      <Image source={{ uri: article.img_article }} style={styles.articleImage} />
       <View style={styles.articleContent}>
-        <Text style={styles.articleTitle} numberOfLines={2}>{article.title}</Text>
-        <Text style={styles.articleDescription} numberOfLines={3}>{article.description}</Text>
+        <Text style={styles.articleTitle} numberOfLines={2}>{article.titre_article}</Text>
+        <Text style={styles.articleDescription} numberOfLines={3}>{article.description_article}</Text>
         <View style={styles.articleFooter}>
           <View style={styles.readTimeInfo}>
             <Ionicons name="time-outline" size={16} color="#64748B" />
-            <Text style={styles.readTimeText}>{article.readTime}</Text>
+            <Text style={styles.readTimeText}>{article.datePublication_article}</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.bookmarkButton}
             onPress={(e) => {
               e.stopPropagation()
-              handleRemoveArticle(article.id, article.title)
+              handleRemoveArticle(article.Id_article, article.titre_article)
             }}
           >
             <Ionicons name="bookmark" size={20} color="#3B82F6" />
@@ -166,21 +147,16 @@ const ArticlesEnregistresScreen = () => {
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Articles enregistrés</Text>
-        {savedArticles.length > 0 && (
+        {!isFetching && savedArticles.length > 0 && (
           <Text style={styles.articleCount}>({savedArticles.length})</Text>
         )}
       </View>
 
-      {/* Indicateur de chargement */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
           <ActivityIndicator size="large" color="#3B82F6" />
@@ -189,10 +165,12 @@ const ArticlesEnregistresScreen = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          {savedArticles.length > 0 ? (
+          {isFetching ? (
+            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
+          ) : savedArticles.length > 0 ? (
             <Animated.View entering={FadeInDown.delay(200)} style={styles.articlesContainer}>
               {savedArticles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+                <ArticleCard key={article.Id_article} article={article} />
               ))}
             </Animated.View>
           ) : (
@@ -202,9 +180,9 @@ const ArticlesEnregistresScreen = () => {
               <Text style={styles.emptyDescription}>
                 Les articles que vous enregistrerez apparaîtront ici
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.exploreButton}
-                onPress={() => router.push('/(tabs)/profilIntervenant/detail_article')}
+                onPress={() => router.push('/profil/detail_article')}
               >
                 <Text style={styles.exploreButtonText}>Explorer les articles</Text>
               </TouchableOpacity>

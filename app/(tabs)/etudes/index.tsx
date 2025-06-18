@@ -1,10 +1,17 @@
 "use client"
 
+<<<<<<< liaisonbdd3
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+=======
+import FooterLogo from "@/components/FooterLogo"
+import HeaderPage from "@/components/HeaderPage"
+import { Ionicons } from "@expo/vector-icons"
+
+>>>>>>> main
 import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import {
@@ -20,6 +27,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
+
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = width * 0.8
@@ -179,7 +187,7 @@ const EtudesScreen = () => {
             <Text style={styles.durationText}>{study.duration}</Text>
           </View>
           <TouchableOpacity style={[styles.enrollButton, { backgroundColor: category.color }]}>
-            <Text style={styles.enrollButtonText}>S'inscrire</Text>
+            <Text style={styles.enrollButtonText}>S&apos;inscrire</Text>
           </TouchableOpacity>
         </View>
       </View>

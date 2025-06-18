@@ -1,7 +1,9 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
+import api from "@/api/axiosClient";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   Alert,
   SafeAreaView,
@@ -12,11 +14,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-} from "react-native"
-import { useState } from "react"
-import Animated, { FadeInDown } from "react-native-reanimated"
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
-import FooterLogo from "@/components/FooterLogo"
+import FooterLogo from "@/components/FooterLogo";
 
 const CreerUtilisateurScreen = () => {
   const router = useRouter()
@@ -38,7 +39,7 @@ const CreerUtilisateurScreen = () => {
     }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation basique
     if (!formData.prenom_user || !formData.nom_user || !formData.email_user || !formData.mdp_user) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires")
@@ -53,6 +54,19 @@ const CreerUtilisateurScreen = () => {
     }
 
     // Ici vous pouvez ajouter la logique pour créer l'utilisateur
+    await api.post("/user/", {
+      prenom_user: formData.prenom_user,
+      nom_user: formData.nom_user,
+      email_user: formData.email_user,
+      mdp_user: formData.mdp_user,
+      bio_user: formData.bio_user,
+      github_user: formData.github_user,
+      dateNaissance: formData.dateNaissance,
+      statut_user: 1, // Par défaut, on crée l'utilisateur avec le statut actif
+    })
+    // Afficher un message de succès
+
+
     Alert.alert(
       "Succès", 
       "L'utilisateur a été créé avec succès",
@@ -210,7 +224,7 @@ const CreerUtilisateurScreen = () => {
               onPress={handleSubmit}
               activeOpacity={0.7}
             >
-              <Text style={styles.submitButtonText}>Créer l'utilisateur</Text>
+              <Text style={styles.submitButtonText}>Créer l&apos;utilisateur</Text>
             </TouchableOpacity>
           </Animated.View>
 
