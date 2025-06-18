@@ -50,10 +50,13 @@ export default function EtudeDetailScreen() {
   const [error, setError] = useState<string | null>(null)
 
   const params = useLocalSearchParams()
+  
+  console.log("Params reçus:", params)
   const router = useRouter()
   const { user, token, isLoading } = useSession()
 
   const { id } = params
+  console.log("ID reçu depuis params:", id)
 
   // Fonction pour obtenir une couleur basée sur la catégorie
   const getCategoryColor = (category: string) => {
@@ -136,10 +139,11 @@ export default function EtudeDetailScreen() {
   useEffect(() => {
     const fetchEtudeDetails = async () => {
       if (!id) return;
-
+console.log("ID reçu depuis params:", id)
       try {
         setLoading(true);
         setError(null);
+        console.log("ID reçu depuis params:", id)
 
         const response = await api.get(`/etude/${id}`);
         const etude = response.data;

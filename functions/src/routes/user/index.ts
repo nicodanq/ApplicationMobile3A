@@ -4,6 +4,7 @@ import { deleteUser } from "./deleteUser";
 import { getAllRoles } from "./getAllRole";
 import { getAllUsers } from "./getAllUser";
 import { getArticleByUser } from "./getArticlebyUser";
+import { getEtudesByUser } from "./getEtudeByUser";
 import { getEventsByUser } from "./getEventsByUser";
 import { getUserByEmail } from "./getUserByEmail";
 import { getUserById } from "./getUserById";
@@ -26,6 +27,7 @@ router.put("/updateStatus/:id", updateStatusUser);
 router.get("/stats/:id", getUserStats);
 router.get("/events/:id", getEventsByUser);
 router.get("/articles/:id", getArticleByUser);
+router.get("/etudes/:id", getEtudesByUser);
 
 
 export default router;
