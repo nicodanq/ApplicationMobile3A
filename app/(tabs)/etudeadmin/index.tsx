@@ -4,7 +4,6 @@ import { useState } from "react"
 
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
-import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
@@ -360,12 +359,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+    position: "relative",
   },
   headerTitle: {
     fontSize: 28,
-    textAlign: "center",
     fontWeight: "700",
     color: "#1E293B",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
   headerLine: {
     height: 2,
@@ -384,6 +387,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    marginLeft: "auto",
+    marginRight: 20,
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,
