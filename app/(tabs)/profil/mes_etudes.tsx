@@ -1,8 +1,11 @@
 "use client"
 
-import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
-import { useState } from "react"
+import api from "@/api/axiosClient";
+import { useSession } from "@/contexts/AuthContext";
+import { useUserDetails } from "@/hooks/useUserDetails";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   Dimensions,
   Image,
@@ -13,75 +16,72 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from "react-native"
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+} from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-import FooterLogo from "@/components/FooterLogo"
+import FooterLogo from "@/components/FooterLogo";
 
 const { width } = Dimensions.get("window")
 
 // Données fictives pour les études de l'utilisateur
-const studiesData = {
-  postulees: [
-    {
-      id: "1",
-      title: "Intelligence Artificielle Avancée",
-      category: "IT & Digital",
-      status: "En attente",
-      appliedDate: "15 Jan 2024",
-      color: "#2196F3",
-    },
-    {
-      id: "2",
-      title: "Cybersécurité Éthique",
-      category: "IT & Digital", 
-      status: "En cours d'évaluation",
-      appliedDate: "10 Jan 2024",
-      color: "#2196F3",
-    }
-  ],
-  enCours: [
-    {
-      id: "3",
-      title: "Développement Web Full-Stack",
-      category: "IT & Digital",
-      progress: 65,
-      startDate: "1 Sept 2023",
-      endDate: "15 Mars 2024",
-      color: "#4CAF50",
-    }
-  ],
-  terminees: [
-    {
-      id: "4",
-      title: "Bases de Données Avancées",
-      category: "IT & Digital",
-      completedDate: "20 Déc 2023",
-      grade: "A",
-      certificate: true,
-      color: "#FF9800",
-    },
-    {
-      id: "5",
-      title: "Gestion de Projet Agile",
-      category: "Conseil",
-      completedDate: "15 Nov 2023",
-      grade: "B+",
-      certificate: true,
-      color: "#E91E63",
-    }
-  ]
-}
+type Study = {
+  Id_etude: number;
+  titre_etude: string;
+  dateDebut_etude: string;
+  dateFin_etude: string;
+  description_etude: string;
+  prix_etude: number;
+  nbrIntervenant: number;
+  img_etude: string;
+  statut: string;
+};
 
 const MesEtudesScreen = () => {
-  const router = useRouter()
+  const router = useRouter();
+  const { user } = useSession();
+  const { details, role, loading, error } = useUserDetails(user?.id ?? null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+
+
+
+  const [studiesData, setStudiesData] = useState<{
+    postulees: Study[];
+    enCours: Study[];
+    terminees: Study[];
+  }>({
+    postulees: [],
+    enCours: [],
+    terminees: []
+  });
+
+
+  useEffect(() => {
+    const fetchStudies = async () => {
+      try {
+        const response = await api.get(`/user/etudes/${user?.id}`);
+        const allStudies: Study[] = response.data;
+
+        const postulees = allStudies.filter((s) => s.statut === "Pas commencée");
+        const enCours = allStudies.filter((s) => s.statut === "En cours");
+        const terminees = allStudies.filter((s) => s.statut === "Terminée");
+
+        setStudiesData({ postulees, enCours, terminees });
+      } catch (error) {
+        console.error("Erreur lors de la récupération des études :", error);
+      }
+    };
+
+    if (user?.id) {
+      fetchStudies();
+    }
+  }, [user?.id]);
+
 
   const handleCategoryPress = (category: 'postulees' | 'enCours' | 'terminees') => {
     router.push({
-      pathname: `/profil/etudes-${category}`,
+      pathname: "/profil/[category]",
       params: { category }
-    } as any)
+    });
   }
 
   const categories = [
@@ -123,8 +123,8 @@ const MesEtudesScreen = () => {
 
       {/* Header dans le style de votre capture d'écran */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
@@ -135,7 +135,7 @@ const MesEtudesScreen = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          
+
           {/* Stats Overview */}
           <Animated.View entering={FadeInUp.delay(100)} style={styles.statsContainer}>
             <View style={styles.statsCard}>
@@ -194,7 +194,7 @@ const MesEtudesScreen = () => {
           {/* Recent Activity */}
           <Animated.View entering={FadeInDown.delay(600)} style={styles.recentSection}>
             <Text style={styles.sectionTitle}>Activité récente</Text>
-            
+
             <View style={styles.activityCard}>
               <View style={styles.activityIcon}>
                 <Ionicons name="checkmark-circle" size={20} color="#10B981" />
@@ -235,7 +235,7 @@ const MesEtudesScreen = () => {
               <Text style={styles.inspirationSubtitle}>
                 Explorez de nouvelles études pour développer vos compétences
               </Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.exploreButton}
                 onPress={() => router.push('/(tabs)/etudes')}
               >

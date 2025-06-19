@@ -21,6 +21,9 @@ export async function loginHandler(req: Request, res: Response) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
     }
 
+    const mdpClair = 'aA1!aA1!'; // Mot de passe en clair pour le test, à remplacer par le mot de passe réel
+const hash = await bcrypt.hash(mdpClair, 10);
+console.log("Mot de passe haché pour le test :", hash);
 
     //cas de test, on compare le mot de passe en clair
     //const isMatch= rows[0].mdp_user === password; // Comparaison directe, à remplacer par bcrypt dans un vrai cas

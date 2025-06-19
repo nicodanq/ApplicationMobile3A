@@ -4,8 +4,9 @@ import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { useLocalSearchParams, useRouter } from "expo-router"
-import { useState, useCallback, useMemo } from "react"
+import { useCallback, useMemo, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +21,6 @@ import {
   View,
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
-import { useFocusEffect } from "@react-navigation/native"
 
 const { width } = Dimensions.get("window")
 
@@ -252,7 +252,7 @@ const DetailEtudeAdminScreen = () => {
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Chargement de l'étude...</Text>
+          <Text style={styles.loadingText}>Chargement de l&apos;étude...</Text>
         </View>
       </SafeAreaView>
     )
@@ -283,7 +283,7 @@ const DetailEtudeAdminScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Détail de l'Étude</Text>
+        <Text style={styles.headerTitle}>Détail de l&apos;Étude</Text>
         <TouchableOpacity style={styles.editButton} onPress={handleEditEtude} activeOpacity={0.7}>
           <Ionicons name="create-outline" size={24} color="#000000" />
         </TouchableOpacity>
@@ -330,7 +330,7 @@ const DetailEtudeAdminScreen = () => {
 
           {/* Détails de l'étude */}
           <Animated.View entering={FadeInDown.delay(300)} style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>Détails de l'étude</Text>
+            <Text style={styles.sectionTitle}>Détails de l&apos;étude</Text>
 
             <View style={styles.detailItem}>
               <View style={styles.detailIcon}>
@@ -404,7 +404,7 @@ const DetailEtudeAdminScreen = () => {
 
             <TouchableOpacity style={styles.actionButton} onPress={handleEditEtude}>
               <Ionicons name="create-outline" size={20} color="#3B82F6" />
-              <Text style={[styles.actionButtonText, { color: "#3B82F6" }]}>Modifier l'étude</Text>
+              <Text style={[styles.actionButtonText, { color: "#3B82F6" }]}>Modifier l&apos;étude</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionButton} onPress={handleManageIntervenants}>
@@ -414,7 +414,7 @@ const DetailEtudeAdminScreen = () => {
 
             <TouchableOpacity style={styles.actionButton} onPress={handleDeleteEtude}>
               <Ionicons name="archive-outline" size={20} color="#EF4444" />
-              <Text style={[styles.actionButtonText, { color: "#EF4444" }]}>Supprimer l'étude</Text>
+              <Text style={[styles.actionButtonText, { color: "#EF4444" }]}>Supprimer l&apos;étude</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
