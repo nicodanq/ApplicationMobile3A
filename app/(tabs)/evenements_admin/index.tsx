@@ -1,11 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler, Alert } from "react-native"
 import { useFocusEffect } from "@react-navigation/native"
 import { Ionicons } from "@expo/vector-icons"
 import { Button } from "../../../components/button"
-import { Card, CardContent } from "../../../components/card"
 import {
   Dialog,
   DialogContent,
@@ -22,10 +21,10 @@ import CreateEventPage from "./create-event-page"
 import EditEventPage from "./edit-event-page"
 
 import { Calendar, LocaleConfig } from "react-native-calendars"
-import { LinearGradient } from "expo-linear-gradient"
 import Animated2, { FadeInDown } from "react-native-reanimated"
 
 import api from "@/api/axiosClient"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 //calendrier en francais
 LocaleConfig.locales["fr"] = {
@@ -50,6 +49,19 @@ LocaleConfig.locales["fr"] = {
 
 LocaleConfig.defaultLocale = "fr"
 
+// Fonction pour convertir "14:30:00" en "14h30"
+const convertTimeToHeure = (timeString: string): string => {
+  const parts = timeString.split(":")
+  const heures = Number.parseInt(parts[0], 10)
+  const minutes = Number.parseInt(parts[1], 10)
+
+  if (minutes === 0) {
+    return `${heures}h`
+  } else {
+    return `${heures}h${minutes.toString().padStart(2, "0")}`
+  }
+}
+
 // Types
 type Evenement = {
   id: string
@@ -72,91 +84,16 @@ type EventFormData = {
   description: string
 }
 
-// Données d'événements
-// const evenementsData: Evenement[] = [
-//   {
-//     id: "1",
-//     date: "2025-06-01",
-//     titre: "Hackathon EPF",
-//     heure: "10h - 17h",
-//     lieu: "Cachan",
-//     description: "Un hackathon organisé à l'EPF pour imaginer les solutions technologiques de demain.",
-//     categorie: "tech",
-//     color: "#3B82F6",
-//     gradientColors: ["#EBF4FF", "#DBEAFE"],
-//   },
-//   {
-//     id: "2",
-//     date: "2025-06-01",
-//     titre: "Forum Entreprises",
-//     heure: "9h - 16h",
-//     lieu: "Sceaux",
-//     description: "Rencontre entre étudiants et entreprises avec stands, entretiens et ateliers.",
-//     categorie: "career",
-//     color: "#10B981",
-//     gradientColors: ["#ECFDF5", "#D1FAE5"],
-//   },
-//   {
-//     id: "3",
-//     date: "2025-06-05",
-//     titre: "Conférence IA",
-//     heure: "14h - 16h",
-//     lieu: "Online",
-//     description: "Conférence sur l'impact de l'IA dans la recherche scientifique.",
-//     categorie: "conference",
-//     color: "#EC4899",
-//     gradientColors: ["#FDF2F8", "#FCE7F3"],
-//   },
-//   {
-//     id: "4",
-//     date: "2025-06-11",
-//     titre: "Workshop Design",
-//     heure: "10h - 17h",
-//     lieu: "Cachan",
-//     description: "Atelier pratique sur les méthodes de design thinking et prototypage.",
-//     categorie: "workshop",
-//     color: "#06B6D4",
-//     gradientColors: ["#F0F9FF", "#E0F7FA"],
-//   },
-//   {
-//     id: "5",
-//     date: "2025-06-11",
-//     titre: "Journée Portes Ouvertes",
-//     heure: "9h - 16h",
-//     lieu: "Sceaux",
-//     description: "Découvrez nos campus et formations lors de notre journée portes ouvertes annuelle.",
-//     categorie: "open",
-//     color: "#8B5CF6",
-//     gradientColors: ["#F5F3FF", "#EDE9FE"],
-//   },
-//   {
-//     id: "6",
-//     date: "2025-06-13",
-//     titre: "Séminaire Recherche",
-//     heure: "14h - 16h",
-//     lieu: "Online",
-//     description: "Présentation des derniers travaux de recherche de nos laboratoires.",
-//     categorie: "research",
-//     color: "#F59E0B",
-//     gradientColors: ["#FFFBEB", "#FEF3C7"],
-//   },
-//]
-
 const categoryColors: { [key: string]: { color: string; gradientColors: [string, string] } } = {
-  tech: { color: "#3B82F6", gradientColors: ["#EBF4FF", "#DBEAFE"] },
-  career: { color: "#10B981", gradientColors: ["#ECFDF5", "#D1FAE5"] },
-  conference: { color: "#EC4899", gradientColors: ["#FDF2F8", "#FCE7F3"] },
-  workshop: { color: "#06B6D4", gradientColors: ["#F0F9FF", "#E0F7FA"] },
-  open: { color: "#8B5CF6", gradientColors: ["#F5F3FF", "#EDE9FE"] },
-  research: { color: "#F59E0B", gradientColors: ["#FFFBEB", "#FEF3C7"] },
+  formation: { color: "#007AFF", gradientColors: ["#EBF4FF", "#DBEAFE"] },
+  afterwork: { color: "#34C759", gradientColors: ["#ECFDF5", "#D1FAE5"] },
+  forum: { color: "#FF2D92", gradientColors: ["#FDF2F8", "#FCE7F3"] },
 }
 
 const AdminEventsScreen = () => {
   const [events, setEvents] = useState<Evenement[]>([])
   const [selectedEvent, setSelectedEvent] = useState<Evenement | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [eventToDelete, setEventToDelete] = useState<string | null>(null)
   const [showCreatePage, setShowCreatePage] = useState(false)
@@ -185,16 +122,17 @@ const AdminEventsScreen = () => {
           titre: event.titre_Event,
           description: event.description_Event,
           date: event.date_Event.split("T")[0],
-          heure: event.horaire_Event,
+          heure: convertTimeToHeure(event.horaire_Event), // Conversion TIME -> format lisible
           lieu: event.lieu_Event,
           categorie: getCategorie(event.ID_typeEvenement),
-          color: getColor(event.ID_typeEvenement),
-          gradientColors: getGradient(event.ID_typeEvenement),
+          color: getColor(event.ID_typeEvenement, event.description_Event),
+          gradientColors: getGradient(event.ID_typeEvenement, event.description_Event),
         }))
 
         setEvents(mappedEvents)
       } catch (error) {
         console.error("Erreur récupération événements (Admin) :", error)
+        Alert.alert("Erreur", "Erreur lors du chargement des événements")
       }
     }
 
@@ -204,42 +142,40 @@ const AdminEventsScreen = () => {
   const getCategorie = (typeId: number): string => {
     switch (typeId) {
       case 1:
-        return "tech"
+        return "formation"
       case 2:
-        return "career"
+        return "afterwork"
       case 3:
-        return "conference"
-      case 4:
-        return "workshop"
-      case 5:
-        return "open"
-      case 6:
-        return "research"
+        return "forum"
       default:
         return "default"
     }
   }
 
-  const getColor = (typeId: number): string => {
+  const getColor = (typeId: number, description: string): string => {
+    // Si l'événement est annulé, toujours rouge
+    if (description.includes("ANNULÉ")) {
+      return "#FF3B30"
+    }
+
     switch (typeId) {
       case 1:
-        return "#3B82F6"
+        return "#007AFF"
       case 2:
-        return "#10B981"
+        return "#34C759"
       case 3:
-        return "#EC4899"
-      case 4:
-        return "#06B6D4"
-      case 5:
-        return "#8B5CF6"
-      case 6:
-        return "#F59E0B"
+        return "#FF2D92"
       default:
-        return "#64748B"
+        return "#8E8E93"
     }
   }
 
-  const getGradient = (typeId: number): [string, string] => {
+  const getGradient = (typeId: number, description: string): [string, string] => {
+    // Si l'événement est annulé, toujours rouge
+    if (description.includes("ANNULÉ")) {
+      return ["#FFEBEE", "#FFCDD2"]
+    }
+
     switch (typeId) {
       case 1:
         return ["#EBF4FF", "#DBEAFE"]
@@ -247,12 +183,6 @@ const AdminEventsScreen = () => {
         return ["#ECFDF5", "#D1FAE5"]
       case 3:
         return ["#FDF2F8", "#FCE7F3"]
-      case 4:
-        return ["#F0F9FF", "#E0F7FA"]
-      case 5:
-        return ["#F5F3FF", "#EDE9FE"]
-      case 6:
-        return ["#FFFBEB", "#FEF3C7"]
       default:
         return ["#F1F5F9", "#E2E8F0"]
     }
@@ -280,6 +210,15 @@ const AdminEventsScreen = () => {
     }, [showCreatePage, showEditPage]),
   )
 
+  // Rafraîchir les événements quand on revient sur la page
+  useFocusEffect(
+    useCallback(() => {
+      if (!showCreatePage && !showEditPage) {
+        refreshEvents()
+      }
+    }, [showCreatePage, showEditPage]),
+  )
+
   // Formater la date pour l'affichage
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -294,18 +233,12 @@ const AdminEventsScreen = () => {
   // Obtenir l'icône selon la catégorie
   const getCategoryIcon = (categorie?: string) => {
     switch (categorie) {
-      case "tech":
-        return "code-slash"
-      case "career":
-        return "briefcase"
-      case "conference":
-        return "mic"
-      case "workshop":
-        return "construct"
-      case "open":
+      case "formation":
         return "school"
-      case "research":
-        return "flask"
+      case "afterwork":
+        return "wine"
+      case "forum":
+        return "people"
       default:
         return "calendar"
     }
@@ -321,11 +254,11 @@ const AdminEventsScreen = () => {
         titre: event.titre_Event,
         description: event.description_Event,
         date: event.date_Event.split("T")[0],
-        heure: event.horaire_Event,
+        heure: convertTimeToHeure(event.horaire_Event), // Conversion TIME -> format lisible
         lieu: event.lieu_Event,
         categorie: getCategorie(event.ID_typeEvenement),
-        color: getColor(event.ID_typeEvenement),
-        gradientColors: getGradient(event.ID_typeEvenement),
+        color: getColor(event.ID_typeEvenement, event.description_Event),
+        gradientColors: getGradient(event.ID_typeEvenement, event.description_Event),
       }))
 
       setEvents(mappedEvents)
@@ -334,60 +267,19 @@ const AdminEventsScreen = () => {
     }
   }
 
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await api.delete(`/evenement/${eventId}`)
-      await refreshEvents() // Rafraîchir la liste après suppression
-      setEventToDelete(null)
-      setIsDeleteModalOpen(false)
-    } catch (error) {
-      console.error("Erreur suppression événement :", error)
-      // Optionnel : afficher un message d'erreur à l'utilisateur
-    }
-  }
-
   const handleCreateEvent = async (eventData: EventFormData) => {
-    // Logique de création via API (à implémenter selon votre backend)
-    // await api.post("/evenement/", eventData);
-
-    // Pour l'instant, on garde la logique locale et on rafraîchit
-    const categoryStyle = categoryColors[eventData.categorie] || categoryColors.tech
-    const newEvent: Evenement = {
-      id: Date.now().toString(),
-      ...eventData,
-      color: categoryStyle.color,
-      gradientColors: categoryStyle.gradientColors,
-    }
-    setEvents([...events, newEvent])
+    // Rafraîchir les données depuis la base
+    await refreshEvents()
     setShowCreatePage(false)
-
-    // Optionnel : rafraîchir depuis la base après création
-    // await refreshEvents();
+    Alert.alert("Succès", "Événement créé avec succès")
   }
 
   const handleEditEvent = async (eventId: string, eventData: EventFormData) => {
-    // Logique de modification via API (à implémenter selon votre backend)
-    // await api.put(`/evenement/${eventId}`, eventData);
-
-    // Pour l'instant, on garde la logique locale
-    const categoryStyle = categoryColors[eventData.categorie] || categoryColors.tech
-    setEvents(
-      events.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              ...eventData,
-              color: categoryStyle.color,
-              gradientColors: categoryStyle.gradientColors,
-            }
-          : event,
-      ),
-    )
+    // Rafraîchir les données depuis la base après modification
+    await refreshEvents()
     setShowEditPage(false)
     setEventToEdit(null)
-
-    // Optionnel : rafraîchir depuis la base après modification
-    // await refreshEvents();
+    Alert.alert("Succès", "Événement modifié avec succès")
   }
 
   const openEventDetail = (event: Evenement) => {
@@ -400,7 +292,7 @@ const AdminEventsScreen = () => {
     setShowEditPage(true)
   }
 
-  const confirmDelete = (eventId: string) => {
+  const confirmCancel = (eventId: string) => {
     setEventToDelete(eventId)
     setIsDeleteModalOpen(true)
   }
@@ -418,22 +310,21 @@ const AdminEventsScreen = () => {
       marked[selectedDate] = {
         ...(marked[selectedDate] || {}),
         selected: true,
-        selectedColor: "#003366",
+        selectedColor: "#007AFF",
         dotColor: "white",
       }
     }
 
-    // Style pour aujourd'hui
     marked[today] = {
       ...(marked[today] || {}),
       customStyles: {
         container: {
-          backgroundColor: "#E0F2FE",
-          borderRadius: 20,
+          backgroundColor: "#E3F2FD",
+          borderRadius: 16,
         },
         text: {
-          color: "#003366",
-          fontWeight: "bold",
+          color: "#007AFF",
+          fontWeight: "600",
         },
       },
     }
@@ -447,6 +338,31 @@ const AdminEventsScreen = () => {
 
   const toggleCalendar = () => {
     setShowCalendar(!showCalendar)
+  }
+
+  const handleCancelEvent = async (eventId: string) => {
+    try {
+      const eventToCancel = events.find((e) => e.id === eventId)
+      const isAlreadyCancelled = eventToCancel?.description.includes("ANNULÉ")
+
+      if (isAlreadyCancelled) {
+        // Réactiver l'événement
+        await api.put(`/evenement/reactiver/${eventId}`)
+        await refreshEvents()
+        Alert.alert("Succès", "Événement réactivé avec succès")
+      } else {
+        // Annuler l'événement
+        await api.put(`/evenement/annuler/${eventId}`)
+        await refreshEvents()
+        Alert.alert("Succès", "Événement annulé avec succès")
+      }
+
+      setEventToDelete(null)
+      setIsDeleteModalOpen(false)
+    } catch (error) {
+      console.error("Erreur annulation/réactivation événement :", error)
+      Alert.alert("Erreur", "Erreur lors de l'opération")
+    }
   }
 
   // Si on est sur la page de création, afficher cette page
@@ -470,160 +386,153 @@ const AdminEventsScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <HeaderPage title="Administration des Événements" />
-        <TouchableOpacity style={styles.addButton} onPress={() => setShowCreatePage(true)} activeOpacity={0.7}>
-          <Ionicons name="add" size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {/* En-tête du calendrier avec bouton toggle */}
-        <View style={styles.calendarHeader}>
-          <Text style={styles.calendarTitle}>
-            {selectedDate ? formatDate(selectedDate) : "Calendrier des événements"}
-          </Text>
-          <TouchableOpacity style={styles.calendarToggle} onPress={toggleCalendar} activeOpacity={0.7}>
-            <Text style={styles.calendarToggleText}>{showCalendar ? "Masquer" : "Afficher"}</Text>
-            <Ionicons name={showCalendar ? "chevron-up" : "chevron-down"} size={16} color="#003366" />
+      {/* Header avec bouton intégré */}
+      <SafeAreaView style={styles.headerContainer}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Événements</Text>
+          <TouchableOpacity 
+            style={styles.addButton} 
+            onPress={() => setShowCreatePage(true)} 
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
+        <View style={styles.headerLine} />
+      </SafeAreaView>
 
-        {/* Calendrier */}
-        {showCalendar && (
-          <View style={styles.calendarContainer}>
-            <Calendar
-              onDayPress={handleDayPress}
-              markedDates={getMarkedDates()}
-              markingType="custom"
-              enableSwipeMonths={true}
-              firstDay={1} // commencer lundi
-              theme={{
-                calendarBackground: "#ffffff",
-                textSectionTitleColor: "#003366",
-                selectedDayBackgroundColor: "#003366",
-                selectedDayTextColor: "#ffffff",
-                todayTextColor: "#003366",
-                dayTextColor: "#1E293B",
-                textDisabledColor: "#94A3B8",
-                dotColor: "#003366",
-                selectedDotColor: "#ffffff",
-                arrowColor: "#003366",
-                monthTextColor: "#003366",
-                textMonthFontWeight: "bold",
-                textDayFontWeight: "600",
-                textDayHeaderFontWeight: "600",
-                textDayFontSize: 14,
-                textMonthFontSize: 18,
-                textDayHeaderFontSize: 14,
-              }}
-              style={styles.calendar}
-            />
-          </View>
-        )}
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {/* Section Calendrier */}
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.sectionHeader} onPress={toggleCalendar} activeOpacity={0.7}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="calendar" size={20} color="#007AFF" />
+              </View>
+              <Text style={styles.sectionTitle}>Calendrier</Text>
+            </View>
+            <Ionicons name={showCalendar ? "chevron-up" : "chevron-down"} size={20} color="#8E8E93" />
+          </TouchableOpacity>
 
-        <View className="mb-6">
-          <View style={styles.subtitleContainer}>
-            <Text style={styles.subtitle}>
-              {selectedDate
-                ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}`
-                : `Prochains événements (${evenementsFiltres.length})`}
-            </Text>
+          {showCalendar && (
+            <View style={styles.calendarCard}>
+              <Calendar
+                onDayPress={handleDayPress}
+                markedDates={getMarkedDates()}
+                markingType="custom"
+                enableSwipeMonths={true}
+                firstDay={1}
+                theme={{
+                  calendarBackground: "#FFFFFF",
+                  textSectionTitleColor: "#1D1D1F",
+                  selectedDayBackgroundColor: "#007AFF",
+                  selectedDayTextColor: "#FFFFFF",
+                  todayTextColor: "#007AFF",
+                  dayTextColor: "#1D1D1F",
+                  textDisabledColor: "#C7C7CC",
+                  dotColor: "#007AFF",
+                  selectedDotColor: "#FFFFFF",
+                  arrowColor: "#007AFF",
+                  monthTextColor: "#1D1D1F",
+                  textMonthFontWeight: "600",
+                  textDayFontWeight: "400",
+                  textDayHeaderFontWeight: "600",
+                  textDayFontSize: 16,
+                  textMonthFontSize: 18,
+                  textDayHeaderFontSize: 14,
+                }}
+                style={styles.calendar}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Section Événements */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleContainer}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="settings" size={20} color="#34C759" />
+              </View>
+              <Text style={styles.sectionTitle}>
+                {selectedDate
+                  ? `Événements du ${formatDate(selectedDate).split(" ").slice(0, 2).join(" ")}`
+                  : `Gestion des événements (${evenementsFiltres.length})`}
+              </Text>
+            </View>
             {selectedDate && (
               <TouchableOpacity onPress={() => setSelectedDate(null)} style={styles.resetButton}>
                 <Text style={styles.resetButtonText}>Tout voir</Text>
               </TouchableOpacity>
             )}
           </View>
-        </View>
 
-        {evenementsFiltres.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <View style={styles.emptyContainer}>
-                <View style={styles.emptyIconContainer}>
-                  <Ionicons name="calendar-outline" size={64} color="#94A3B8" />
-                </View>
-                <Text style={styles.emptyText}>Aucun événement {selectedDate ? "ce jour-là" : "à venir"}.</Text>
+          {evenementsFiltres.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="calendar-outline" size={48} color="#C7C7CC" />
               </View>
-            </CardContent>
-          </Card>
-        ) : (
-          evenementsFiltres.map((event, index) => (
-            <Animated2.View key={event.id} entering={FadeInDown.delay(index * 100).springify()}>
-              <TouchableOpacity style={styles.cardContainer} activeOpacity={0.8} onPress={() => openEventDetail(event)}>
-                <LinearGradient
-                  colors={event.gradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.card}
-                >
-                  <View style={styles.cardContent}>
-                    <View style={styles.imageContainer}>
-                      <View style={[styles.iconContainer, { backgroundColor: event.color }]}>
-                        <Ionicons name={getCategoryIcon(event.categorie)} size={24} color="white" />
-                      </View>
-                      <View style={styles.imageOverlay} />
+              <Text style={styles.emptyText}>Aucun événement {selectedDate ? "ce jour-là" : "à venir"}</Text>
+            </View>
+          ) : (
+            evenementsFiltres.map((event, index) => (
+              <Animated2.View key={event.id} entering={FadeInDown.delay(index * 100).springify()}>
+                <TouchableOpacity style={styles.eventCard} activeOpacity={0.8} onPress={() => openEventDetail(event)}>
+                  <View style={styles.eventHeader}>
+                    <View style={[styles.eventIconContainer, { backgroundColor: event.color }]}>
+                      <Ionicons name={getCategoryIcon(event.categorie)} size={20} color="white" />
                     </View>
-
-                    <View style={styles.textContainer}>
-                      <View style={styles.cardHeaderContent}>
-                        <Text style={[styles.cardTitle, { color: event.color }]}>{event.titre}</Text>
-                        <View style={styles.cardActions}>
-                          <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation()
-                              openEditPage(event)
-                            }}
-                          >
-                            <Ionicons name="create-outline" size={20} color="#3B82F6" />
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation()
-                              confirmDelete(event.id)
-                            }}
-                          >
-                            <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-
-                      <Text style={styles.cardDescription} numberOfLines={2}>
-                        {event.description}
-                      </Text>
-
-                      <View style={styles.eventDetails}>
-                        <View style={styles.eventDetailItem}>
-                          <Ionicons name="calendar-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>
-                            {formatDate(event.date).split(" ").slice(0, 2).join(" ")}
-                          </Text>
-                        </View>
-                        <View style={styles.eventDetailItem}>
-                          <Ionicons name="time-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>{event.heure}</Text>
-                        </View>
-                        <View style={styles.eventDetailItem}>
-                          <Ionicons name="location-outline" size={14} color="#64748B" />
-                          <Text style={styles.eventDetailText}>{event.lieu}</Text>
-                        </View>
-                      </View>
-
-                      <View style={styles.learnMoreButton}>
-                        <Text style={[styles.learnMoreText, { color: event.color }]}>Voir les détails</Text>
-                        <Ionicons name="arrow-forward" size={16} color={event.color} style={styles.arrowIcon} />
-                      </View>
+                    <View style={styles.eventInfo}>
+                      <Text style={styles.eventTitle}>{event.titre}</Text>
+                      <Text style={styles.eventSubtitle}>{event.description}</Text>
+                    </View>
+                    <View style={styles.cardActions}>
+                      <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={(e) => {
+                          e.stopPropagation()
+                          openEditPage(event)
+                        }}
+                      >
+                        <Ionicons name="create-outline" size={18} color="#007AFF" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.actionButton, styles.cancelButton]}
+                        onPress={(e) => {
+                          e.stopPropagation()
+                          confirmCancel(event.id)
+                        }}
+                      >
+                        <Ionicons
+                          name={event.description.includes("ANNULÉ") ? "refresh-outline" : "close-outline"}
+                          size={18}
+                          color="#FF3B30"
+                        />
+                      </TouchableOpacity>
                     </View>
                   </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated2.View>
-          ))
-        )}
+
+                  <View style={styles.eventDetails}>
+                    <View style={styles.eventDetailItem}>
+                      <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+                      <Text style={styles.eventDetailText}>
+                        {formatDate(event.date).split(" ").slice(0, 2).join(" ")}
+                      </Text>
+                    </View>
+                    <View style={styles.eventDetailItem}>
+                      <Ionicons name="time-outline" size={16} color="#8E8E93" />
+                      <Text style={styles.eventDetailText}>{event.heure}</Text>
+                    </View>
+                    <View style={styles.eventDetailItem}>
+                      <Ionicons name="location-outline" size={16} color="#8E8E93" />
+                      <Text style={styles.eventDetailText}>{event.lieu}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              </Animated2.View>
+            ))
+          )}
+        </View>
 
         <FooterLogo />
       </ScrollView>
@@ -651,18 +560,18 @@ const AdminEventsScreen = () => {
               <View style={styles.modalDetailsContainer}>
                 <View style={styles.modalDetailRow}>
                   <View style={styles.modalDetailItem}>
-                    <Ionicons name="time-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
+                    <Ionicons name="time-outline" size={18} color="#8E8E93" style={styles.modalDetailIcon} />
                     <Text style={styles.modalDetailText}>{selectedEvent.heure}</Text>
                   </View>
 
                   <View style={styles.modalDetailItem}>
-                    <Ionicons name="location-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
+                    <Ionicons name="location-outline" size={18} color="#8E8E93" style={styles.modalDetailIcon} />
                     <Text style={styles.modalDetailText}>{selectedEvent.lieu}</Text>
                   </View>
                 </View>
 
                 <View style={styles.modalDetailItem}>
-                  <Ionicons name="calendar-outline" size={18} color="#64748B" style={styles.modalDetailIcon} />
+                  <Ionicons name="calendar-outline" size={18} color="#8E8E93" style={styles.modalDetailIcon} />
                   <Text style={styles.modalDetailText}>{formatDate(selectedEvent.date)}</Text>
                 </View>
               </View>
@@ -680,31 +589,22 @@ const AdminEventsScreen = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Modal d'ajout d'événement */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Ajouter un nouvel événement</DialogTitle>
-            <DialogDescription>
-              Fonctionnalité en cours de développement. Le formulaire d'ajout sera disponible prochainement.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onPress={() => setIsAddModalOpen(false)}>
-              Fermer
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Modal de confirmation de suppression */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Supprimer l'événement</DialogTitle>
+            <DialogTitle>
+              {events.find((e) => e.id === eventToDelete)?.description.includes("ANNULÉ")
+                ? "Réactiver l'événement"
+                : "Annuler l'événement"}
+            </DialogTitle>
             <DialogDescription>
               {eventToDelete && (
-                <Text>Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.</Text>
+                <Text>
+                  {events.find((e) => e.id === eventToDelete)?.description.includes("ANNULÉ")
+                    ? "Êtes-vous sûr de vouloir réactiver cet événement ?"
+                    : "Êtes-vous sûr de vouloir annuler cet événement ? Il sera marqué comme annulé."}
+                </Text>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -715,13 +615,14 @@ const AdminEventsScreen = () => {
             <Button
               onPress={() => {
                 if (eventToDelete) {
-                  handleDeleteEvent(eventToDelete)
-                  setIsDeleteModalOpen(false)
+                  handleCancelEvent(eventToDelete)
                 }
               }}
-              style={{ backgroundColor: "#EF4444" }}
+              style={{ backgroundColor: "#FF3B30" }}
             >
-              Supprimer
+              {events.find((e) => e.id === eventToDelete)?.description.includes("ANNULÉ")
+                ? "Réactiver"
+                : "Annuler l'événement"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -735,26 +636,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
-  header: {
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+  headerContainer: {
+    paddingTop: 28, // ou utilisez useSafeAreaInsets si vous préférez
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: "#F8FAFC",
+  },
+  headerContent: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    position: "relative",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  headerLine: {
+    height: 2,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 40,
   },
   addButton: {
-    backgroundColor: "#F1F5F9",
     width: 44,
     height: 44,
     borderRadius: 22,
+    backgroundColor: "#E3F2FD",
     justifyContent: "center",
     alignItems: "center",
-    position: "absolute",
-    right: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -765,190 +675,151 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingTop: 20,
     paddingBottom: 40,
   },
-  calendarHeader: {
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 10,
+    marginBottom: 16,
   },
-  calendarTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1E293B",
-  },
-  calendarToggle: {
+  sectionTitleContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    padding: 8,
-  },
-  calendarToggleText: {
-    color: "#003366",
-    fontWeight: "600",
-    fontSize: 14,
-    marginRight: 4,
-  },
-  calendarContainer: {
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  calendar: {
-    marginHorizontal: 20,
-    borderRadius: 20,
-    paddingVertical: 10,
-    backgroundColor: "#ffffff",
-  },
-  subtitleContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#1E293B",
-  },
-  resetButton: {
-    padding: 8,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 16,
-  },
-  resetButtonText: {
-    color: "#003366",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  cardContainer: {
-    marginBottom: 20,
-    marginHorizontal: 20,
-  },
-  card: {
-    borderRadius: 20,
-    overflow: "hidden",
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-  },
-  cardContent: {
-    flexDirection: "row",
-    padding: 20,
-    minHeight: 140,
-  },
-  imageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginRight: 16,
-    position: "relative",
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
     alignItems: "center",
   },
   iconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E3F2FD",
     justifyContent: "center",
     alignItems: "center",
+    marginRight: 12,
   },
-  imageOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.05)",
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1D1D1F",
   },
-  textContainer: {
-    flex: 1,
-    justifyContent: "space-between",
+  resetButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#E3F2FD",
+    borderRadius: 16,
   },
-  cardHeaderContent: {
+  resetButtonText: {
+    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  calendarCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  calendar: {
+    borderRadius: 16,
+    paddingVertical: 16,
+  },
+  eventCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    marginBottom: 12,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  eventHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 8,
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  eventIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1D1D1F",
+    marginBottom: 2,
+  },
+  eventSubtitle: {
+    fontSize: 14,
+    color: "#8E8E93",
+    lineHeight: 18,
   },
   cardActions: {
     flexDirection: "row",
   },
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#F2F2F7",
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
-    backgroundColor: "#F1F5F9",
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    flex: 1,
-    marginRight: 10,
+  cancelButton: {
+    backgroundColor: "#FFEBEE",
   },
-  cardDescription: {
-    fontSize: 14,
-    color: "#64748B",
-    marginBottom: 12,
-    lineHeight: 20,
+  deleteButton: {
+    backgroundColor: "#FFEBEE",
   },
   eventDetails: {
-    marginBottom: 12,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
   },
   eventDetailItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
   },
   eventDetailText: {
-    fontSize: 13,
-    color: "#64748B",
-    marginLeft: 8,
-  },
-  learnMoreButton: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  learnMoreText: {
     fontSize: 14,
-    fontWeight: "600",
+    color: "#8E8E93",
+    marginLeft: 6,
   },
-  arrowIcon: {
-    marginLeft: 4,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
+  emptyCard: {
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    borderRadius: 16,
     padding: 40,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 16,
-    color: "#64748B",
+    color: "#8E8E93",
     textAlign: "center",
   },
   modalHeader: {
@@ -964,7 +835,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   modalDetailsContainer: {
-    backgroundColor: "#F8FAFC",
+    backgroundColor: "#F2F2F7",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -984,17 +855,17 @@ const styles = StyleSheet.create({
   },
   modalDetailText: {
     fontSize: 14,
-    color: "#1E293B",
+    color: "#1D1D1F",
   },
   modalDescriptionTitle: {
     fontSize: 18,
     fontWeight: "600",
     marginBottom: 8,
-    color: "#1E293B",
+    color: "#1D1D1F",
   },
   modalDescription: {
     fontSize: 15,
-    color: "#64748B",
+    color: "#8E8E93",
     lineHeight: 22,
   },
 })
