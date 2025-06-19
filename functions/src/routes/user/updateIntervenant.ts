@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { pool } from "../../utils/db";
 
 export async function updateIntervenant(req: Request, res: Response) {
-  const userId = Number(req.params.userId);
+  const userId = Number(req.params.id); // ← Changé de userId à id
   const { etudeId, statut, prix } = req.body;
 
   if (!userId || !etudeId) {

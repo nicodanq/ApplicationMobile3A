@@ -29,6 +29,6 @@ router.get("/stats/:id", getUserStats);
 router.get("/events/:id", getEventsByUser);
 router.get("/articles/:id", getArticleByUser);
 router.get("/etudes/:id", getEtudesByUser);
-router.patch("/intervenant/:userId", updateIntervenant);
+router.patch("/intervenant/:id", updateIntervenant);
 
 export default router;
