@@ -9,6 +9,7 @@ import { getEventsByUser } from "./getEventsByUser";
 import { getUserByEmail } from "./getUserByEmail";
 import { getUserById } from "./getUserById";
 import { getUserStats } from "./getUserStats";
+import { updateIntervenant } from "./updateIntervenant";
 import { updatePassword } from "./updatePasswordUser";
 import { updateStatusUser } from "./UpdateStatusUser";
 import { updateUser } from "./updateUser";
@@ -28,6 +29,6 @@ router.get("/stats/:id", getUserStats);
 router.get("/events/:id", getEventsByUser);
 router.get("/articles/:id", getArticleByUser);
 router.get("/etudes/:id", getEtudesByUser);
-
+router.patch("/intervenant/:userId", updateIntervenant);
 
 export default router;
