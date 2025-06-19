@@ -114,84 +114,54 @@ const GererIntervenantsScreen = () => {
   }
 
   const handleRefuserCandidature = async () => {
-    if (!selectedPostulant || isValidated) return
+  if (!selectedPostulant || isValidated) return;
 
+  console.log("❌ Refus candidature:", selectedPostulant.id);
+  const updated = { ...selectedPostulant, statut: "refuse" as const };
+
+  const success = await updateIntervenant(updated);
+  if (success) {
     Alert.alert(
-      "Refuser la candidature",
-      `Êtes-vous sûr de vouloir refuser la candidature de ${selectedPostulant.prenom} ${selectedPostulant.nom} ?`,
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Refuser",
-          style: "destructive",
-          onPress: async () => {
-            console.log("❌ Refus candidature:", selectedPostulant.id)
-            const updated = { ...selectedPostulant, statut: "refuse" as const }
-
-            const success = await updateIntervenant(updated)
-            if (success) {
-              Alert.alert(
-                "Candidature refusée",
-                `La candidature de ${selectedPostulant.prenom} ${selectedPostulant.nom} a été refusée`,
-              )
-              setSelectedPostulant(null)
-            }
-          },
-        },
-      ],
-    )
+      "Candidature refusée",
+      `La candidature de ${selectedPostulant.prenom} ${selectedPostulant.nom} a été refusée`
+    );
+    setSelectedPostulant(null);
+  } else {
+    Alert.alert("Erreur", "Impossible de refuser la candidature.");
   }
+};
 
   const handleRetirerIntervenant = async (postulant: Intervenant) => {
-    if (isValidated) return
+  if (isValidated) return;
 
-    console.log("🔄 Tentative de retrait intervenant:", postulant.id)
+  console.log("🔄 Tentative de retrait intervenant:", postulant.id);
+  const updated = { ...postulant, statut: "en_attente" as const };
 
-    Alert.alert(
-      "Retirer l'intervenant",
-      `Êtes-vous sûr de vouloir retirer ${postulant.prenom} ${postulant.nom} de cette étude ?`,
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Retirer",
-          style: "destructive",
-          onPress: async () => {
-            console.log("⬅️ Retrait intervenant:", postulant.id)
-            const updated = { ...postulant, statut: "en_attente" as const }
+  console.log("🚀 Envoi API PATCH inter", updated); // pour "Retirer"
 
-            const success = await updateIntervenant(updated)
-            if (success) {
-              Alert.alert("Succès", `${postulant.prenom} ${postulant.nom} a été retiré(e) de l'étude`)
-            }
-          },
-        },
-      ],
-    )
+  const success = await updateIntervenant(updated);
+  if (success) {
+    Alert.alert("Succès", `${postulant.prenom} ${postulant.nom} a été retiré(e) de l'étude`);
+  } else {
+    Alert.alert("Erreur", "Impossible de retirer l'intervenant.");
   }
+};
+
 
   const handleReactiverCandidature = async (postulant: Intervenant) => {
-    if (isValidated) return
+  if (isValidated) return;
 
-    Alert.alert(
-      "Réactiver la candidature",
-      `Êtes-vous sûr de vouloir réactiver la candidature de ${postulant.prenom} ${postulant.nom} ?`,
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Réactiver",
-          onPress: async () => {
-            console.log("🔄 Réactivation candidature:", postulant.id)
-            const updated = { ...postulant, statut: "en_attente" as const }
+  console.log("🔄 Réactivation candidature:", postulant.id);
+  const updated = { ...postulant, statut: "en_attente" as const };
 
-            const success = await updateIntervenant(updated)
-            if (success) {
-              Alert.alert("Succès", `La candidature de ${postulant.prenom} ${postulant.nom} a été réactivée`)
-            }
-          },
-        },
-      ],
-    )
+  const success = await updateIntervenant(updated);
+  if (success) {
+    Alert.alert("Succès", `La candidature de ${postulant.prenom} ${postulant.nom} a été réactivée`);
+  } else {
+    Alert.alert("Erreur", `Impossible de réactiver la candidature de ${postulant.prenom} ${postulant.nom}`);
   }
+};
+
 
   const handleSelectPostulant = (postulant: Intervenant) => {
     if (!isValidated) {
@@ -202,9 +172,7 @@ const GererIntervenantsScreen = () => {
 
   const handleUpdatePrix = (postulantId: number, prix: string) => {
     if (isValidated) return
-
     console.log("💰 Mise à jour prix:", postulantId, prix)
-
     // Mise à jour optimiste de l'état local
     setIntervenants((prev) =>
       prev.map((p) =>
@@ -213,7 +181,6 @@ const GererIntervenantsScreen = () => {
           : p
       )
     )
-
     // Mettre à jour aussi le postulant sélectionné si c'est le même
     if (selectedPostulant && selectedPostulant.id === postulantId) {
       setSelectedPostulant((prev) => (prev ? { ...prev, prix: prix === "" ? 0 : Number(prix) } : null))
@@ -221,99 +188,82 @@ const GererIntervenantsScreen = () => {
   }
 
   const handleValidateChoices = async () => {
-    console.log("✅ Tentative de validation des choix")
+  console.log("🎯 CLIC SUR LE BOUTON VALIDER");
+  console.log("✅ Tentative de validation des choix");
 
-    const intervenantsAffectes = intervenants.filter((p) => p.statut === "affecte")
+  const intervenantsAffectes = intervenants.filter((p) => p.statut === "affecte");
+  console.log("🔍 Intervenants affectés :", intervenantsAffectes.length);
 
-    if (intervenantsAffectes.length === 0) {
-      Alert.alert("Attention", "Vous devez affecter au moins un intervenant avant de valider.")
-      return
-    }
-
-    const intervenantsSansPrix = intervenantsAffectes.filter((p) => p.prix === null || p.prix === undefined || p.prix === 0)
-    if (intervenantsSansPrix.length > 0) {
-      Alert.alert("Attention", "Tous les intervenants affectés doivent avoir un prix défini.")
-      return
-    }
-
-    Alert.alert(
-      "Valider les choix",
-      `Vous allez valider la sélection de ${intervenantsAffectes.length} intervenant(s). Cette action ne pourra plus être modifiée.`,
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Valider",
-          onPress: async () => {
-            try {
-              setLoading(true)
-              console.log("🔒 Validation en cours...")
-
-              // Sauvegarder tous les prix avant validation
-              const updatePromises = intervenantsAffectes.map((intervenant) => updateIntervenant(intervenant))
-              await Promise.all(updatePromises)
-
-              // Appel API pour valider l'étude
-              await api.post(`/etude/cancel/${etude.id}`, {
-                selectedUsers: intervenantsAffectes.map((i) => ({
-                  userId: i.id,
-                  coeff: i.prix, // ou i.coeff si tu renommes
-                }))
-
-              })
-              await fetchIntervenants(); // recharge les intervenants + met à jour isValidated
-              Alert.alert("Succès", "Les choix d'intervenants ont été validés et verrouillés.");
-              console.log("✅ Validation réussie");
-
-
-              Alert.alert("Succès", "Les choix d'intervenants ont été validés et verrouillés.")
-              console.log("✅ Validation réussie")
-            } catch (err) {
-              console.error("❌ Erreur validation :", err)
-              Alert.alert("Erreur", "Impossible de valider les choix.")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ],
-    )
+  if (intervenantsAffectes.length === 0) {
+    Alert.alert("Attention", "Vous devez affecter au moins un intervenant avant de valider.");
+    return;
   }
+
+  const intervenantsSansPrix = intervenantsAffectes.filter(
+    (p) => p.prix === null || p.prix === undefined || p.prix === 0
+  );
+
+  if (intervenantsSansPrix.length > 0) {
+    Alert.alert("Attention", "Tous les intervenants affectés doivent avoir un prix défini.");
+    return;
+  }
+
+  const payload = {
+    selectedUsers: intervenantsAffectes.map((i) => ({
+      userId: i.id,
+      coeff: Number(i.prix),
+    })),
+  };
+
+  console.log("🚀 Payload envoyé :", JSON.stringify(payload, null, 2));
+
+  try {
+    setLoading(true);
+    console.log("🔒 Validation en cours...");
+
+    // Enregistre les prix pour chaque intervenant
+    const updatePromises = intervenantsAffectes.map((intervenant) =>
+      updateIntervenant(intervenant)
+    );
+    await Promise.all(updatePromises);
+
+    // Envoi à l'API
+    await api.post(`/etude/start/${etude.id}`, payload);
+
+    await fetchIntervenants(); // Rafraîchir l'affichage
+    Alert.alert("Succès", "Les choix d'intervenants ont été validés et verrouillés.");
+    console.log("✅ Validation réussie");
+  } catch (err) {
+    console.error("❌ Erreur validation :", err);
+    Alert.alert("Erreur", "Impossible de valider les choix.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCancelValidation = async () => {
-    console.log("🔁 handleCancelValidation lancé")
-    console.log(etude.id ? `pour l'étude ID: ${etude.id}` : "sans ID d'étude")
-    Alert.alert(
-      "Annuler la validation",
-      "Êtes-vous sûr de vouloir annuler la validation ? Vous pourrez à nouveau modifier les intervenants.",
-      [
-        { text: "Non", style: "cancel" },
-        {
-          text: "Oui",
-          onPress: async () => {
-            try {
-              setLoading(true)
-              console.log("🔓 Annulation validation...")
+  console.log("🔁 handleCancelValidation lancé");
+  console.log(etude.id ? `pour l'étude ID: ${etude.id}` : "sans ID d'étude");
 
-              // Appel API pour annuler la validation
-              await api.post(`/etude/cancel/${etude.id}`, {
+  try {
+    setLoading(true);
+    console.log("🔓 Annulation validation...");
 
-              });
+    // Appel API pour annuler la validation
+    await api.post(`/etude/cancel/${etude.id}`, {});
 
-              console.log("✅ Annulation API réussie");
-              setIsValidated(false)
-              Alert.alert("Validation annulée", "Vous pouvez à nouveau modifier les intervenants.")
-              await fetchIntervenants()
-            } catch (err) {
-              console.error("❌ Erreur annulation validation :", err)
-              Alert.alert("Erreur", "Impossible d'annuler la validation.")
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ],
-    )
+    console.log("✅ Annulation API réussie");
+    setIsValidated(false);
+    Alert.alert("Validation annulée", "Vous pouvez à nouveau modifier les intervenants.");
+    await fetchIntervenants();
+  } catch (err) {
+    console.error("❌ Erreur annulation validation :", err);
+    Alert.alert("Erreur", "Impossible d'annuler la validation.");
+  } finally {
+    setLoading(false);
   }
+};
+
 
   if (!etude) {
     return (
@@ -398,10 +348,7 @@ const GererIntervenantsScreen = () => {
                 {!isValidated && (
                   <TouchableOpacity
                     style={styles.removeButton}
-                    onPress={(e) => {
-                      e.stopPropagation()
-                      handleRetirerIntervenant(postulant)
-                    }}
+                    onPress={() => handleRetirerIntervenant(postulant)}
                   >
                     <Ionicons name="remove-circle" size={24} color="#EF4444" />
                   </TouchableOpacity>
@@ -460,10 +407,7 @@ const GererIntervenantsScreen = () => {
                 {!isValidated && (
                   <TouchableOpacity
                     style={styles.reactivateButton}
-                    onPress={(e) => {
-                      e.stopPropagation()
-                      handleReactiverCandidature(postulant)
-                    }}
+                    onPress={() => handleReactiverCandidature(postulant)}
                   >
                     <Ionicons name="refresh-circle" size={24} color="#F59E0B" />
                   </TouchableOpacity>
