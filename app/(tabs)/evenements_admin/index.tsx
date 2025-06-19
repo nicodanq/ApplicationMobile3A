@@ -14,17 +14,15 @@ import {
   DialogTitle,
 } from "../../../components/dialog"
 import { Badge } from "../../../components/badge"
-
-import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
 import CreateEventPage from "./create-event-page"
 import EditEventPage from "./edit-event-page"
+import { SafeAreaView } from "react-native"
 
 import { Calendar, LocaleConfig } from "react-native-calendars"
 import Animated2, { FadeInDown } from "react-native-reanimated"
 
 import api from "@/api/axiosClient"
-import { SafeAreaView } from "react-native-safe-area-context"
 
 //calendrier en francais
 LocaleConfig.locales["fr"] = {
@@ -390,11 +388,7 @@ const AdminEventsScreen = () => {
       <SafeAreaView style={styles.headerContainer}>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Événements</Text>
-          <TouchableOpacity 
-            style={styles.addButton} 
-            onPress={() => setShowCreatePage(true)} 
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.addButton} onPress={() => setShowCreatePage(true)} activeOpacity={0.7}>
             <Ionicons name="add" size={24} color="#007AFF" />
           </TouchableOpacity>
         </View>
@@ -644,14 +638,18 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+    position: "relative",
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: "700",
     color: "#1E293B",
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
   },
   headerLine: {
     height: 2,
@@ -670,6 +668,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    marginLeft: "auto",
+    marginRight: 20,
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,
