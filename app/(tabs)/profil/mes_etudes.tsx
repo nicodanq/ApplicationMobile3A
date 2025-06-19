@@ -19,6 +19,7 @@ import {
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
+
 import FooterLogo from "@/components/FooterLogo";
 
 const { width } = Dimensions.get("window")
@@ -246,9 +247,9 @@ const MesEtudesScreen = () => {
           </Animated.View>
 
         </View>
+        <FooterLogo />
       </ScrollView>
 
-      <FooterLogo />
     </SafeAreaView>
   )
 }

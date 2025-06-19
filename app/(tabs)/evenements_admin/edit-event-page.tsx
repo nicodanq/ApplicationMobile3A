@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { Ionicons } from "@expo/vector-icons"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
@@ -347,15 +348,15 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
 
   return (
     <View style={styles.container}>
-      <HeaderPage title="Modification d'un événement" />
+    
 
-      <View style={styles.headerContainer}>
+      <SafeAreaView style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Modifier l'événement</Text>
         <View style={styles.placeholder} />
-      </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Indicateur d'événement en cours de modification */}

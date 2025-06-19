@@ -8,13 +8,12 @@ import { useRouter } from "expo-router";
 import {
   Dimensions,
   Image,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
@@ -72,7 +71,7 @@ const ProfilScreen = () => {
 
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
       {/* Header simple */}
@@ -86,7 +85,7 @@ const ProfilScreen = () => {
           {/* Profil Section */}
           <Animated.View entering={FadeInUp.delay(100)} style={styles.profileSection}>
             <View style={styles.avatarContainer}>
-              <Image source={{ uri: "https://example.com/avatar-default.png" }} style={styles.avatar} />
+              <Image source={{ uri: "https://as2.ftcdn.net/v2/jpg/03/32/59/65/1000_F_332596535_lAdLhf6KzbW6PWXBWeIFTovTii1drkbT.jpg" }} style={styles.avatar} />
             </View>
             <Text style={styles.email}>{details?.email_user}</Text>
             <Text style={styles.role}>{userRole}</Text>
@@ -268,7 +267,7 @@ const ProfilScreen = () => {
       </ScrollView>
 
 
-    </SafeAreaView>
+    </View>
   )
 }
 

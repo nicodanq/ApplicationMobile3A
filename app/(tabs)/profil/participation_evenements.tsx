@@ -15,18 +15,32 @@ import {
   Text,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native"
 
 function getCategoryColor(type: string): string {
   switch (type.toLowerCase()) {
     case "formation":
       return "#2196F3"
-    case "atelier":
-      return "#4CAF50"
+    case "afterwork":
+      return "#34C759" // Vert plus vif
     case "forum":
-      return "#FF9800"
+      return "#FF2D92"
     default:
       return "#9E9E9E"
+  }
+}
+
+function getCategoryIcon(type: string): string {
+  switch (type.toLowerCase()) {
+    case "formation":
+      return "school"
+    case "atelier":
+      return "wine"
+    case "forum":
+      return "people"
+    default:
+      return "calendar"
   }
 }
 
@@ -36,8 +50,9 @@ const ParticipationEvenementsScreen = () => {
   const { details, role, loading, error } = useUserDetails(user?.id ?? null)
 
   const [events, setEvents] = useState<any[]>([])
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [showEventModal, setShowEventModal] = useState(false)
+  const [selectedEvent, setSelectedEvent] = useState<any>(null)
+  const [isUnsubscribing, setIsUnsubscribing] = useState(false)
 
   useEffect(() => {
     if (!user?.id) return
@@ -45,17 +60,23 @@ const ParticipationEvenementsScreen = () => {
     const fetchEvents = async () => {
       try {
         const response = await api.get(`/user/events/${user.id}`)
-        console.log("Événements récupérés :", response.data);
+        console.log("Événements récupérés :", response.data)
         const fetchedEvents = response.data
 
         const formattedEvents = fetchedEvents.map((event: any) => ({
           id: String(event.Id_Event),
           title: event.titre_Event,
           category: event.typeEvent,
-          date: new Date(event.date_Event).toLocaleDateString("fr-FR"),
+          description: event.description_Event || "Description de l'événement",
+          date: new Date(event.date_Event).toLocaleDateString("fr-FR", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }),
           address: event.lieu_Event,
           time: event.horaire_Event?.slice(0, 5) || "00:00",
           categoryColor: getCategoryColor(event.typeEvent),
+          categoryIcon: getCategoryIcon(event.typeEvent),
         }))
 
         setEvents(formattedEvents)
@@ -68,24 +89,44 @@ const ParticipationEvenementsScreen = () => {
     fetchEvents()
   }, [user?.id])
 
-  const handleUnsubscribe = (eventId: string) => {
-    setSelectedEventId(eventId)
-    setShowConfirmModal(true)
+  const handleEventPress = (event: any) => {
+    setSelectedEvent(event)
+    setShowEventModal(true)
   }
 
-  const confirmUnsubscribe = () => {
-    if (selectedEventId) {
-      setEvents(events.filter((event) => event.id !== selectedEventId))
-      setShowConfirmModal(false)
-      setSelectedEventId(null)
-      Alert.alert("Succès", "Vous ne participez plus à cet événement")
-      // Tu peux ici appeler une API pour désinscrire en BDD
+  const handleUnsubscribe = async () => {
+    if (!selectedEvent || !user?.id) return
+
+    try {
+      setIsUnsubscribing(true)
+
+      // Appel API pour désinscrire l'utilisateur
+      const response = await api.delete("/evenement/desinscrire", {
+        data: {
+          Id_Event: Number.parseInt(selectedEvent.id),
+          ID_user: user.id,
+        },
+      })
+
+      if (response.status === 200) {
+        // Mettre à jour la liste des événements
+        setEvents(events.filter((event) => event.id !== selectedEvent.id))
+        setShowEventModal(false)
+        setSelectedEvent(null)
+        Alert.alert("Succès", "Vous ne participez plus à cet événement")
+      }
+    } catch (error: any) {
+      console.error("Erreur lors de la désinscription :", error)
+      const errorMessage = error.response?.data?.message || "Erreur lors de la désinscription"
+      Alert.alert("Erreur", errorMessage)
+    } finally {
+      setIsUnsubscribing(false)
     }
   }
 
-  const cancelUnsubscribe = () => {
-    setShowConfirmModal(false)
-    setSelectedEventId(null)
+  const closeModal = () => {
+    setShowEventModal(false)
+    setSelectedEvent(null)
   }
 
   return (
@@ -110,57 +151,104 @@ const ParticipationEvenementsScreen = () => {
             </View>
           ) : (
             events.map((event) => (
-              <View key={event.id} style={styles.eventCard}>
-                <View style={styles.eventHeader}>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  <TouchableOpacity style={styles.unsubscribeButton} onPress={() => handleUnsubscribe(event.id)}>
-                    <Ionicons name="close-circle-outline" size={24} color="#64748B" />
-                  </TouchableOpacity>
-                </View>
+              <TouchableOpacity
+                key={event.id}
+                style={styles.eventCard}
+                activeOpacity={0.7}
+                onPress={() => handleEventPress(event)}
+              >
+                <View style={styles.eventContent}>
+                  <View style={[styles.eventIcon, { backgroundColor: event.categoryColor }]}>
+                    <Ionicons name={event.categoryIcon as any} size={24} color="white" />
+                  </View>
 
-                <View style={[styles.categoryBadge, { backgroundColor: event.categoryColor + "20" }]}>
-                  <Text style={[styles.categoryText, { color: event.categoryColor }]}>{event.category}</Text>
-                </View>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{event.title}</Text>
+                    <Text style={styles.eventDescription}>{event.description}</Text>
 
-                <View style={styles.eventDetails}>
-                  <View style={styles.detailRow}>
-                    <Ionicons name="calendar-outline" size={16} color="#64748B" />
-                    <Text style={styles.detailText}>{event.date}</Text>
+                    <View style={styles.eventDetails}>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="calendar-outline" size={16} color="#8E8E93" />
+                        <Text style={styles.detailText}>{event.date}</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="time-outline" size={16} color="#8E8E93" />
+                        <Text style={styles.detailText}>{event.time}</Text>
+                      </View>
+                      <View style={styles.detailItem}>
+                        <Ionicons name="location-outline" size={16} color="#8E8E93" />
+                        <Text style={styles.detailText}>{event.address}</Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={styles.detailRow}>
-                    <Ionicons name="location-outline" size={16} color="#64748B" />
-                    <Text style={styles.detailText}>{event.address}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Ionicons name="time-outline" size={16} color="#64748B" />
-                    <Text style={styles.detailText}>{event.time}</Text>
+
+                  <View style={styles.chevronContainer}>
+                    <Ionicons name="chevron-forward" size={20} color="#C7C7CC" />
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
       </ScrollView>
 
-      {/* Confirmation Modal */}
-      <Modal visible={showConfirmModal} transparent={true} animationType="fade" onRequestClose={cancelUnsubscribe}>
+      {/* Event Detail Modal */}
+      <Modal visible={showEventModal} transparent={true} animationType="slide" onRequestClose={closeModal}>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <View style={styles.modalHeader}>
-              <Ionicons name="warning-outline" size={32} color="#E53E3E" />
-              <Text style={styles.modalTitle}>Confirmer la désinscription</Text>
-            </View>
+          <View style={styles.eventModalContainer}>
+            {selectedEvent && (
+              <>
+                {/* Header with icon and close button */}
+                <View style={styles.eventModalHeader}>
+                  <View style={[styles.modalEventIcon, { backgroundColor: selectedEvent.categoryColor }]}>
+                    <Ionicons name={selectedEvent.categoryIcon as any} size={32} color="white" />
+                  </View>
+                  <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+                    <Ionicons name="close" size={24} color="#8E8E93" />
+                  </TouchableOpacity>
+                </View>
 
-            <Text style={styles.modalText}>Êtes-vous sûr de ne plus vouloir participer à cet événement ?</Text>
+                {/* Event title */}
+                <Text style={styles.modalEventTitle}>{selectedEvent.title}</Text>
 
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={cancelUnsubscribe}>
-                <Text style={styles.cancelButtonText}>Non</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.confirmButton]} onPress={confirmUnsubscribe}>
-                <Text style={styles.confirmButtonText}>Oui</Text>
-              </TouchableOpacity>
-            </View>
+                {/* Event details card */}
+                <View style={styles.eventDetailsCard}>
+                  <View style={styles.modalDetailRow}>
+                    <View style={styles.modalDetailItem}>
+                      <Ionicons name="time-outline" size={20} color="#8E8E93" />
+                      <Text style={styles.modalDetailText}>{selectedEvent.time}</Text>
+                    </View>
+                    <View style={styles.modalDetailItem}>
+                      <Ionicons name="location-outline" size={20} color="#8E8E93" />
+                      <Text style={styles.modalDetailText}>{selectedEvent.address}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.modalDetailItem}>
+                    <Ionicons name="calendar-outline" size={20} color="#8E8E93" />
+                    <Text style={styles.modalDetailText}>{selectedEvent.date}</Text>
+                  </View>
+                </View>
+
+                {/* Description */}
+                <View style={styles.descriptionSection}>
+                  <Text style={styles.descriptionTitle}>Description</Text>
+                  <Text style={styles.descriptionText}>{selectedEvent.description}</Text>
+                </View>
+
+                {/* Unsubscribe button */}
+                <TouchableOpacity
+                  style={[styles.unsubscribeButton, isUnsubscribing && styles.unsubscribeButtonDisabled]}
+                  onPress={handleUnsubscribe}
+                  disabled={isUnsubscribing}
+                >
+                  {isUnsubscribing ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={styles.unsubscribeButtonText}>Ne plus participer</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -168,11 +256,10 @@ const ParticipationEvenementsScreen = () => {
   )
 }
 
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F8FAFC",
   },
   header: {
     flexDirection: "row",
@@ -181,6 +268,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E0E0",
+    backgroundColor: "#FFFFFF",
   },
   backButton: {
     marginRight: 15,
@@ -199,50 +287,58 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   eventCard: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  eventHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  eventContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  },
+  eventIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+  },
+  eventInfo: {
+    flex: 1,
   },
   eventTitle: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#1E293B",
-    flex: 1,
-    marginRight: 10,
+    fontWeight: "600",
+    color: "#1D1D1F",
+    marginBottom: 4,
   },
-  unsubscribeButton: {
-    padding: 4,
-  },
-  categoryBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+  eventDescription: {
+    fontSize: 14,
+    color: "#8E8E93",
     marginBottom: 12,
   },
-  categoryText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
   eventDetails: {
-    gap: 8,
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 16,
   },
-  detailRow: {
+  detailItem: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
   },
   detailText: {
     fontSize: 14,
-    color: "#64748B",
-    flex: 1,
+    color: "#8E8E93",
+    marginLeft: 6,
+  },
+  chevronContainer: {
+    padding: 8,
   },
   emptyContainer: {
     alignItems: "center",
@@ -265,58 +361,95 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center", // Changé de "flex-end" à "center"
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  eventModalContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24, // Changé de borderTopLeftRadius/borderTopRightRadius
+    padding: 24,
+    width: "100%",
+    maxWidth: 400,
+    maxHeight: "80%",
+  },
+  eventModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalEventIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContainer: {
-    backgroundColor: "#FFFFFF",
+  closeButton: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    padding: 24,
-    margin: 20,
-    minWidth: 300,
-  },
-  modalHeader: {
+    backgroundColor: "#F2F2F7",
+    justifyContent: "center",
     alignItems: "center",
-    marginBottom: 16,
   },
-  modalTitle: {
-    fontSize: 18,
+  modalEventTitle: {
+    fontSize: 24,
     fontWeight: "bold",
-    color: "#1E293B",
-    marginTop: 8,
+    color: "#1D1D1F",
+    marginBottom: 20,
     textAlign: "center",
   },
-  modalText: {
-    fontSize: 16,
-    color: "#64748B",
-    textAlign: "center",
+  eventDetailsCard: {
+    backgroundColor: "#F2F2F7",
+    borderRadius: 16,
+    padding: 16,
     marginBottom: 24,
+  },
+  modalDetailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalDetailItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
+  modalDetailText: {
+    fontSize: 16,
+    color: "#1D1D1F",
+    marginLeft: 8,
+    fontWeight: "500",
+  },
+  descriptionSection: {
+    marginBottom: 32,
+  },
+  descriptionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1D1D1F",
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 16,
+    color: "#8E8E93",
     lineHeight: 22,
   },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
+  unsubscribeButton: {
+    backgroundColor: "#FF3B30",
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 56,
   },
-  cancelButton: {
-    backgroundColor: "#F1F5F9",
+  unsubscribeButtonDisabled: {
+    opacity: 0.6,
   },
-  confirmButton: {
-    backgroundColor: "#E53E3E",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#64748B",
-  },
-  confirmButtonText: {
-    fontSize: 16,
+  unsubscribeButtonText: {
+    fontSize: 18,
     fontWeight: "600",
     color: "#FFFFFF",
   },
