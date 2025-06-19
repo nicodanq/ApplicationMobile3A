@@ -1,6 +1,8 @@
 "use client"
 
+import FooterLogo from "@/components/FooterLogo"
 import { useLocalSearchParams, useRouter } from "expo-router"
+import { useState } from "react"
 import {
   Dimensions,
   Image,
@@ -16,163 +18,57 @@ import {
 
 const { width } = Dimensions.get("window")
 
+type Article = {
+  id: string
+  titre: string
+  description: string
+  categorie: string
+  datePublication: string
+  image: string
+  auteur: string
+  readTime: number
+}
+
 const ArticleDetailScreen = () => {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const [isSaved, setIsSaved] = useState(true) // Par défaut sauvegardé
 
-  const { articleTitle, articleDescription, articleTitleColor, articleBackgroundColor, id, returnTo } = params
+  // Récupérer les données de l'article depuis les paramètres
+  const article: Article = params.articleData ? JSON.parse(params.articleData as string) : null
 
-  // Vérifier si on vient de la page des articles enregistrés
-  const isFromSavedArticles = returnTo === "articles-enregistres"
-
-  // Images améliorées pour chaque type d'article
-  const getArticleImage = (title: string) => {
-    const images: { [key: string]: string } = {
-      "Développement Web": "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=400&fit=crop",
-      "Base de Données": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&h=400&fit=crop",
-      DevOps: "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&h=400&fit=crop",
-      "Machine Learning": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800&h=400&fit=crop",
-      "Data Science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
-      "Deep Learning": "https://images.unsplash.com/photo-1507146426996-ef05306b995a?w=800&h=400&fit=crop",
-      "Sécurité Réseau": "https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=800&h=400&fit=crop",
-      Cryptographie: "https://images.unsplash.com/photo-1614064641938-3bbee52942c7?w=800&h=400&fit=crop",
-      "Ethical Hacking": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop",
-      "React Native": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
-      "UX Design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
-      "Progressive Web Apps": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=400&fit=crop",
-      "IT & Digital": "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?w=800&h=400&fit=crop",
-      "Ingénierie des Systèmes": "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=400&fit=crop",
-      "Conseil": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=400&fit=crop",
-    }
-
+  if (!article) {
     return (
-      images[title as string] || "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=800&h=400&fit=crop"
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Article non trouvé</Text>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     )
   }
 
-  const getArticleContent = (title: string) => {
-    const articles: { [key: string]: any } = {
-      "Développement Web": {
-        category: "Technologies et Outils",
-        fullTitle: "Les dernières tendances du développement web moderne",
-        fullDescription: `Le développement web évolue constamment avec l'émergence de nouvelles technologies et frameworks. Cet article explore les tendances actuelles comme les Progressive Web Apps, le JAMstack, et les architectures serverless. Nous analysons également l'impact de l'intelligence artificielle sur le développement web et comment les développeurs peuvent s'adapter à ces changements rapides pour créer des applications plus performantes et accessibles.`,
-        author: "Alexandre Dubois",
-        readTime: "8 min",
-        publishDate: "15 janvier 2024",
-        tags: ["JavaScript", "React", "Performance"],
-      },
-      "Base de Données": {
-        category: "Technologies et Outils",
-        fullTitle: "Optimisation des bases de données pour les applications modernes",
-        fullDescription: `L'optimisation des bases de données est cruciale pour les performances des applications modernes. Cet article détaille les meilleures pratiques pour structurer, indexer et optimiser vos bases de données. Nous couvrons les différences entre SQL et NoSQL, les stratégies de mise en cache, et les techniques de partitionnement pour gérer de gros volumes de données efficacement.`,
-        author: "Marie Lefevre",
-        readTime: "12 min",
-        publishDate: "12 janvier 2024",
-        tags: ["SQL", "NoSQL", "Performance"],
-      },
-      "Machine Learning": {
-        category: "Intelligence Artificielle & Data",
-        fullTitle: "Introduction pratique au Machine Learning",
-        fullDescription: `Le Machine Learning transforme la façon dont nous analysons les données et prenons des décisions. Cet article propose une approche pratique pour comprendre les algorithmes fondamentaux, de la régression linéaire aux réseaux de neurones. Nous explorons également les outils populaires comme TensorFlow et scikit-learn, avec des exemples concrets d'implémentation.`,
-        author: "Dr. Sophie Martin",
-        readTime: "15 min",
-        publishDate: "10 janvier 2024",
-        tags: ["Python", "TensorFlow", "Algorithmes"],
-      },
-      "Sécurité Réseau": {
-        category: "Cybersécurité",
-        fullTitle: "Sécuriser son infrastructure réseau en 2024",
-        fullDescription: `La sécurité réseau est plus critique que jamais avec l'augmentation des cyberattaques. Cet article présente les meilleures pratiques pour sécuriser votre infrastructure, incluant la segmentation réseau, les firewalls nouvelle génération, et la détection d'intrusions. Nous abordons également les défis spécifiques du télétravail et du cloud computing.`,
-        author: "Thomas Rousseau",
-        readTime: "10 min",
-        publishDate: "8 janvier 2024",
-        tags: ["Sécurité", "Réseau", "Firewall"],
-      },
-      "IT & Digital": {
-        category: "Technologie : IT & Digital",
-        fullTitle: "IT & Digital",
-        fullDescription: `Les technologies numériques continuent d'évoluer à un rythme effréné...`,
-        author: "Expert EPF",
-        readTime: "5 min",
-        publishDate: "Aujourd'hui",
-        tags: ["Innovation", "Technologie"],
-      },
-      "Ingénierie des Systèmes": {
-        category: "Innovation : Ingénierie des Systèmes",
-        fullTitle: "Ingénierie des Systèmes",
-        fullDescription: `L'ingénierie des systèmes fait face à des défis croissants...`,
-        author: "Expert EPF",
-        readTime: "5 min",
-        publishDate: "Aujourd'hui",
-        tags: ["Innovation", "Technologie"],
-      },
-      "Conseil": {
-        category: "Stratégie : Conseil",
-        fullTitle: "Conseil",
-        fullDescription: `La transformation digitale est devenue un enjeu majeur...`,
-        author: "Expert EPF",
-        readTime: "5 min",
-        publishDate: "Aujourd'hui",
-        tags: ["Innovation", "Technologie"],
-      },
+  // Fonction pour obtenir une couleur basée sur la catégorie
+  const getCategoryColor = (category: string) => {
+    const colors: { [key: string]: { bg: string; text: string } } = {
+      "AI & UX": { bg: "#E3F2FD", text: "#2196F3" },
+      "Data & Culture": { bg: "#F3E5F5", text: "#9C27B0" },
     }
+    return colors[category] || { bg: "#F5F5F5", text: "#757575" }
+  }
 
-    return (
-      articles[title] || {
-        category: title || "Catégorie",
-        fullTitle: title || "Titre de l'article",
-        fullDescription:
-          articleDescription ||
-          "Découvrez les dernières innovations et tendances dans ce domaine passionnant. Cet article explore en profondeur les concepts clés et fournit des insights pratiques pour les professionnels et les étudiants.",
-        author: "Expert EPF",
-        readTime: "5 min",
-        publishDate: "Aujourd'hui",
-        tags: ["Innovation", "Technologie"],
-      }
+  const handleSaveToggle = () => {
+    setIsSaved(!isSaved)
+    Alert.alert(
+      isSaved ? "Article retiré" : "Article sauvegardé",
+      isSaved ? "L'article a été retiré de vos favoris" : "L'article a été ajouté à vos favoris",
     )
   }
 
-  // Fonction pour gérer la sauvegarde/suppression
-  const handleBookmarkAction = () => {
-    if (isFromSavedArticles) {
-      // Si on vient des articles enregistrés, on propose de supprimer
-      Alert.alert(
-        "Supprimer l'article",
-        `Êtes-vous sûr de vouloir supprimer "${titleString}" de vos articles enregistrés ?`,
-        [
-          { 
-            text: "Annuler", 
-            style: "cancel" 
-          },
-          { 
-            text: "Supprimer", 
-            style: "destructive",
-            onPress: () => {
-              // Ici vous pouvez ajouter la logique pour supprimer l'article
-              // Par exemple, appeler une fonction qui met à jour le state global
-              Alert.alert("Article supprimé", "L'article a été retiré de vos favoris", [
-                {
-                  text: "OK",
-                  onPress: () => router.back() // Retourner à la page précédente
-                }
-              ])
-            }
-          }
-        ]
-      )
-    } else {
-      // Si on vient d'ailleurs, on sauvegarde
-      Alert.alert("Article sauvegardé", "L'article a été ajouté à vos favoris")
-    }
-  }
-
-  const titleString = Array.isArray(articleTitle) ? articleTitle[0] : articleTitle || ""
-  const articleContent = getArticleContent(titleString)
-  const categoryColor = Array.isArray(articleTitleColor) ? articleTitleColor[0] : articleTitleColor || "#2196F3"
-  const bgColor = Array.isArray(articleBackgroundColor)
-    ? articleBackgroundColor[0]
-    : articleBackgroundColor || "#E3F2FD"
-  const articleImage = getArticleImage(titleString)
+  const categoryColors = getCategoryColor(article.categorie)
 
   return (
     <SafeAreaView style={styles.container}>
@@ -191,47 +87,54 @@ const ArticleDetailScreen = () => {
           <View style={styles.mainCard}>
             {/* Image */}
             <View style={styles.imageContainer}>
-              <Image source={{ uri: articleImage }} style={styles.headerImage} />
+              <Image source={{ uri: article.image }} style={styles.headerImage} />
               <View style={styles.imageOverlay} />
 
               {/* Category Badge */}
-              <View style={[styles.categoryBadge, { backgroundColor: bgColor }]}>
-                <Text style={[styles.categoryText, { color: categoryColor }]}>{articleContent.category}</Text>
+              <View style={[styles.categoryBadge, { backgroundColor: categoryColors.bg }]}>
+                <Text style={[styles.categoryText, { color: categoryColors.text }]}>{article.categorie}</Text>
               </View>
 
               {/* Reading time badge */}
               <View style={styles.readTimeBadge}>
-                <Text style={styles.readTimeText}>📖 {articleContent.readTime}</Text>
+                <Text style={styles.readTimeText}>📖 {article.readTime} min</Text>
               </View>
             </View>
 
             {/* Title and Description */}
             <View style={styles.contentSection}>
-              <Text style={styles.articleTitle}>{articleContent.fullTitle}</Text>
+              <Text style={styles.articleTitle}>{article.titre}</Text>
 
               {/* Meta information */}
               <View style={styles.metaSection}>
                 <View style={styles.authorSection}>
                   <View style={styles.authorAvatar}>
-                    <Text style={styles.avatarText}>{articleContent.author.charAt(0)}</Text>
+                    <Text style={styles.avatarText}>{article.auteur.charAt(0).toUpperCase()}</Text>
                   </View>
                   <View style={styles.authorInfo}>
-                    <Text style={styles.authorText}>{articleContent.author}</Text>
-                    <Text style={styles.publishDate}>{articleContent.publishDate}</Text>
+                    <Text style={styles.authorText}>{article.auteur}</Text>
+                    <Text style={styles.publishDate}>
+                      {new Date(article.datePublication).toLocaleDateString("fr-FR", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </Text>
                   </View>
                 </View>
               </View>
 
               {/* Tags */}
               <View style={styles.tagsContainer}>
-                {articleContent.tags.map((tag: string, index: number) => (
-                  <View key={index} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{article.categorie}</Text>
+                </View>
+                <View style={styles.tag}>
+                  <Text style={styles.tagText}>{article.readTime} min</Text>
+                </View>
               </View>
 
-              <Text style={styles.articleDescription}>{articleContent.fullDescription}</Text>
+              <Text style={styles.articleDescription}>{article.description}</Text>
 
               {/* Action buttons */}
               <View style={styles.actionButtons}>
@@ -239,17 +142,10 @@ const ArticleDetailScreen = () => {
                   <Text style={styles.actionIcon}>👍</Text>
                   <Text style={styles.actionText}>J'aime</Text>
                 </TouchableOpacity>
-                
-                {/* Bouton dynamique : Sauvegarder ou Supprimer */}
-                <TouchableOpacity style={styles.bookmarkButton} onPress={handleBookmarkAction}>
-                  <Text style={styles.actionIcon}>
-                    {isFromSavedArticles ? "🗑️" : "🔖"}
-                  </Text>
-                  <Text style={[styles.actionText, isFromSavedArticles && styles.deleteText]}>
-                    {isFromSavedArticles ? "Supprimer" : "Sauvegarder"}
-                  </Text>
+                <TouchableOpacity style={styles.bookmarkButton} onPress={handleSaveToggle}>
+                  <Text style={styles.actionIcon}>{isSaved ? "🔖" : "📌"}</Text>
+                  <Text style={styles.actionText}>{isSaved ? "Ne plus sauvegarder" : "Sauvegarder"}</Text>
                 </TouchableOpacity>
-                
                 <TouchableOpacity style={styles.shareButtonAction}>
                   <Text style={styles.actionIcon}>📤</Text>
                   <Text style={styles.actionText}>Partager</Text>
@@ -258,6 +154,7 @@ const ArticleDetailScreen = () => {
             </View>
           </View>
         </View>
+        <FooterLogo />
       </ScrollView>
     </SafeAreaView>
   )
@@ -267,6 +164,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F8FAFC",
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#EF4444",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  backButtonText: {
+    color: "#2196F3",
+    fontSize: 16,
+    fontWeight: "600",
   },
   header: {
     flexDirection: "row",
@@ -292,11 +206,6 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 20,
-    color: "#1E293B",
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
     color: "#1E293B",
   },
   scrollView: {
@@ -458,9 +367,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#64748B",
     fontWeight: "500",
-  },
-  deleteText: {
-    color: "#EF4444", // Rouge pour le texte "Supprimer"
   },
 })
 

@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type Study = {
     Id_etude: number;
@@ -71,12 +72,12 @@ const EtudesCategorieScreen = () => {
     return (
         <View style={styles.container}>
             {/* Header */}
-            <View style={styles.header}>
+            <SafeAreaView style={styles.header}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>{titleMap[safeCategory(category as string)]}</Text>
-            </View>
+            </SafeAreaView>
 
             <ScrollView contentContainerStyle={styles.scroll}>
                 {loading ? (

@@ -117,7 +117,7 @@ const MesInformationsAdminScreen = () => {
           <View style={styles.scrollContent}>
             <Animated.View entering={FadeInDown.delay(100)} style={styles.avatarSection}>
               <Image
-                source={{ uri: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" }}
+                source={{ uri: "https://as2.ftcdn.net/v2/jpg/03/32/59/65/1000_F_332596535_lAdLhf6KzbW6PWXBWeIFTovTii1drkbT.jpg" }}
                 style={styles.avatar}
               />
               <TouchableOpacity style={styles.changePhotoButton}>

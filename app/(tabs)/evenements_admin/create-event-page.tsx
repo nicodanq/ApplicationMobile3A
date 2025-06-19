@@ -5,6 +5,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert 
 import { Ionicons } from "@expo/vector-icons"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
@@ -280,15 +281,15 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
 
   return (
     <View style={styles.container}>
-      <HeaderPage title="Création d'un événement" />
+    
 
-      <View style={styles.headerContainer}>
+      <SafeAreaView style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nouvel événement</Text>
         <View style={styles.placeholder} />
-      </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Card style={styles.formCard}>

@@ -1,198 +1,161 @@
 "use client"
 
-import api from "@/api/axiosClient";
-import FooterLogo from "@/components/FooterLogo";
-import { useSession } from "@/contexts/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
-} from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import { useState } from "react"
+import FooterLogo from "@/components/FooterLogo"
+import { Ionicons } from "@expo/vector-icons"
+import { useRouter } from "expo-router"
+import { Dimensions, Image, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 const { width } = Dimensions.get("window")
-const cardWidth = width * 0.75
+const cardWidth = width - 40
 
-// Composant pour les images avec placeholder
-const ImageWithPlaceholder = ({ uri, style }: { uri: string; style: any }) => {
-  const [imageLoaded, setImageLoaded] = useState(false)
-  const [imageError, setImageError] = useState(false)
-  
-  return (
-    <View style={style}>
-      {(!imageLoaded || imageError) && (
-        <View style={[style, { 
-          backgroundColor: '#E2E8F0', 
-          justifyContent: 'center', 
-          alignItems: 'center',
-          position: 'absolute',
-          zIndex: 1
-        }]}>
-          <Ionicons name="image-outline" size={24} color="#94A3B8" />
-        </View>
-      )}
-      <Image 
-        source={{ uri }} 
-        style={style}
-        onLoad={() => setImageLoaded(true)}
-        onError={() => setImageError(true)}
-      />
-    </View>
-  )
+type Article = {
+  id: string
+  titre: string
+  description: string
+  categorie: string
+  datePublication: string
+  image: string
+  auteur: string
+  readTime: number
 }
 
-const ArticlesEnregistresScreen = () => {
-  const router = useRouter();
-  const { user } = useSession();
-  const [isLoading, setIsLoading] = useState(false)
-  const [savedArticles, setSavedArticles] = useState<any[]>([])
-  const [isFetching, setIsFetching] = useState(true)
+// Articles en dur
+const articlesData: Article[] = [
+  {
+    id: "1",
+    titre: "L'intelligence artificielle transforme le design UX",
+    description:
+      "L'intelligence artificielle transforme le design UX. En 2024, les interfaces adaptatives deviennent courantes : les applications apprennent des comportements utilisateurs pour ajuster les parcours, proposer des contenus personnalisés, voire anticiper les besoins. Des outils comme Figma AI, Galileo ou Uizard permettent de générer des interfaces à partir de simples textes. L'UX designer devient alors chef d'orchestre, guidant l'IA au lieu de tout concevoir à la main. L'accessibilité bénéficie aussi de l'IA : reconnaissance vocale, navigation prédictive et adaptation aux handicaps sont intégrés dès la conception. Toutefois, cette automatisation pose des questions éthiques : biais, sur-personnalisation, et perte de contrôle de l'utilisateur. Les bons designers UX 2024 sont ceux qui savent conjuguer IA et empathie utilisateur.",
+    categorie: "AI & UX",
+    datePublication: "2024-02-10",
+    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=200&fit=crop",
+    auteur: "Isabelle",
+    readTime: 12,
+  },
+  {
+    id: "2",
+    titre: "Le Big Data révolutionne l'analyse culturelle",
+    description:
+      "Le Big Data ne se limite plus à l'analyse économique : il devient un outil d'étude des comportements sociaux et culturels. En 2024, de nombreuses organisations utilisent les données pour comprendre les dynamiques d'inclusion, les discriminations algorithmiques ou l'impact culturel de certaines plateformes. Netflix, Spotify ou TikTok analysent en profondeur les préférences culturelles pour proposer des contenus ultra ciblés. Dans le domaine public, les données massives servent à orienter les politiques éducatives ou sanitaires. Cette intersection entre data science et sciences humaines ouvre la voie à une lecture augmentée de la société. Toutefois, elle implique une vigilance éthique accrue : toute donnée est interprétée, et la façon de la collecter ou l'analyser peut renforcer des biais existants. La donnée culturelle est une nouvelle frontière.",
+    categorie: "Data & Culture",
+    datePublication: "2024-02-15",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&h=200&fit=crop",
+    auteur: "Julien",
+    readTime: 10,
+  },
+]
 
-  useEffect(() => {
-    const fetchUserArticles = async () => {
-      if (!user?.id) return;
-
-      try {
-        setIsFetching(true)
-        const response = await api.get(`/user/articles/${user.id}`);
-        setSavedArticles(response.data); // Les données viennent directement de la BDD
-      } catch (error) {
-        console.error("Erreur de récupération des articles favoris :", error);
-        setSavedArticles([]); // Si erreur, on met un tableau vide
-      } finally {
-        setIsFetching(false)
-      }
-    }
-
-    fetchUserArticles();
-  }, [user?.id]);
-
-  const handleRemoveArticle = (articleId: number, articleTitle: string) => {
-    Alert.alert(
-      "Supprimer l'article",
-      `Êtes-vous sûr de vouloir supprimer "${articleTitle}" de vos articles enregistrés ?`,
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer", style: "destructive",
-          onPress: () => {
-            setSavedArticles(prev => prev.filter(article => article.Id_article !== articleId));
-          }
-        }
-      ]
-    );
-  };
-
-  const handleArticlePress = async (article: any) => {
-    try {
-      setIsLoading(true)
-      await router.push({
-        pathname: '/(tabs)/articles/[id]',
-        params: {
-          id: article.Id_article,
-          articleTitle: article.titre_article,
-          articleDescription: article.description_article,
-        },
-      })
-    } catch (error) {
-      console.error('Erreur de navigation:', error)
-      Alert.alert("Erreur", "Impossible d'ouvrir l'article. Veuillez réessayer.")
-    } finally {
-      setIsLoading(false)
-    }
+const getCategoryColor = (category: string) => {
+  const colors: { [key: string]: { bg: string; text: string } } = {
+    "AI & UX": { bg: "#E3F2FD", text: "#2196F3" },
+    "Data & Culture": { bg: "#F3E5F5", text: "#9C27B0" },
   }
+  return colors[category] || { bg: "#F5F5F5", text: "#757575" }
+}
 
-  const ArticleCard = ({ article }: { article: any }) => (
-    <TouchableOpacity
-      style={styles.articleCard}
-      onPress={() => handleArticlePress(article)}
-      activeOpacity={0.7}
-      disabled={isLoading}
-    >
-      <Image source={{ uri: article.img_article }} style={styles.articleImage} />
+const ArticleCard = ({ article, onPress }: { article: Article; onPress: () => void }) => {
+  const categoryColors = getCategoryColor(article.categorie)
+
+  return (
+    <TouchableOpacity style={styles.articleCard} onPress={onPress} activeOpacity={0.7}>
+      <Image source={{ uri: article.image }} style={styles.articleImage} />
       <View style={styles.articleContent}>
-        <Text style={styles.articleTitle} numberOfLines={2}>{article.titre_article}</Text>
-        <Text style={styles.articleDescription} numberOfLines={3}>{article.description_article}</Text>
+        <View style={styles.articleHeader}>
+          <View style={[styles.categoryBadge, { backgroundColor: categoryColors.bg }]}>
+            <Text style={[styles.categoryText, { color: categoryColors.text }]}>{article.categorie}</Text>
+          </View>
+        </View>
+        <Text style={styles.articleTitle} numberOfLines={2}>
+          {article.titre}
+        </Text>
+        <Text style={styles.articleDescription} numberOfLines={3}>
+          {article.description}
+        </Text>
         <View style={styles.articleFooter}>
+          <View style={styles.authorInfo}>
+            <View style={styles.authorAvatar}>
+              <Text style={styles.avatarText}>{article.auteur.charAt(0).toUpperCase()}</Text>
+            </View>
+            <Text style={styles.authorText}>{article.auteur}</Text>
+          </View>
           <View style={styles.readTimeInfo}>
             <Ionicons name="time-outline" size={16} color="#64748B" />
-            <Text style={styles.readTimeText}>{article.datePublication_article}</Text>
+            <Text style={styles.readTimeText}>{article.readTime} min</Text>
           </View>
-          <TouchableOpacity
-            style={styles.bookmarkButton}
-            onPress={(e) => {
-              e.stopPropagation()
-              handleRemoveArticle(article.Id_article, article.titre_article)
-            }}
-          >
-            <Ionicons name="bookmark" size={20} color="#3B82F6" />
-          </TouchableOpacity>
         </View>
       </View>
     </TouchableOpacity>
   )
+}
+
+const ArticlesScreen = () => {
+  const router = useRouter()
+  const [articles] = useState<Article[]>(articlesData)
+
+  const handleArticlePress = (article: Article) => {
+    router.push({
+      pathname: "/(tabs)/profil/detail_article",
+      params: {
+        id: article.id,
+        articleData: JSON.stringify(article),
+      },
+    })
+  }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View style={styles.header}>
+      {/* Header simple */}
+      <SafeAreaView style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={24} color="#1E293B" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Articles enregistrés</Text>
-        {!isFetching && savedArticles.length > 0 && (
-          <Text style={styles.articleCount}>({savedArticles.length})</Text>
-        )}
-      </View>
-
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-        </View>
-      )}
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          {isFetching ? (
-            <ActivityIndicator size="large" color="#3B82F6" style={{ marginTop: 40 }} />
-          ) : savedArticles.length > 0 ? (
-            <Animated.View entering={FadeInDown.delay(200)} style={styles.articlesContainer}>
-              {savedArticles.map((article) => (
-                <ArticleCard key={article.Id_article} article={article} />
-              ))}
-            </Animated.View>
-          ) : (
-            <View style={styles.emptyState}>
-              <Ionicons name="bookmark-outline" size={64} color="#94A3B8" />
-              <Text style={styles.emptyTitle}>Aucun article enregistré</Text>
-              <Text style={styles.emptyDescription}>
-                Les articles que vous enregistrerez apparaîtront ici
-              </Text>
-              <TouchableOpacity
-                style={styles.exploreButton}
-                onPress={() => router.push('/profil/detail_article')}
-              >
-                <Text style={styles.exploreButtonText}>Explorer les articles</Text>
-              </TouchableOpacity>
+          {/* Statistiques */}
+          <Animated.View entering={FadeInUp.delay(100)} style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{articles.length}</Text>
+              <Text style={styles.statLabel}>Total Articles</Text>
             </View>
-          )}
-        </View>
-      </ScrollView>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>2</Text>
+              <Text style={styles.statLabel}>Catégories</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>2</Text>
+              <Text style={styles.statLabel}>Auteurs</Text>
+            </View>
+          </Animated.View>
 
-      <FooterLogo />
-    </SafeAreaView>
+          {/* Liste des articles */}
+          <Animated.View entering={FadeInDown.delay(200)} style={styles.articlesSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Articles récents</Text>
+              <Text style={styles.sectionCount}>{articles.length}</Text>
+            </View>
+
+            <View style={styles.articlesContainer}>
+              {articles.map((article, index) => (
+                <Animated.View key={article.id} entering={FadeInDown.delay(300 + index * 100)}>
+                  <ArticleCard article={article} onPress={() => handleArticlePress(article)} />
+                </Animated.View>
+              ))}
+            </View>
+          </Animated.View>
+        </View>
+        <FooterLogo />
+      </ScrollView>
+    </View>
   )
 }
 
@@ -220,36 +183,75 @@ const styles = StyleSheet.create({
     color: "#000000",
     flex: 1,
   },
-  articleCount: {
-    fontSize: 16,
-    color: "#64748B",
-    fontWeight: "500",
-  },
-  loadingOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
   scrollView: {
     flex: 1,
     backgroundColor: "#F8FAFC",
   },
   scrollContent: {
     paddingTop: 20,
-    paddingBottom: 40,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#000000",
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 14,
+    color: "#64748B",
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 20,
+  },
+  articlesSection: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#000000",
+  },
+  sectionCount: {
+    fontSize: 16,
+    color: "#64748B",
+    backgroundColor: "#F1F5F9",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   articlesContainer: {
     paddingHorizontal: 20,
     gap: 16,
   },
   articleCard: {
-    width: "100%",
+    width: cardWidth,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     overflow: "hidden",
@@ -261,28 +263,67 @@ const styles = StyleSheet.create({
   },
   articleImage: {
     width: "100%",
-    height: 120,
+    height: 160,
     backgroundColor: "#F1F5F9",
   },
   articleContent: {
     padding: 16,
   },
+  articleHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  categoryBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  categoryText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
   articleTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "600",
     color: "#000000",
     marginBottom: 8,
+    lineHeight: 24,
   },
   articleDescription: {
     fontSize: 14,
     color: "#64748B",
-    marginBottom: 12,
+    marginBottom: 16,
     lineHeight: 20,
   },
   articleFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  authorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  authorAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#4F46E5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  avatarText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  authorText: {
+    fontSize: 14,
+    color: "#1E293B",
+    fontWeight: "500",
   },
   readTimeInfo: {
     flexDirection: "row",
@@ -293,40 +334,6 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginLeft: 4,
   },
-  bookmarkButton: {
-    padding: 4,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#64748B",
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyDescription: {
-    fontSize: 16,
-    color: "#94A3B8",
-    textAlign: "center",
-    lineHeight: 22,
-    marginBottom: 24,
-  },
-  exploreButton: {
-    backgroundColor: "#3B82F6",
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  exploreButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
 })
 
-export default ArticlesEnregistresScreen
+export default ArticlesScreen
