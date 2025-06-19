@@ -146,18 +146,18 @@ const ArticlesScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
         <HeaderPage title="Articles" />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>Chargement...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <HeaderPage title="Articles" />
 
@@ -187,7 +187,7 @@ const ArticlesScreen = () => {
         <FooterLogo />
       </ScrollView>
       
-    </SafeAreaView>
+    </View>
   )
 }
 

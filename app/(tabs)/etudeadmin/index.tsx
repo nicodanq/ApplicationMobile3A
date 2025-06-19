@@ -211,39 +211,45 @@ const EtudesAdminScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.header}>
-          <HeaderPage title="Gestion des Études" />
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={24} color="#000000" />
-          </TouchableOpacity>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Gestion des Études</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerLine} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>Chargement des études...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <View style={styles.header}>
-          <HeaderPage title="Gestion des Études" />
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="add" size={24} color="#000000" />
-          </TouchableOpacity>
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Gestion des Études</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerLine} />
         </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
@@ -251,25 +257,28 @@ const EtudesAdminScreen = () => {
             <Text style={styles.retryButtonText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <HeaderPage title="Gestion des Études" />
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="add" size={24} color="#000000" />
-        </TouchableOpacity>
-      </View>
+      {/* Header unifié */}
+      <SafeAreaView style={styles.headerContainer}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Gestion des Études</Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerLine} />
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
@@ -298,7 +307,7 @@ const EtudesAdminScreen = () => {
         </View>
         <FooterLogo />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
@@ -340,34 +349,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 0.5,
-    borderBottomColor: "#E5E5E5",
+  headerContainer: {
+    paddingTop: 28, // ou utilisez useSafeAreaInsets si vous préférez
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: "#F8FAFC",
   },
-  backButton: {
-    padding: 4,
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#000000",
-    flex: 1,
+    fontSize: 28,
     textAlign: "center",
-    marginHorizontal: 16,
+    fontWeight: "700",
+    color: "#1E293B",
+  },
+  headerLine: {
+    height: 2,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 40,
   },
   addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E3F2FD",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   scrollView: {
     flex: 1,

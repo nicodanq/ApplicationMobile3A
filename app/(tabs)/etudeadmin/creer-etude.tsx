@@ -1,5 +1,7 @@
 "use client"
 
+import api from "@/api/axiosClient"
+import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
 import { useRouter } from "expo-router"
 import { useState } from "react"
@@ -20,16 +22,17 @@ import FooterLogo from "@/components/FooterLogo"
 
 const typesEtudes = [
   "IT & Digital",
-  "Ingénierie des systèmes", 
+  "Ingénierie des Systèmes",
   "Conseil",
   "RSE",
   "Digital & Culture",
-  "Traduction Technique"
+  "Traduction Technique",
 ]
 
 const CreerEtudeScreen = () => {
   const router = useRouter()
-  
+  const { user } = useSession()
+
   const [formData, setFormData] = useState({
     titre: "",
     description: "",
@@ -37,32 +40,75 @@ const CreerEtudeScreen = () => {
     nbrIntervenant: "",
     dateDebut: "",
     dateFin: "",
-    typeEtude: "",
-    imageUrl: ""
+    imageUrl: "",
   })
 
   const [selectedType, setSelectedType] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }))
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation basique
     if (!formData.titre || !formData.description || !formData.prix || !selectedType) {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires")
+      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires (titre, description, prix, type)")
       return
     }
 
-    // Ici vous pouvez ajouter la logique pour sauvegarder l'étude
-    Alert.alert(
-      "Succès", 
-      "L'étude a été créée avec succès",
-      [{ text: "OK", onPress: () => router.back() }]
-    )
+    // Validation du prix
+    if (Number.isNaN(Number.parseFloat(formData.prix)) || Number.parseFloat(formData.prix) < 0) {
+      Alert.alert("Erreur", "Veuillez entrer un prix valide")
+      return
+    }
+
+    // Validation du nombre d'intervenants
+    if (
+      formData.nbrIntervenant &&
+      (Number.isNaN(Number.parseInt(formData.nbrIntervenant)) || Number.parseInt(formData.nbrIntervenant) < 1)
+    ) {
+      Alert.alert("Erreur", "Veuillez entrer un nombre d'intervenants valide")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+
+      const etudeData = {
+        titre_etude: formData.titre,
+        description_etude: formData.description,
+        prix_etude: Number.parseFloat(formData.prix),
+        nbrIntervenant: formData.nbrIntervenant ? Number.parseInt(formData.nbrIntervenant) : 1,
+        dateDebut_etude: formData.dateDebut || undefined,
+        dateFin_etude: formData.dateFin || undefined,
+        img_etude: formData.imageUrl || undefined,
+        typeEtude: selectedType,
+      }
+
+      const response = await api.post("/etude/", etudeData)
+
+      if (response.status === 201) {
+        Alert.alert("Succès", "L'étude a été créée avec succès", [
+          {
+            text: "OK",
+            onPress: () => router.back(),
+          },
+        ])
+      }
+    } catch (err: any) {
+      console.error("Erreur création étude:", err)
+      if (err.response?.status === 400) {
+        Alert.alert("Erreur", err.response.data.message || "Données invalides")
+      } else {
+        Alert.alert("Erreur", "Impossible de créer l'étude. Veuillez réessayer.")
+      }
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -71,11 +117,7 @@ const CreerEtudeScreen = () => {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color="#000000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Créer une Étude</Text>
@@ -84,10 +126,8 @@ const CreerEtudeScreen = () => {
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
-          
           {/* Formulaire */}
           <Animated.View entering={FadeInDown.delay(100)} style={styles.formContainer}>
-            
             {/* Titre */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Titre de l'étude *</Text>
@@ -121,16 +161,10 @@ const CreerEtudeScreen = () => {
                 {typesEtudes.map((type) => (
                   <TouchableOpacity
                     key={type}
-                    style={[
-                      styles.typeButton,
-                      selectedType === type && styles.typeButtonSelected
-                    ]}
+                    style={[styles.typeButton, selectedType === type && styles.typeButtonSelected]}
                     onPress={() => setSelectedType(type)}
                   >
-                    <Text style={[
-                      styles.typeButtonText,
-                      selectedType === type && styles.typeButtonTextSelected
-                    ]}>
+                    <Text style={[styles.typeButtonText, selectedType === type && styles.typeButtonTextSelected]}>
                       {type}
                     </Text>
                   </TouchableOpacity>
@@ -152,12 +186,12 @@ const CreerEtudeScreen = () => {
 
             {/* Nombre d'intervenants */}
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Nombre d'intervenants *</Text>
+              <Text style={styles.label}>Nombre d'intervenants</Text>
               <TextInput
                 style={styles.input}
                 value={formData.nbrIntervenant}
                 onChangeText={(value) => handleInputChange("nbrIntervenant", value)}
-                placeholder="0"
+                placeholder="1"
                 keyboardType="numeric"
               />
             </View>
@@ -194,28 +228,23 @@ const CreerEtudeScreen = () => {
                 placeholder="https://example.com/image.jpg"
               />
             </View>
-
           </Animated.View>
 
           {/* Boutons d'action */}
           <Animated.View entering={FadeInDown.delay(200)} style={styles.actionButtons}>
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()} activeOpacity={0.7}>
               <Text style={styles.cancelButtonText}>Annuler</Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.submitButton}
+
+            <TouchableOpacity
+              style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
               onPress={handleSubmit}
               activeOpacity={0.7}
+              disabled={isSubmitting}
             >
-              <Text style={styles.submitButtonText}>Créer l'étude</Text>
+              <Text style={styles.submitButtonText}>{isSubmitting ? "Création..." : "Créer l'étude"}</Text>
             </TouchableOpacity>
           </Animated.View>
-
         </View>
       </ScrollView>
 
@@ -338,6 +367,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#3B82F6",
     alignItems: "center",
+  },
+  submitButtonDisabled: {
+    backgroundColor: "#9CA3AF",
   },
   submitButtonText: {
     fontSize: 16,

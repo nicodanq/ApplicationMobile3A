@@ -4,7 +4,6 @@ import api from "@/api/axiosClient"
 import { Ionicons } from "@expo/vector-icons"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useCallback, useEffect, useState } from "react"
-
 import {
   ActivityIndicator,
   Alert,

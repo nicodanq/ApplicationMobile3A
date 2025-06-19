@@ -9,6 +9,7 @@ import { useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -20,7 +21,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = width * 0.8
@@ -152,6 +152,36 @@ const EtudesScreen = () => {
     } as any)
   }
 
+  const handleInscription = async (studyId: string, studyTitle: string) => {
+    if (!user) {
+      Alert.alert("Connexion requise", "Vous devez être connecté pour vous inscrire à une étude.")
+      return
+    }
+
+    try {
+      const inscriptionData = {
+        Id_etude: Number.parseInt(studyId),
+        ID_user: user.id,
+      }
+
+      const response = await api.post("/etude/inscription/", inscriptionData)
+
+      if (response.status === 201) {
+        Alert.alert("Inscription réussie", `Vous êtes maintenant inscrit à "${studyTitle}".`)
+      }
+    } catch (err: any) {
+      // Gestion spécifique des erreurs sans log dans la console
+      if (err.response?.status === 409) {
+        Alert.alert("Déjà inscrit", "Vous êtes déjà inscrit à cette étude.")
+      } else if (err.response?.status === 400) {
+        Alert.alert("Erreur", "Données invalides. Veuillez réessayer.")
+      } else {
+        console.error("Erreur inscription:", err)
+        Alert.alert("Erreur", "Impossible de s'inscrire à cette étude. Veuillez réessayer.")
+      }
+    }
+  }
+
   const renderStudyCard = ({ item: study, index }: { item: Study; index: number }, category: StudyCategory) => (
     <TouchableOpacity
       style={[styles.studyCard, { marginLeft: index === 0 ? 20 : 10 }]}
@@ -179,7 +209,13 @@ const EtudesScreen = () => {
             <Ionicons name="time-outline" size={14} color="#64748B" />
             <Text style={styles.durationText}>{study.duration}</Text>
           </View>
-          <TouchableOpacity style={[styles.enrollButton, { backgroundColor: category.color }]}>
+          <TouchableOpacity
+            style={[styles.enrollButton, { backgroundColor: category.color }]}
+            onPress={(e) => {
+              e.stopPropagation()
+              handleInscription(study.id, study.title)
+            }}
+          >
             <Text style={styles.enrollButtonText}>S&apos;inscrire</Text>
           </TouchableOpacity>
         </View>
@@ -225,20 +261,20 @@ const EtudesScreen = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
         <HeaderPage title="Études" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#2196F3" />
           <Text style={styles.loadingText}>Chargement des études...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
         <HeaderPage title="Études" />
         <View style={styles.errorContainer}>
@@ -247,12 +283,12 @@ const EtudesScreen = () => {
             <Text style={styles.retryButtonText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       {/* Header personnalisé */}
@@ -289,7 +325,7 @@ const EtudesScreen = () => {
         {/* Footer personnalisé */}
         <FooterLogo />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 

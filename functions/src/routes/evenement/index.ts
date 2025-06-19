@@ -1,11 +1,18 @@
 import express from 'express';
-import { createEvent } from './createEvent';
 import { getAllEvents } from './getAllEvents';
-
+import { inscrireEvenement } from './participationController';
+import { creerEvenement } from './createEvent';
+import { modifierEvenement } from './updateEvent';
+import { annulerEvenement, reactiverEvenement } from './deleteEvent';
 
 const router = express.Router();
 
 router.get("/", getAllEvents);
-router.post("/create", createEvent);
+router.post("/inscrire", inscrireEvenement)
+router.post('/creer', creerEvenement);
+router.put('/:id', modifierEvenement)
+router.put('/annuler/:id', annulerEvenement)
+router.put('/reactiver/:id', reactiverEvenement)
+
 
 export default router;

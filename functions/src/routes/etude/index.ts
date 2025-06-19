@@ -1,4 +1,6 @@
 import express from "express";
+import { createEtude } from "./createEtude";
+import { inscrireEtude } from "./inscriptionController";
 import { cancelEtude } from "./cancelEtude";
 import { getAllEtudes } from "./getAllEtudes";
 import { getAllEtudesAdmin } from "./getEtudeAdmin";
@@ -9,12 +11,13 @@ import { startEtude } from "./startEtude";
 import { updateEtude } from './updateEtude';
 import { updateEtudeStatus } from "./updateStatutEtude";
 
-
 const router = express.Router();
 router.get("/", getAllEtudes);
 router.get("/admin", getAllEtudesAdmin)
-router.put("/:id/statut", updateEtudeStatus)
+router.put("/:id/status", updateEtudeStatus)
 router.put("/:id", updateEtude)
+router.post("/inscription/", inscrireEtude)
+router.post("/", createEtude)
 router.get("/:id", getEtudeByID);
 router.get("/:id/users", getUsersByEtude);
 router.post("/start/:id", startEtude);

@@ -175,14 +175,40 @@ export default function EtudeDetailScreen() {
   }, [id]);
 
 
-  const handlePostuler = () => {
+  const handlePostuler = async () => {
     if (!etude) return
 
-    Alert.alert(
-      "Candidature envoyée",
-      `Votre candidature pour "${etude.title}" a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.`,
-      [{ text: "OK", onPress: () => console.log("OK Pressed") }],
-    )
+    if (!user) {
+      Alert.alert("Connexion requise", "Vous devez être connecté pour vous inscrire à une étude.")
+      return
+    }
+
+    try {
+      const inscriptionData = {
+        Id_etude: Number.parseInt(etude.id),
+        ID_user: user.id,
+      }
+
+      const response = await api.post("/etude/inscription/", inscriptionData)
+
+      if (response.status === 201) {
+        Alert.alert(
+          "Inscription réussie",
+          `Votre inscription à "${etude.title}" a été confirmée. Vous recevrez plus d'informations dans les prochains jours.`,
+          [{ text: "OK", onPress: () => console.log("OK Pressed") }],
+        )
+      }
+    } catch (err: any) {
+      // Gestion spécifique des erreurs sans log dans la console
+      if (err.response?.status === 409) {
+        Alert.alert("Déjà inscrit", "Vous êtes déjà inscrit à cette étude.")
+      } else if (err.response?.status === 400) {
+        Alert.alert("Erreur", "Données invalides. Veuillez réessayer.")
+      } else {
+        console.error("Erreur inscription:", err)
+        Alert.alert("Erreur", "Impossible de s'inscrire à cette étude. Veuillez réessayer.")
+      }
+    }
   }
 
   if (loading) {
@@ -328,7 +354,7 @@ export default function EtudeDetailScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.applyButtonGradient}
             >
-              <Text style={styles.applyButtonText}>S&apos;inscrire à cette formation</Text>
+              <Text style={styles.applyButtonText}>Postuler à cette étude</Text>
               <Ionicons name="arrow-forward" size={20} color="white" />
             </LinearGradient>
           </AnimatedTouchable>
