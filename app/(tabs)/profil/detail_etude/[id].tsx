@@ -19,7 +19,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native"
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
+import Animated, { FadeInDown } from "react-native-reanimated"
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity)
 
@@ -320,22 +320,7 @@ console.log("ID reçu depuis params:", id)
             <Text style={styles.publicationDate}>{formatDate(etude.dateCreation)}</Text>
           </Animated.View>
 
-          <AnimatedTouchable
-            entering={FadeInUp.delay(800).springify()}
-            style={styles.applyButton}
-            onPress={handlePostuler}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={[categoryColors.text, categoryColors.text]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.applyButtonGradient}
-            >
-              <Text style={styles.applyButtonText}>S&apos;inscrire à cette formation</Text>
-              <Ionicons name="arrow-forward" size={20} color="white" />
-            </LinearGradient>
-          </AnimatedTouchable>
+          
         </View>
         <FooterLogo />
       </ScrollView>

@@ -10,23 +10,32 @@ export async function getEtudesByUser(req: Request, res: Response) {
 
   try {
     const [rows] = await pool.query(
-      `SELECT 
-        e.Id_etude,
-        e.titre_etude,
-        e.dateDebut_etude,
-        e.dateFin_etude,
-        e.description_etude,
-        e.prix_etude,
-        e.nbrIntervenant,
-        e.img_etude,
-        se.StatutE AS statut
-      FROM Effectuer ef
-      JOIN Etude e ON ef.Id_etude = e.Id_etude
-      JOIN StatutEtude se ON e.ID_statutE = se.ID_statutE
-      WHERE ef.ID_user = ?
-      ORDER BY e.ID_statutE`,
+      `
+  SELECT 
+    e.Id_etude,
+    e.titre_etude,
+    e.dateDebut_etude,
+    e.dateFin_etude,
+    e.description_etude,
+    e.prix_etude,
+    e.nbrIntervenant,
+    e.img_etude,
+    se.StatutE AS statut,
+    ef.statutAffectation
+  FROM Effectuer ef
+  JOIN Etude e ON ef.Id_etude = e.Id_etude
+  JOIN StatutEtude se ON e.ID_statutE = se.ID_statutE
+  WHERE ef.ID_user = ?
+    AND (
+      (e.ID_statutE = 3 AND ef.statutAffectation = 'en_attente') OR
+      (e.ID_statutE = 1 AND ef.statutAffectation = 'affecte') OR
+      (e.ID_statutE = 2 AND ef.statutAffectation = 'affecte')
+    )
+  ORDER BY e.ID_statutE;
+  `,
       [userId]
     );
+
 
     return res.status(200).json(rows);
   } catch (error) {

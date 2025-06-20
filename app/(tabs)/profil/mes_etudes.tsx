@@ -143,7 +143,7 @@ const MesEtudesScreen = () => {
               <Text style={styles.statsNumber}>
                 {studiesData.postulees.length + studiesData.enCours.length + studiesData.terminees.length}
               </Text>
-              <Text style={styles.statsLabel}>Total formations</Text>
+              <Text style={styles.statsLabel}>Total Etudes</Text>
             </View>
             <View style={styles.statsDivider} />
             <View style={styles.statsCard}>
