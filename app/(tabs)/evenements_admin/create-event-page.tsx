@@ -6,7 +6,7 @@ import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
-import { SafeAreaView } from "react-native-safe-area-context"
+
 
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
