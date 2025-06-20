@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
-import { SafeAreaView } from "react-native-safe-area-context"
+
 
 import FooterLogo from "@/components/FooterLogo"
 
