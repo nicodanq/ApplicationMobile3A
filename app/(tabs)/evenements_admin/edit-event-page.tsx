@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
 import { useFocusEffect } from "@react-navigation/native"
-import { BackHandler, Alert } from "react-native"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { useCallback, useEffect, useState } from "react"
+import { Alert, BackHandler, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+
 import { Ionicons } from "@expo/vector-icons"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
 
-import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
 
 import api from "@/api/axiosClient"
@@ -347,15 +347,15 @@ const EditEventPage = ({ event, onBack, onSave }: EditEventPageProps) => {
 
   return (
     <View style={styles.container}>
-      <HeaderPage title="Modification d'un événement" />
+    
 
-      <View style={styles.headerContainer}>
+      <SafeAreaView style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Modifier l'événement</Text>
         <View style={styles.placeholder} />
-      </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {/* Indicateur d'événement en cours de modification */}

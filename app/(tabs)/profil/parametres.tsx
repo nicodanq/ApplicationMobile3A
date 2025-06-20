@@ -59,7 +59,7 @@ const ParametresAdminScreen = () => {
   const [securityAlerts, setSecurityAlerts] = useState(true)
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const [apparenceMode, setapparenceMode] = useState(false)
-  const [isAdminMode, setIsAdminMode] = useState(false);
+  const { isAdminMode, toggleAdminMode } = useSession(); 
 
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -74,10 +74,10 @@ const ParametresAdminScreen = () => {
   if (error) return <Text>Erreur lors du chargement</Text>;
 
   const onToogleAdminMode = () => {
-    setIsAdminMode(!isAdminMode);
+    toggleAdminMode();
     Alert.alert(
       "Mode Maintenance",
-      `Le mode maintenance est maintenant ${!apparenceMode ? "activé" : "désactivé"}.`,
+      `Le mode maintenance est maintenant ${!isAdminMode ? "activé" : "désactivé"}.`,
       [{ text: "OK" }]
     );
   }
@@ -202,7 +202,7 @@ const ParametresAdminScreen = () => {
           title: "Mode maintenance",
           subtitle: "Activer le mode maintenance de la plateforme",
           type: "switch",
-          value: apparenceMode,
+          value: isAdminMode,
           onToggle: onToogleAdminMode,
         },
         {

@@ -7,7 +7,6 @@ import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -20,12 +19,13 @@ export default function TabLayout() {
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
           },
           default: {},
         }),
-      }}>
+      }}
+    >
+      {/* Onglets normaux */}
       <Tabs.Screen
         name="index"
         options={{
@@ -36,25 +36,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="etudes"
         options={{
-          title: 'Etudes',
+          title: 'Études',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="book" color={color} />,
         }}
       />
       <Tabs.Screen
         name="evenements"
         options={{
-          title: 'Evènements',
-
+          title: 'Évènements',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
-
         }}
       />
-
       <Tabs.Screen
         name="articles"
         options={{
           title: 'Articles',
-
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="chart.line.text.clipboard" color={color} />,
         }}
       />
@@ -63,6 +59,25 @@ export default function TabLayout() {
         options={{
           title: 'Profil',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
+        }}
+      />
+
+      <Tabs.Screen
+        name="etudeadmin"
+        options={{
+          href: null, // cache dans la tab bar
+        }}
+      />
+      <Tabs.Screen
+        name="evenements_admin"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="articleadmin"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

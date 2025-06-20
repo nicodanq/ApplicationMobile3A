@@ -1,324 +1,198 @@
 "use client"
 
+import { useCallback, useState } from "react"
+
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
-import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { useRouter } from "expo-router"
-import { useState, useCallback } from "react"
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  FlatList,
-  Image,
-  Modal,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
-import { useFocusEffect } from "@react-navigation/native"
+
 
 const { width } = Dimensions.get("window")
 const cardWidth = width * 0.75
 
-type Article = {
+type Etude = {
   id: string
-  titre_article: string
-  description_article: string
-  datePublication_article: string
-  img_article: string
-  auteur_article: string
-  readTime: string
-  categorie: string
-  ID_user: string
+  titre: string
+  description: string
+  type: string
+  prix: number
+  nbrIntervenant: number
+  dateDebut: string
+  dateFin: string
+  image: string
+  statut: number
 }
 
-type Category = {
-  id: string
-  title: string
-  articles: Article[]
+type EtudesData = {
+  pasCommencees: Etude[]
+  enCours: Etude[]
+  terminees: Etude[]
 }
 
-const AdminArticlesScreen = () => {
+const getTypeColor = (type: string) => {
+  const colors: { [key: string]: string } = {
+    "IT & Digital": "#3B82F6",
+    "Ingénierie des Systèmes": "#10B981",
+    Conseil: "#8B5CF6",
+    RSE: "#F59E0B",
+    "Digital & Culture": "#EF4444",
+    "Traduction Technique": "#06B6D4",
+    Autre: "#64748B",
+  }
+  return colors[type] || "#64748B"
+}
+
+const EtudeCard = ({ etude, onPress }: { etude: Etude; onPress: () => void }) => (
+  <TouchableOpacity style={styles.etudeCard} onPress={onPress} activeOpacity={0.7}>
+    <Image source={{ uri: etude.image }} style={styles.etudeImage} />
+    <View style={styles.etudeContent}>
+      <View style={styles.etudeHeader}>
+        <Text style={styles.etudeTitle} numberOfLines={2}>
+          {etude.titre}
+        </Text>
+        <View style={[styles.typeTag, { backgroundColor: getTypeColor(etude.type) }]}>
+          <Text style={styles.typeText}>{etude.type}</Text>
+        </View>
+      </View>
+      <Text style={styles.etudeDescription} numberOfLines={2}>
+        {etude.description}
+      </Text>
+      <View style={styles.etudeFooter}>
+        <View style={styles.etudeInfo}>
+          <Ionicons name="people-outline" size={16} color="#64748B" />
+          <Text style={styles.etudeInfoText}>{etude.nbrIntervenant} intervenant(s)</Text>
+        </View>
+        <Text style={styles.etudePrix}>{etude.prix.toLocaleString()}€</Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+)
+
+const EtudesAdminScreen = () => {
   const router = useRouter()
-  const { user, token } = useSession()
+  const { user, token, isLoading } = useSession()
 
   const [loading, setLoading] = useState(true)
-  const [categoriesData, setCategoriesData] = useState<Category[]>([])
+  const [etudesData, setEtudesData] = useState<EtudesData>({
+    pasCommencees: [],
+    enCours: [],
+    terminees: [],
+  })
   const [error, setError] = useState<string | null>(null)
-
-  const [isAddArticleModalVisible, setIsAddArticleModalVisible] = useState(false)
-  const [isEditArticleModalVisible, setIsEditArticleModalVisible] = useState(false)
-  const [isAddCategoryModalVisible, setIsAddCategoryModalVisible] = useState(false)
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null)
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
-
-  const [newArticle, setNewArticle] = useState({
-    titre_article: "",
-    description_article: "",
-    datePublication_article: "",
-    img_article: "",
-    auteur_article: "",
-  })
-
-  const [newCategory, setNewCategory] = useState({
-    title: "",
-  })
-
-  const fetchArticles = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      const response = await api.get("/article/")
-      const rawArticles = response.data
-
-      console.log("Articles récupérés:", rawArticles)
-
-      // Transformer les données
-      const formattedArticles: Article[] = rawArticles.map((article: any) => ({
-        id: article.Id_article?.toString() || `${article.titre_article}-${Math.random()}`,
-        titre_article: article.titre_article ?? "Titre manquant",
-        description_article: article.description_article ?? "Pas de description",
-        datePublication_article: article.datePublication_article
-          ? new Date(article.datePublication_article).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-        img_article:
-          article.img_article ??
-          "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
-        auteur_article: article.auteur_article ?? "Auteur EPF",
-        readTime: article.readTime ? `${article.readTime} min` : "5 min",
-        categorie: article.categorie ?? "Autre",
-        ID_user: article.ID_user?.toString() ?? "",
-      }))
-
-      // Grouper par catégorie
-      const grouped: Record<string, Article[]> = formattedArticles.reduce(
-        (acc, article) => {
-          if (!acc[article.categorie]) acc[article.categorie] = []
-          acc[article.categorie].push(article)
-          return acc
-        },
-        {} as Record<string, Article[]>,
-      )
-
-      // Créer les catégories
-      const categoriesArray: Category[] = Object.entries(grouped).map(([categoryName, articles]) => ({
-        id: categoryName.toLowerCase().replace(/\s+/g, "-"),
-        title: categoryName,
-        articles,
-      }))
-
-      setCategoriesData(categoriesArray)
-    } catch (err) {
-      console.error("Erreur récupération articles:", err)
-      setError("Erreur lors du chargement des articles")
-      setCategoriesData([])
-    } finally {
-      setLoading(false)
-    }
-  }
 
   useFocusEffect(
     useCallback(() => {
-      fetchArticles()
+      const fetchEtudes = async () => {
+        try {
+          setLoading(true)
+          setError(null)
+
+          // Essayer d'abord avec un endpoint admin spécifique, sinon utiliser l'endpoint normal
+          let response
+          try {
+            response = await api.get("/etude/admin") // Nouvel endpoint pour l'admin
+          } catch (adminError) {
+            console.log("Endpoint admin non disponible, utilisation de l'endpoint normal")
+            response = await api.get("/etude/") // Fallback sur l'endpoint normal
+          }
+
+          const rawEtudes = response.data
+
+          console.log("Données brutes récupérées:", rawEtudes)
+          console.log("Nombre d'études:", rawEtudes.length)
+
+          // Transformer les données
+          const formattedEtudes: Etude[] = rawEtudes
+            .map((etude: any) => {
+              console.log(`Étude ${etude.Id_etude}: statut = ${etude.ID_statutE}`)
+              return {
+                id: etude.Id_etude?.toString() || `etude-${Math.random()}`,
+                titre: etude.titre_etude ?? "Titre manquant",
+                description: etude.description_etude ?? "Pas de description",
+                type: etude.categorie ?? "Autre",
+                prix: etude.prix_etude ?? 0,
+                nbrIntervenant: etude.nbrIntervenant ?? 1,
+                dateDebut: etude.dateDebut_etude ?? "",
+                dateFin: etude.dateFin_etude ?? "",
+                image: etude.img_etude
+                  ? etude.img_etude.startsWith("http")
+                    ? etude.img_etude
+                    : `https://votre-domaine.com/images/${etude.img_etude}`
+                  : "https://images.unsplash.com/photo-1629654297299-c8506221ca97?w=400&h=200&fit=crop",
+                statut: etude.ID_statutE ?? 3,
+              }
+            })
+            // Filtrer les études supprimées (statut 4)
+            .filter((etude: { statut: number }) => etude.statut !== 4)
+
+          console.log("Études formatées (sans les supprimées):", formattedEtudes)
+
+          // Grouper par statut
+          // Statut 3 = Pas commencée, 1 = En cours, 2 = Terminée, 4 = Supprimée (filtrée)
+          const grouped: EtudesData = {
+            pasCommencees: formattedEtudes.filter((etude) => etude.statut === 3),
+            enCours: formattedEtudes.filter((etude) => etude.statut === 1),
+            terminees: formattedEtudes.filter((etude) => etude.statut === 2),
+          }
+
+          console.log("Groupement par statut:")
+          console.log("Pas commencées:", grouped.pasCommencees.length)
+          console.log("En cours:", grouped.enCours.length)
+          console.log("Terminées:", grouped.terminees.length)
+
+          setEtudesData(grouped)
+        } catch (err) {
+          console.error("Erreur récupération études:", err)
+          setError("Erreur lors du chargement des études")
+          setEtudesData({
+            pasCommencees: [],
+            enCours: [],
+            terminees: [],
+          })
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchEtudes()
     }, []),
   )
 
-  // Calcul des statistiques
-  const totalArticles = categoriesData.reduce((total, category) => total + category.articles.length, 0)
-  const totalCategories = categoriesData.length
-
-  const handleArticlePress = (article: Article, category: Category) => {
+  const handleEtudePress = (etude: Etude) => {
     router.push({
-      pathname: "/(tabs)/articleadmin/[id]",
-      params: {
-        id: article.id,
-        articleTitle: article.titre_article,
-        articleDescription: article.description_article,
-      },
+      pathname: "/(tabs)/etudeadmin/detail_etude_admin",
+      params: { etudeData: JSON.stringify(etude) },
     })
   }
 
-  const handleAddArticle = async () => {
-    if (selectedCategory && newArticle.titre_article && newArticle.description_article && newArticle.auteur_article) {
-      try {
-        // Appel API pour créer l'article
-        const articleData = {
-          titre_article: newArticle.titre_article,
-          description_article: newArticle.description_article,
-          datePublication_article: newArticle.datePublication_article || new Date().toISOString().split("T")[0],
-          img_article:
-            newArticle.img_article ||
-            "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=300&h=200&fit=crop",
-          auteur_article: newArticle.auteur_article,
-          readTime: 5, // Valeur par défaut
-          categorie: selectedCategory.title,
-          ID_user: user?.id || 1,
-        }
-
-        const response = await api.post("/article/", articleData)
-
-        if (response.status === 201 || response.status === 200) {
-          // Réinitialiser le formulaire
-          setNewArticle({
-            titre_article: "",
-            description_article: "",
-            datePublication_article: "",
-            img_article: "",
-            auteur_article: "",
-          })
-          setIsAddArticleModalVisible(false)
-
-          // Forcer le rechargement des données
-          await fetchArticles()
-
-          Alert.alert("Succès", "Article ajouté avec succès!")
-        }
-      } catch (err) {
-        console.error("Erreur création article:", err)
-        Alert.alert("Erreur", "Impossible de créer l'article")
-      }
-    } else {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires (titre, description, auteur)")
-    }
-  }
-
-  const handleEditArticle = async () => {
-    if (selectedCategory && selectedArticle && selectedArticle.titre_article && selectedArticle.description_article) {
-      try {
-        // Appel API pour modifier l'article
-        const articleData = {
-          titre_article: selectedArticle.titre_article,
-          description_article: selectedArticle.description_article,
-          datePublication_article: selectedArticle.datePublication_article,
-          img_article: selectedArticle.img_article,
-          auteur_article: selectedArticle.auteur_article,
-          categorie: selectedCategory.title,
-        }
-
-        const response = await api.put(`/article/${selectedArticle.id}`, articleData)
-
-        if (response.status === 200) {
-          setSelectedArticle(null)
-          setIsEditArticleModalVisible(false)
-          Alert.alert("Succès", "Article modifié avec succès!")
-          // Les données seront rafraîchies automatiquement grâce à useFocusEffect
-        }
-      } catch (err) {
-        console.error("Erreur modification article:", err)
-        Alert.alert("Erreur", "Impossible de modifier l'article")
-      }
-    } else {
-      Alert.alert("Erreur", "Veuillez remplir tous les champs obligatoires")
-    }
-  }
-
-  const handleDeleteArticle = (categoryId: string, articleId: string) => {
-    Alert.alert("Confirmation", "Êtes-vous sûr de vouloir supprimer cet article ?", [
-      {
-        text: "Annuler",
-        style: "cancel",
-      },
-      {
-        text: "Supprimer",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            const response = await api.delete(`/article/${articleId}`)
-
-            if (response.status === 200) {
-              Alert.alert("Succès", "Article supprimé avec succès!")
-              // Les données seront rafraîchies automatiquement grâce à useFocusEffect
-            }
-          } catch (err) {
-            console.error("Erreur suppression article:", err)
-            Alert.alert("Erreur", "Impossible de supprimer l'article")
-          }
-        },
-      },
-    ])
-  }
-
-  const handleAddCategory = async () => {
-    if (newCategory.title.trim()) {
-      try {
-        // Appel API pour créer la catégorie
-        const categoryData = {
-          typeArticle: newCategory.title,
-        }
-
-        const response = await api.post("/type-article/", categoryData)
-
-        if (response.status === 201 || response.status === 200) {
-          setNewCategory({ title: "" })
-          setIsAddCategoryModalVisible(false)
-          Alert.alert("Succès", "Catégorie ajoutée avec succès!")
-          // Les données seront rafraîchies automatiquement grâce à useFocusEffect
-        }
-      } catch (err) {
-        console.error("Erreur création catégorie:", err)
-        Alert.alert("Erreur", "Impossible de créer la catégorie")
-      }
-    } else {
-      Alert.alert("Erreur", "Veuillez saisir un nom de catégorie")
-    }
-  }
-
-  const ArticleCard = ({ article, category }: { article: Article; category: Category }) => (
-    <TouchableOpacity
-      style={styles.articleCard}
-      onPress={() => handleArticlePress(article, category)}
-      activeOpacity={0.7}
-    >
-      <Image source={{ uri: article.img_article }} style={styles.articleImage} />
-      <View style={styles.articleContent}>
-        <Text style={styles.articleTitle} numberOfLines={2}>
-          {article.titre_article}
-        </Text>
-        <Text style={styles.articleDescription} numberOfLines={3}>
-          {article.description_article}
-        </Text>
-        <View style={styles.articleFooter}>
-          <View style={styles.readTimeInfo}>
-            <Ionicons name="time-outline" size={16} color="#64748B" />
-            <Text style={styles.readTimeText}>{article.readTime}</Text>
-          </View>
-          <Text style={styles.authorText}>Par {article.auteur_article}</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-
-  const renderArticlesList = (category: Category, delay: number) => (
-    <Animated.View key={`category-${category.id}`} entering={FadeInDown.delay(delay)} style={styles.section}>
+  const renderEtudesList = (etudes: Etude[], title: string, delay: number) => (
+    <Animated.View entering={FadeInDown.delay(delay)} style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{category.title}</Text>
-        <View style={styles.sectionActions}>
-          <Text style={styles.sectionCount}>{category.articles.length}</Text>
-          <TouchableOpacity
-            style={styles.addArticleButton}
-            onPress={() => {
-              setSelectedCategory(category)
-              setIsAddArticleModalVisible(true)
-            }}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={styles.sectionCount}>{etudes.length}</Text>
       </View>
-      {category.articles.length > 0 ? (
+      {etudes.length > 0 ? (
         <FlatList
-          data={category.articles}
-          renderItem={({ item }) => <ArticleCard article={item} category={category} />}
-          keyExtractor={(item) => `article-${item.id}`}
+          data={etudes}
+          renderItem={({ item }) => <EtudeCard etude={item} onPress={() => handleEtudePress(item)} />}
+          keyExtractor={(item) => item.id}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.listContainer}
@@ -326,20 +200,34 @@ const AdminArticlesScreen = () => {
         />
       ) : (
         <View style={styles.emptySection}>
-          <Text style={styles.emptyText}>Aucun article dans cette catégorie</Text>
+          <Text style={styles.emptyText}>Aucune étude dans cette catégorie</Text>
         </View>
       )}
     </Animated.View>
   )
 
+  const totalEtudes = etudesData.pasCommencees.length + etudesData.enCours.length + etudesData.terminees.length
+
   if (loading) {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-          <HeaderPage title="Articles" />
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Gestion des Études</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerLine} />
+        </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Chargement des articles...</Text>
+          <Text style={styles.loadingText}>Chargement des études...</Text>
         </View>
       </View>
     )
@@ -349,8 +237,19 @@ const AdminArticlesScreen = () => {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-        <HeaderPage title="Articles" />
-    
+        <View style={styles.headerContainer}>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerTitle}>Gestion des Études</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={24} color="#007AFF" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerLine} />
+        </View>
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => window.location.reload()}>
@@ -365,191 +264,48 @@ const AdminArticlesScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      {/* Header */}
-      <HeaderPage title="Articles" />
-
+      {/* Header unifié */}
+      <SafeAreaView style={styles.headerContainer}>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Gestion des Études</Text>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => router.push("/(tabs)/etudeadmin/creer-etude")}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerLine} />
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.scrollContent}>
           {/* Statistiques */}
           <Animated.View entering={FadeInUp.delay(100)} style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{totalArticles}</Text>
-              <Text style={styles.statLabel}>Articles</Text>
+              <Text style={styles.statNumber}>{totalEtudes}</Text>
+              <Text style={styles.statLabel}>Total Études</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{totalCategories}</Text>
-              <Text style={styles.statLabel}>Catégories</Text>
+              <Text style={styles.statNumber}>{etudesData.enCours.length}</Text>
+              <Text style={styles.statLabel}>En Cours</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statNumber}>Admin</Text>
-              <Text style={styles.statLabel}>Mode</Text>
+              <Text style={styles.statNumber}>{etudesData.terminees.length}</Text>
+              <Text style={styles.statLabel}>Terminées</Text>
             </View>
           </Animated.View>
 
-          {/* Sections des articles */}
-          {categoriesData.length > 0 ? (
-            categoriesData.map((category, index) => renderArticlesList(category, 200 + index * 100))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Aucun article disponible pour le moment</Text>
-            </View>
-          )}
+          {/* Sections des études */}
+          {renderEtudesList(etudesData.pasCommencees, "Pas commencées", 200)}
+          {renderEtudesList(etudesData.enCours, "En cours", 300)}
+          {renderEtudesList(etudesData.terminees, "Terminées", 400)}
         </View>
         <FooterLogo />
       </ScrollView>
-
-      {/* Add Article Modal */}
-      <Modal visible={isAddArticleModalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Ajouter un article</Text>
-            <Text style={styles.modalSubtitle}>Catégorie: {selectedCategory?.title}</Text>
-
-            <ScrollView style={styles.modalScrollView}>
-              <TextInput
-                style={styles.input}
-                placeholder="Titre de l'article *"
-                value={newArticle.titre_article}
-                onChangeText={(text) => setNewArticle({ ...newArticle, titre_article: text })}
-              />
-
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description de l'article *"
-                multiline
-                numberOfLines={4}
-                value={newArticle.description_article}
-                onChangeText={(text) => setNewArticle({ ...newArticle, description_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Auteur de l'article *"
-                value={newArticle.auteur_article}
-                onChangeText={(text) => setNewArticle({ ...newArticle, auteur_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Date de publication (YYYY-MM-DD)"
-                value={newArticle.datePublication_article}
-                onChangeText={(text) => setNewArticle({ ...newArticle, datePublication_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="URL de l'image"
-                value={newArticle.img_article}
-                onChangeText={(text) => setNewArticle({ ...newArticle, img_article: text })}
-              />
-            </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsAddArticleModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleAddArticle}>
-                <Text style={styles.saveButtonText}>Ajouter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Article Modal */}
-      <Modal visible={isEditArticleModalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Modifier l'article</Text>
-            <Text style={styles.modalSubtitle}>Catégorie: {selectedCategory?.title}</Text>
-
-            <ScrollView style={styles.modalScrollView}>
-              <TextInput
-                style={styles.input}
-                placeholder="Titre de l'article *"
-                value={selectedArticle?.titre_article}
-                onChangeText={(text) => setSelectedArticle({ ...selectedArticle!, titre_article: text })}
-              />
-
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                placeholder="Description de l'article *"
-                multiline
-                numberOfLines={4}
-                value={selectedArticle?.description_article}
-                onChangeText={(text) => setSelectedArticle({ ...selectedArticle!, description_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Auteur de l'article *"
-                value={selectedArticle?.auteur_article}
-                onChangeText={(text) => setSelectedArticle({ ...selectedArticle!, auteur_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Date de publication (YYYY-MM-DD)"
-                value={selectedArticle?.datePublication_article}
-                onChangeText={(text) => setSelectedArticle({ ...selectedArticle!, datePublication_article: text })}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="URL de l'image"
-                value={selectedArticle?.img_article}
-                onChangeText={(text) => setSelectedArticle({ ...selectedArticle!, img_article: text })}
-              />
-            </ScrollView>
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsEditArticleModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleEditArticle}>
-                <Text style={styles.saveButtonText}>Enregistrer</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Add Category Modal */}
-      <Modal visible={isAddCategoryModalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Ajouter une catégorie</Text>
-
-            <TextInput
-              style={styles.input}
-              placeholder="Nom de la catégorie *"
-              value={newCategory.title}
-              onChangeText={(text) => setNewCategory({ ...newCategory, title: text })}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setIsAddCategoryModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Annuler</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalButton, styles.saveButton]} onPress={handleAddCategory}>
-                <Text style={styles.saveButtonText}>Ajouter</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   )
 }
@@ -592,34 +348,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 40,
+  headerContainer: {
+    paddingTop: 28, // ou utilisez useSafeAreaInsets si vous préférez
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: "#F8FAFC",
   },
-  emptyText: {
-    fontSize: 16,
-    color: "#64748B",
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    position: "relative",
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1E293B",
+    position: "absolute",
+    left: 0,
+    right: 0,
     textAlign: "center",
   },
-  emptySection: {
-    paddingHorizontal: 20,
-    paddingVertical: 40,
-    alignItems: "center",
+  headerLine: {
+    height: 2,
+    backgroundColor: "#E2E8F0",
+    marginHorizontal: 40,
   },
-
-  addCategoryButton: {
-    position: "absolute",
-    right: 20,
-    top: "50%",
-    marginTop: -20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: "#3B82F6",
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#E3F2FD",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    marginLeft: "auto",
+    marginRight: 20,
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,
@@ -675,12 +445,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#000000",
-    flex: 1,
-  },
-  sectionActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
   },
   sectionCount: {
     fontSize: 16,
@@ -690,19 +454,20 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 12,
   },
-  addArticleButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#10B981",
-    justifyContent: "center",
-    alignItems: "center",
-  },
   listContainer: {
     paddingHorizontal: 20,
   },
-  articleCard: {
-    position: "relative",
+  emptySection: {
+    paddingHorizontal: 20,
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#64748B",
+    textAlign: "center",
+  },
+  etudeCard: {
     width: cardWidth,
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
@@ -713,118 +478,62 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  articleImage: {
+  etudeImage: {
     width: "100%",
     height: 120,
     backgroundColor: "#F1F5F9",
   },
-  articleContent: {
+  etudeContent: {
     padding: 16,
   },
-  articleTitle: {
+  etudeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+  },
+  etudeTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#000000",
-    marginBottom: 8,
+    flex: 1,
+    marginRight: 8,
   },
-  articleDescription: {
+  typeTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  typeText: {
+    fontSize: 10,
+    color: "#FFFFFF",
+    fontWeight: "600",
+  },
+  etudeDescription: {
     fontSize: 14,
     color: "#64748B",
     marginBottom: 12,
     lineHeight: 20,
   },
-  articleFooter: {
+  etudeFooter: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
-  readTimeInfo: {
+  etudeInfo: {
     flexDirection: "row",
     alignItems: "center",
   },
-  readTimeText: {
+  etudeInfoText: {
     fontSize: 12,
     color: "#64748B",
     marginLeft: 4,
   },
-  authorText: {
-    fontSize: 12,
-    color: "#64748B",
-    fontStyle: "italic",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  modalContent: {
-    width: "90%",
-    maxHeight: "80%",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    fontSize: 20,
+  etudePrix: {
+    fontSize: 16,
     fontWeight: "bold",
-    marginBottom: 5,
-    color: "#000000",
-  },
-  modalSubtitle: {
-    fontSize: 16,
-    color: "#64748B",
-    marginBottom: 20,
-  },
-  modalScrollView: {
-    maxHeight: 300,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
-    backgroundColor: "#F8FAFC",
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#F1F5F9",
-  },
-  cancelButtonText: {
-    color: "#64748B",
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  saveButton: {
-    backgroundColor: "#3B82F6",
-  },
-  saveButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 16,
+    color: "#10B981",
   },
 })
 
-export default AdminArticlesScreen
+export default EtudesAdminScreen

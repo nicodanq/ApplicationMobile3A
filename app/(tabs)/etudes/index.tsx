@@ -5,22 +5,22 @@ import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
-import { useEffect, useState } from "react"
+import { useFocusEffect, useRouter } from "expo-router"
+import { useCallback, useEffect, useState } from "react"
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
   FlatList,
   Image,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native"
+
 
 const { width } = Dimensions.get("window")
 const CARD_WIDTH = width * 0.8
@@ -47,6 +47,15 @@ type StudyCategory = {
 const EtudesScreen = () => {
   const router = useRouter()
   const { user, token, isLoading } = useSession()
+  const { isAdminMode } = useSession();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAdminMode) {
+        router.replace("/etudeadmin");
+      }
+    }, [isAdminMode])
+  );
 
   const [loading, setLoading] = useState(true)
   const [studyCategories, setStudyCategories] = useState<StudyCategory[]>([])

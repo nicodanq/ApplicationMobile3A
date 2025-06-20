@@ -2,7 +2,7 @@
 
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import {
   Alert,
   Animated,
@@ -18,9 +18,10 @@ import {
 import { Calendar, LocaleConfig } from "react-native-calendars"
 import Animated2, { FadeInDown } from "react-native-reanimated"
 
+import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
-import api from "@/api/axiosClient"
+import { useFocusEffect, useRouter } from "expo-router"
 
 LocaleConfig.locales["fr"] = {
   monthNames: [
@@ -56,6 +57,8 @@ type Evenement = {
 }
 
 const EvenementsScreen = () => {
+  const { isAdminMode } = useSession();
+  const router = useRouter();
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState<Evenement | null>(null)
@@ -69,6 +72,14 @@ const EvenementsScreen = () => {
 
   const [evenements, setEvenements] = useState<Evenement[]>([])
   const [loading, setLoading] = useState(true)
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAdminMode) {
+        router.replace("/evenements_admin");
+      }
+    }, [isAdminMode])
+  );
 
   // Fonction pour convertir "14:30:00" en "14h30"
   const convertTimeToHeure = (timeString: string): string => {

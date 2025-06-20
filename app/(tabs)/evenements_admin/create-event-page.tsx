@@ -1,14 +1,14 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useState } from "react"
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
 
-import HeaderPage from "@/components/HeaderPage"
-import FooterLogo from "@/components/FooterLogo"
 import api from "@/api/axiosClient"
+import FooterLogo from "@/components/FooterLogo"
 
 // Types
 type EventFormData = {
@@ -280,15 +280,15 @@ const CreateEventPage = ({ onBack, onSave }: CreateEventPageProps) => {
 
   return (
     <View style={styles.container}>
-      <HeaderPage title="Création d'un événement" />
+    
 
-      <View style={styles.headerContainer}>
+      <SafeAreaView style={styles.headerContainer}>
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Ionicons name="arrow-back" size={24} color="#007AFF" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nouvel événement</Text>
         <View style={styles.placeholder} />
-      </View>
+      </SafeAreaView>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Card style={styles.formCard}>
