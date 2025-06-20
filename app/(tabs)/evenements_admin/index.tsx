@@ -1,23 +1,23 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, BackHandler, Alert } from "react-native"
-import { useFocusEffect } from "@react-navigation/native"
+import FooterLogo from "@/components/FooterLogo"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
+import { useCallback, useEffect, useState } from "react"
+import { Alert, BackHandler, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native"
+import { Badge } from "../../../components/badge"
 import { Button } from "../../../components/button"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "../../../components/dialog"
-import { Badge } from "../../../components/badge"
-import FooterLogo from "@/components/FooterLogo"
 import CreateEventPage from "./create-event-page"
 import EditEventPage from "./edit-event-page"
-import { SafeAreaView } from "react-native"
+
 
 import { Calendar, LocaleConfig } from "react-native-calendars"
 import Animated2, { FadeInDown } from "react-native-reanimated"

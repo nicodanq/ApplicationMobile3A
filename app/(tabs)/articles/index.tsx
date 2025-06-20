@@ -5,19 +5,18 @@ import FooterLogo from "@/components/FooterLogo"
 import HeaderPage from "@/components/HeaderPage"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
-import { useRouter } from "expo-router"
-import { useEffect, useState } from "react"
+import { useFocusEffect, useRouter } from "expo-router"
+import { useCallback, useEffect, useState } from "react"
 import {
   Dimensions,
   FlatList,
   Image,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
 
@@ -25,7 +24,16 @@ const { width } = Dimensions.get("window")
 const cardWidth = width * 0.75
 
 const ArticlesScreen = () => {
+  const { isAdminMode } = useSession();
   const router = useRouter()
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAdminMode) {
+        router.replace("/articleadmin");
+      }
+    }, [isAdminMode])
+  );
 
   type Article = {
     id: string

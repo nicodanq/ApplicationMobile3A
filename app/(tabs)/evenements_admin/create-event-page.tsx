@@ -1,15 +1,15 @@
 "use client"
 
-import { useState } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useState } from "react"
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import HeaderPage from "@/components/HeaderPage"
-import FooterLogo from "@/components/FooterLogo"
 import api from "@/api/axiosClient"
+import FooterLogo from "@/components/FooterLogo"
 
 // Types
 type EventFormData = {

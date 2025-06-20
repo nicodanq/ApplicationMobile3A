@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
 import { useFocusEffect } from "@react-navigation/native"
-import { BackHandler, Alert } from "react-native"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from "react-native"
+import { useCallback, useEffect, useState } from "react"
+import { Alert, BackHandler, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native"
+
 import { Ionicons } from "@expo/vector-icons"
+import { SafeAreaView } from "react-native-safe-area-context"
 import { Button } from "../../../components/button"
 import { Card, CardContent } from "../../../components/card"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import HeaderPage from "@/components/HeaderPage"
 import FooterLogo from "@/components/FooterLogo"
 
 import api from "@/api/axiosClient"

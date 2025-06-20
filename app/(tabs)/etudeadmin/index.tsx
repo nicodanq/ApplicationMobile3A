@@ -1,28 +1,28 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 
 import api from "@/api/axiosClient"
 import FooterLogo from "@/components/FooterLogo"
 import { useSession } from "@/contexts/AuthContext"
 import { Ionicons } from "@expo/vector-icons"
+import { useFocusEffect } from "@react-navigation/native"
 import { useRouter } from "expo-router"
 import {
-  ActivityIndicator,
-  Dimensions,
-  FlatList,
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    FlatList,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native"
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated"
-import { useFocusEffect } from "@react-navigation/native"
-import { useCallback } from "react"
+
 
 const { width } = Dimensions.get("window")
 const cardWidth = width * 0.75
