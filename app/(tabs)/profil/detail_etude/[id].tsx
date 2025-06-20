@@ -9,7 +9,6 @@ import { useLocalSearchParams, useRouter } from "expo-router"
 import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
-  Alert,
   Image,
   Platform,
   ScrollView,
@@ -17,7 +16,7 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native"
 import Animated, { FadeInDown } from "react-native-reanimated"
 
@@ -179,15 +178,7 @@ console.log("ID reçu depuis params:", id)
   }, [id]);
 
 
-  const handlePostuler = () => {
-    if (!etude) return
-
-    Alert.alert(
-      "Candidature envoyée",
-      `Votre candidature pour "${etude.title}" a été soumise avec succès. Vous recevrez une réponse dans les prochains jours.`,
-      [{ text: "OK", onPress: () => console.log("OK Pressed") }],
-    )
-  }
+  
 
   if (loading) {
     return (
